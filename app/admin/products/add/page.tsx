@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from '@/utils/supabase/client';
 import { UploadCloud, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createProductAction } from "./product.actions";
 
 export default function AddProductPage() {
     const router = useRouter();
@@ -21,8 +21,6 @@ export default function AddProductPage() {
     });
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
-
-    const supabase = createClient();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -53,40 +51,18 @@ export default function AddProductPage() {
 
         setLoading(true);
         try {
-            let finalImageUrl = null;
+            const result = await createProductAction({
+                name: formData.name,
+                price: Number(formData.price),
+                description: formData.description,
+                category: formData.category,
+                size: formData.size,
+                image: file
+            });
 
-            // 1. Upload to Storage if file exists
-            if (file) {
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from('products')
-                    .upload(fileName, file, {
-                        cacheControl: '3600',
-                        upsert: false
-                    });
-
-                if (uploadError) throw uploadError;
-
-                // 2. Get Public URL
-                const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
-                finalImageUrl = urlData.publicUrl;
+            if (!result.success) {
+                throw new Error(result.error);
             }
-
-            // 3. Insert into Database
-            const { error: dbError } = await supabase
-                .from('products')
-                .insert([{
-                    name: formData.name,
-                    price: Number(formData.price),
-                    description: formData.description || null,
-                    category: formData.category || null,
-                    size: formData.size || null,
-                    image_url: finalImageUrl
-                }]);
-
-            if (dbError) throw dbError;
 
             setSuccess(true);
 
