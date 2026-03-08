@@ -42,12 +42,12 @@ export default function HeroSection() {
                         {/* Image Grid */}
                         <div className="grid grid-cols-2 gap-3 w-full lg:w-[500px] fade-in-up" style={{ animationDelay: '150ms' }}>
                             <div className="space-y-3">
-                                <img className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://images.unsplash.com/photo-1520975898319-53b3b5f3a031?q=80&w=800&auto=format&fit=crop" alt="Gift 1" loading="lazy" />
-                                <img className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?q=80&w=800&auto=format&fit=crop" alt="Gift 2" loading="lazy" />
+                                <img className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://res.cloudinary.com/ddbj6idxf/image/upload/v1772726889/IMG-20260214-WA0008_nj26gm.jpg" alt="Gift 1" loading="lazy" />
+                                <img className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://res.cloudinary.com/ddbj6idxf/image/upload/v1772726895/IMG-20260214-WA0021_kwipp7.jpg" alt="Gift 2" loading="lazy" />
                             </div>
                             <div className="space-y-3 pt-8">
-                                <img className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=800&auto=format&fit=crop" alt="Gift 3" loading="lazy" />
-                                <img className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=800&auto=format&fit=crop" alt="Gift 4" loading="lazy" />
+                                <img className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://res.cloudinary.com/ddbj6idxf/image/upload/v1772726893/IMG-20260214-WA0016_gbdhsa.jpg" alt="Gift 3" loading="lazy" />
+                                <img className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm" src="https://res.cloudinary.com/ddbj6idxf/image/upload/v1772726882/IMG-20260214-WA0006_a1ojcw.jpg" alt="Gift 4" loading="lazy" />
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client";
-import { Product, IProductService } from "@/types/product";
+import { Product, Category, IProductService } from "@/types/product";
 import { fallback } from "@/utils/data";
 
 export class ProductService implements IProductService {
@@ -7,7 +7,10 @@ export class ProductService implements IProductService {
 
     async getProducts(): Promise<Product[]> {
         try {
-            const { data, error } = await this.supabase.from("products").select("*").limit(64);
+            const { data, error } = await this.supabase
+                .from("products")
+                .select("*, categories(name)")
+                .limit(64);
             if (error || !data || data.length === 0) {
                 return this.mapFallback(fallback);
             }
@@ -19,7 +22,11 @@ export class ProductService implements IProductService {
 
     async getProductById(id: string | number): Promise<Product | null> {
         try {
-            const { data, error } = await this.supabase.from("products").select("*").eq("id", id).single();
+            const { data, error } = await this.supabase
+                .from("products")
+                .select("*, categories(name)")
+                .eq("id", id)
+                .single();
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
         } catch {
@@ -42,6 +49,48 @@ export class ProductService implements IProductService {
             .slice(0, 8);
     }
 
+    async getCategories(): Promise<Category[]> {
+        try {
+            // Fetch categories that have at least one product
+            const { data, error } = await this.supabase
+                .from("categories")
+                .select("id, name, slug")
+                .not("id", "is", null); // Placeholder for logic "at least one product" if needed via join, but simple fetch for now
+
+            // More accurate: categories JOIN products
+            const { data: catWithProds, error: joinError } = await this.supabase
+                .from("categories")
+                .select("id, name, slug, products!inner(id)");
+
+            if (joinError || !catWithProds) return [];
+
+            // Remove duplicates (Supabase might return multiple rows if not careful with inner join)
+            const uniqueCats = Array.from(new Map(catWithProds.map(c => [c.id, c])).values());
+
+            return uniqueCats.map(c => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug
+            }));
+        } catch {
+            return [];
+        }
+    }
+
+    async createCategory(name: string, slug: string): Promise<Category | null> {
+        try {
+            const { data, error } = await this.supabase
+                .from("categories")
+                .insert([{ name, slug }])
+                .select()
+                .single();
+            if (error || !data) return null;
+            return data as Category;
+        } catch {
+            return null;
+        }
+    }
+
     private mapSupabaseData(data: any[]): Product[] {
         return data.map(d => ({
             id: d.id,
@@ -51,7 +100,8 @@ export class ProductService implements IProductService {
             created_at: d.created_at || undefined,
             size: d.size || undefined,
             rating: d.rating || 4,
-            category: d.category || undefined,
+            category_id: d.category_id || undefined,
+            category_name: d.categories?.name || d.category || undefined,
             description: d.description || undefined
         }));
     }

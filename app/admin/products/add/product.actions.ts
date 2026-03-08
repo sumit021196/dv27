@@ -8,6 +8,7 @@ export async function createProductAction(formData: {
     price: number;
     description?: string | null;
     category?: string | null;
+    category_id?: string | null;
     size?: string | null;
     image?: File | null;
 }) {
@@ -44,6 +45,7 @@ export async function createProductAction(formData: {
                 price: formData.price,
                 description: formData.description || null,
                 category: formData.category || null,
+                category_id: formData.category_id || null,
                 size: formData.size || null,
                 image_url: finalImageUrl
             }]);

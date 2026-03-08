@@ -1,16 +1,17 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { productService } from "@/services/product.service";
+import { Category, Product } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
 import { type Item, fallback } from "@/utils/data";
 
 export default function ProductList() {
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const categories = ["All", "Mugs", "Cushions", "Frames", "Accessories", "Lamps", "Hampers", "Stationery", "Jewelry", "Books"];
-  const [activeCat, setActiveCat] = useState<string>("All");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCatId, setActiveCatId] = useState<string>("all");
 
   const [page, setPage] = useState(1);
   const pageSize = 12; // Increased for a better grid
@@ -20,10 +21,14 @@ export default function ProductList() {
       setLoading(true);
       setLoadError(null);
       try {
-        const data = await productService.getProducts();
-        setItems(data as unknown as Item[]);
+        const [productsData, categoriesData] = await Promise.all([
+          productService.getProducts(),
+          productService.getCategories()
+        ]);
+        setItems(productsData);
+        setCategories(categoriesData);
       } catch (e: unknown) {
-        setItems(fallback);
+        setItems(fallback as unknown as Product[]);
         const message = e instanceof Error ? e.message : String(e);
         setLoadError(message ?? "Failed to load");
       } finally {
@@ -34,10 +39,12 @@ export default function ProductList() {
   }, []);
 
   const filtered = useMemo(() => {
-    let result = [...items] as (Item & { category?: string })[];
-    if (activeCat !== "All") result = result.filter((p) => p.category === activeCat);
+    let result = [...items];
+    if (activeCatId !== "all") {
+      result = result.filter((p) => p.category_id === activeCatId);
+    }
     return result;
-  }, [items, activeCat]);
+  }, [items, activeCatId]);
 
   const visible = filtered.slice(0, page * pageSize);
 
@@ -47,19 +54,31 @@ export default function ProductList() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="no-scrollbar overflow-x-auto py-4">
             <div className="flex gap-2.5">
+              <button
+                onClick={() => {
+                  setActiveCatId("all");
+                  setPage(1);
+                }}
+                className={`whitespace-nowrap flex-shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 ${activeCatId === "all"
+                  ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:-translate-y-0.5"
+                  : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50"
+                  }`}
+              >
+                All
+              </button>
               {categories.map((c) => (
                 <button
-                  key={c}
+                  key={c.id}
                   onClick={() => {
-                    setActiveCat(c);
+                    setActiveCatId(c.id);
                     setPage(1);
                   }}
-                  className={`whitespace-nowrap flex-shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 ${activeCat === c
+                  className={`whitespace-nowrap flex-shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 ${activeCatId === c.id
                     ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 hover:-translate-y-0.5"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50"
                     }`}
                 >
-                  {c}
+                  {c.name}
                 </button>
               ))}
             </div>

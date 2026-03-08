@@ -5,6 +5,9 @@ import { UploadCloud, CheckCircle2, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "./product.actions";
+import { productService } from "@/services/product.service";
+import { Category } from "@/types/product";
+import { useEffect } from "react";
 
 export default function AddProductPage() {
     const router = useRouter();
@@ -12,19 +15,43 @@ export default function AddProductPage() {
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
 
+    const [categories, setCategories] = useState<Category[]>([]);
     const [formData, setFormData] = useState({
         name: "",
         price: "",
         description: "",
         category: "",
+        category_id: "",
         size: "", // comma separated for variants
     });
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    useEffect(() => {
+        const loadCats = async () => {
+            try {
+                const data = await productService.getCategories();
+                setCategories(data);
+            } catch (err) {
+                console.error("Failed to load categories", err);
+            }
+        };
+        loadCats();
+    }, []);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === "category_id") {
+            const selectedCat = categories.find(c => c.id === value);
+            setFormData(prev => ({
+                ...prev,
+                category_id: value,
+                category: selectedCat ? selectedCat.name : ""
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +83,7 @@ export default function AddProductPage() {
                 price: Number(formData.price),
                 description: formData.description,
                 category: formData.category,
+                category_id: formData.category_id,
                 size: formData.size,
                 image: file
             });
@@ -157,14 +185,22 @@ export default function AddProductPage() {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <input
-                                type="text"
-                                name="category"
-                                value={formData.category}
+                            <select
+                                name="category_id"
+                                value={formData.category_id}
                                 onChange={handleInputChange}
-                                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-3 border"
-                                placeholder="e.g. Birthday, Anniversary"
-                            />
+                                className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-3 border bg-white"
+                            >
+                                <option value="">Select Category</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Categories must be created in the Category Manager first.
+                            </p>
                         </div>
 
                         <div className="col-span-1 sm:col-span-2">

@@ -1,3 +1,10 @@
+export interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    created_at?: string;
+}
+
 export interface Product {
     id: string | number;
     name: string;
@@ -6,7 +13,8 @@ export interface Product {
     created_at?: string;
     size?: string;
     rating?: number;
-    category?: string;
+    category_id?: string;
+    category_name?: string;
     description?: string;
 }
 
@@ -15,4 +23,6 @@ export interface IProductService {
     getProductById(id: string | number): Promise<Product | null>;
     getTrendingProducts(): Promise<Product[]>;
     getNewArrivals(): Promise<Product[]>;
+    getCategories(): Promise<Category[]>;
+    createCategory(name: string, slug: string): Promise<Category | null>;
 }

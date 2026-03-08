@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FALLBACK_IMG } from "@/utils/images";
 import Link from "next/link";
 import { useCart } from "./cart/CartContext";
+import { MessageCircle } from "lucide-react";
 import { fallback } from "@/utils/data";
 import { productService } from "@/services/product.service";
 
@@ -100,16 +101,24 @@ export default function ProductDetailClient({ id }: { id: string }) {
             {product.description ?? "A premium personalized gift crafted with care. High-quality materials and elegant finish."}
           </p>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
             <button
               onClick={() => cart.add({ id: product.id, name: product.name, price: product.price, image: src || undefined }, 1)}
-              className="inline-flex items-center rounded-lg bg-brand text-white px-5 py-3 text-sm font-semibold hover:bg-brand-strong transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-brand/10 text-brand px-6 py-3.5 text-sm font-bold hover:bg-brand/20 transition-all active:scale-95"
             >
               Add to Cart
             </button>
-            <button className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold hover:bg-gray-50 transition">
-              Buy Now
-            </button>
+            <a
+              href={`https://wa.me/911234567890?text=${encodeURIComponent(
+                `Hi, I want to buy *${product.name}* (ID: ${product.id}). Price: ₹${product.price}. Link: ${typeof window !== "undefined" ? window.location.href : ""}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] text-white px-8 py-3.5 text-sm font-bold hover:bg-[#20bd5a] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#25D366]/20"
+            >
+              <MessageCircle size={18} fill="currentColor" />
+              Order via WhatsApp
+            </a>
           </div>
 
           <div className="mt-8">
