@@ -53,7 +53,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                                 <ShoppingBag className="text-gray-300" size={32} />
                             </div>
                             <p className="text-gray-900 font-medium">Your cart is empty</p>
-                            <p className="text-gray-500 text-sm mt-1">Add some gifts to get started!</p>
+                            <p className="text-gray-500 text-sm mt-1">Add some pieces to your bag to get started!</p>
                             <button
                                 onClick={onClose}
                                 className="mt-6 rounded-xl bg-foreground text-background px-6 py-2.5 font-semibold text-sm hover:bg-foreground/90 transition"

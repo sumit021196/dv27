@@ -17,7 +17,7 @@ export default async function Page() {
 
       <Section
         title="New Arrivals"
-        subtitle="Freshly added personalized picks"
+        subtitle="Freshly added wardrobe staples"
         ctaHref="/products"
         ctaLabel="Shop all"
       >
@@ -30,7 +30,7 @@ export default async function Page() {
 
       <Section
         title="Trending Now"
-        subtitle="Popular gifts customers love"
+        subtitle="Pieces our community is loving"
         ctaHref="/products"
         ctaLabel="Browse more"
       >
@@ -43,7 +43,7 @@ export default async function Page() {
 
       <Section
         title="All Products"
-        subtitle="Explore the complete collection"
+        subtitle="The full edit"
         ctaHref="/products"
         ctaLabel="See catalog"
       >
@@ -56,7 +56,7 @@ export default async function Page() {
 
       <footer className="border-t border-gray-200 bg-white mt-12">
         <div className="mx-auto max-w-6xl px-4 py-8 flex flex-col items-center justify-center text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Palak Gift Store. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} DV27. All rights reserved.</p>
         </div>
       </footer>
     </main>

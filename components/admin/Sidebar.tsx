@@ -45,7 +45,7 @@ export function AdminSidebar() {
                 <div className="flex flex-col h-full">
                     <div className="h-16 flex items-center px-6 border-b border-gray-200">
                         <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                            PalakAdmin
+                            DV27 Admin
                         </h1>
                     </div>
 

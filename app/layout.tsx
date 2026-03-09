@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Palak Gift Store",
-  description: "Personalized gifts crafted with care and delivered with love.",
+  title: "DV27",
+  description: "Curated wardrobe essentials for the contemporary soul. Redefining modern elegance.",
 };
 
 export default function RootLayout({

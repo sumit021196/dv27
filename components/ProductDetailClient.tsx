@@ -98,7 +98,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
           <div className="mt-3 text-brand-strong font-extrabold text-xl">₹{product.price}</div>
 
           <p className="mt-4 text-sm text-gray-900 leading-6">
-            {product.description ?? "A premium personalized gift crafted with care. High-quality materials and elegant finish."}
+            {product.description ?? "A premium wardrobe essential crafted with precision. High-quality materials and contemporary finish."}
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
