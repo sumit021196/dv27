@@ -7,7 +7,8 @@ const supabaseKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const createClient = (request: NextRequest) => {
+
+export const updateSession = async (request: NextRequest) => {
   // Create an unmodified response
   let supabaseResponse = NextResponse.next({
     request: {
@@ -36,5 +37,9 @@ export const createClient = (request: NextRequest) => {
     },
   );
 
+  // refreshing the auth token
+  await supabase.auth.getUser()
+
   return supabaseResponse
 };
+

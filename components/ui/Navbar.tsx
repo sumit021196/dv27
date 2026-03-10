@@ -11,8 +11,14 @@ import {
     Home,
     Grid3X3,
     TrendingUp,
-    Zap,
+    User,
+    LogOut,
+    ChevronDown,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { logout } from "@/app/(auth)/auth.actions";
+import { User as UserType } from "@supabase/supabase-js";
+import Image from "next/image";
 
 const navLinks = [
     { href: "/", label: "Home", icon: Home },
@@ -26,11 +32,29 @@ export default function Navbar() {
     const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
     const cart = useCart();
 
+    const [user, setUser] = useState<UserType | null>(null);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const supabase = createClient();
+
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        fetchUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            subscription.unsubscribe();
+        };
+    }, [supabase.auth]);
 
     const totalItems = cart.items.reduce((acc, current) => acc + current.qty, 0);
 
@@ -38,8 +62,8 @@ export default function Navbar() {
         <>
             <header
                 className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${isScrolled
-                        ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-zinc-200/60"
-                        : "bg-transparent"
+                    ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-zinc-200/60"
+                    : "bg-transparent"
                     }`}
             >
                 <div className="mx-auto flex h-14 md:h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -62,11 +86,15 @@ export default function Navbar() {
                         </button>
 
                         {/* Logo */}
-                        <Link href="/" className="flex items-center gap-1.5 transition-transform hover:scale-105">
-                            <Zap size={18} className="text-stone-900 fill-stone-900" />
-                            <span className="text-xl font-extrabold tracking-tighter text-stone-900">
-                                DV27
-                            </span>
+                        <Link href="/" className="flex items-center transition-transform hover:scale-105">
+                            <Image
+                                src="/logo.svg"
+                                alt="DV27"
+                                width={48}
+                                height={48}
+                                className="h-10 w-auto"
+                                priority
+                            />
                         </Link>
                     </div>
 
@@ -84,8 +112,64 @@ export default function Navbar() {
                         ))}
                     </nav>
 
-                    {/* Right: Cart Button */}
-                    <div className="flex items-center gap-2">
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        {/* User Profile / Login */}
+                        <div className="relative">
+                            {user ? (
+                                <button
+                                    onClick={() => setProfileOpen(!profileOpen)}
+                                    className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center border border-zinc-200">
+                                        <User size={18} className="text-zinc-600" />
+                                    </div>
+                                    <ChevronDown size={14} className={`text-zinc-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    className="px-4 py-2 text-sm font-semibold text-zinc-700 hover:text-zinc-900 transition-colors"
+                                >
+                                    Log in
+                                </Link>
+                            )}
+
+                            {/* Dropdown Menu */}
+                            {profileOpen && user && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setProfileOpen(false)}
+                                    />
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-zinc-100 py-2 z-50 overflow-hidden">
+                                        <div className="px-4 py-3 border-b border-zinc-50 mb-1">
+                                            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Account</p>
+                                            <p className="text-sm font-bold text-zinc-900 truncate">{user.email}</p>
+                                        </div>
+                                        <Link
+                                            href="/profile"
+                                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+                                            onClick={() => setProfileOpen(false)}
+                                        >
+                                            <User size={16} />
+                                            Your Profile
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                logout();
+                                                setProfileOpen(false);
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                                        >
+                                            <LogOut size={16} />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
                         <button
                             type="button"
                             onClick={() => setCartDrawerOpen(true)}
@@ -118,10 +202,15 @@ export default function Navbar() {
                     >
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between mb-8">
-                            <div className="flex items-center gap-1.5">
-                                <Zap size={18} className="text-stone-900 fill-stone-900" />
-                                <span className="text-xl font-extrabold tracking-tighter text-stone-900">DV27</span>
-                            </div>
+                            <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+                                <Image
+                                    src="/logo.svg"
+                                    alt="DV27"
+                                    width={48}
+                                    height={48}
+                                    className="h-10 w-auto"
+                                />
+                            </Link>
                             <button
                                 type="button"
                                 className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 transition-colors"
