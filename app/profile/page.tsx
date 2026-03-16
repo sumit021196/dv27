@@ -24,6 +24,7 @@ import Link from "next/link";
 export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
+    const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
@@ -38,6 +39,15 @@ export default function ProfilePage() {
                     .eq("id", user.id)
                     .single();
                 setProfile(profile);
+
+                // Fetch user specific orders
+                try {
+                    const res = await fetch('/api/my-orders');
+                    const data = await res.json();
+                    if(data.orders) setOrders(data.orders);
+                } catch(e) {
+                    console.error("Error fetching orders:", e);
+                }
             }
             setLoading(false);
         };
@@ -124,21 +134,51 @@ export default function ProfilePage() {
                 {/* ── Active Order Card (Compact) ── */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">Ongoing Order</h2>
-                        <Link href="#" className="text-xs font-bold text-zinc-400">View all</Link>
+                        <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">My Orders</h2>
+                        <span className="text-xs font-bold text-zinc-400">{orders.length} total</span>
                     </div>
-                    <div className="bg-zinc-900 rounded-3xl p-6 text-white flex items-center justify-between shadow-lg shadow-zinc-100">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                                <Package className="text-white/60" size={24} />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-white/50 mb-0.5">Order #3928</p>
-                                <p className="text-sm font-bold">Awaiting shipment</p>
-                            </div>
+                    
+                    {orders.length === 0 ? (
+                         <div className="bg-zinc-50 border border-zinc-100 border-dashed rounded-3xl p-8 text-center flex flex-col items-center">
+                            <Package className="text-zinc-300 w-10 h-10 mb-3" />
+                            <p className="text-sm font-bold text-zinc-500">No orders yet</p>
+                            <Link href="/products" className="text-xs font-bold text-blue-600 mt-2">Start shopping</Link>
+                         </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {orders.slice(0, 3).map((order) => (
+                                <Link 
+                                    href={`/profile/orders/${order.id}`} 
+                                    key={order.id} 
+                                    className="bg-white border border-zinc-100 hover:border-zinc-300 rounded-3xl p-5 flex items-center justify-between shadow-sm transition-colors block"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                                            order.status === 'delivered' ? 'bg-emerald-50' : 
+                                            order.status === 'cancelled' ? 'bg-red-50' : 'bg-zinc-900 text-white'
+                                        }`}>
+                                            <Package className={
+                                                order.status === 'delivered' ? 'text-emerald-500' : 
+                                                order.status === 'cancelled' ? 'text-red-500' : 'text-white'
+                                            } size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">
+                                                Order #{order.id.split('-')[0]}
+                                            </p>
+                                            <p className="text-sm font-bold text-zinc-900 capitalize">
+                                                {order.status}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <p className="text-sm font-black text-zinc-900">₹{order.total_amount}</p>
+                                        <ChevronRight size={18} className="text-zinc-300" />
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
-                        <ChevronRight size={20} className="text-white/40" />
-                    </div>
+                    )}
                 </section>
 
                 {/* ── Menu List (Category Style) ── */}

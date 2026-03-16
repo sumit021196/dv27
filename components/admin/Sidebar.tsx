@@ -9,16 +9,22 @@ import {
     Users,
     LogOut,
     Menu,
-    X
+    X,
+    List,
+    Star,
+    Image as ImageIcon
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useState } from "react";
 
 const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+    { name: "Categories", href: "/admin/categories", icon: List },
     { name: "Products", href: "/admin/products", icon: Package },
     { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
-    { name: "Visitors", href: "/admin/visitors", icon: Users },
+    { name: "Reviews", href: "/admin/reviews", icon: Star },
+    { name: "Customers", href: "/admin/users", icon: Users },
+    { name: "Banners", href: "/admin/banners", icon: ImageIcon },
 ];
 
 export function AdminSidebar() {

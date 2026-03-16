@@ -14,13 +14,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     // Check role from profiles
     const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("is_admin")
         .eq("id", user.id)
         .single();
 
-    if (profile?.role !== "admin") {
+    if (!profile?.is_admin) {
         redirect("/");
     }
+
 
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-900">
