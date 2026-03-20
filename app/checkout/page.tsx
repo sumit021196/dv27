@@ -3,9 +3,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useCart } from "@/components/cart/CartContext";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Loader2, AlertCircle, MapPin, Truck } from "lucide-react";
 import Link from "next/link";
 import Script from "next/script";
+import type { ServiceabilityResponse } from "@/services/deliveryone.service";
 
 export default function CheckoutPage() {
   const cart = useCart();
@@ -18,17 +19,43 @@ export default function CheckoutPage() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState("");
+  const [shippingInfo, setShippingInfo] = useState<ServiceabilityResponse | null>(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+  const [pincodeError, setPincodeError] = useState("");
   
   // Basic validation
-  const isFormValid = name.length > 2 && phone.length >= 10 && pincode.length === 6 && address.length > 5;
+  const isFormValid = name.length > 2 && phone.length >= 10 && pincode.length === 6 && address.length > 5 && shippingInfo?.serviceable;
 
   const total = useMemo(() => cart.items.reduce((s, i) => s + i.price * i.qty, 0), [cart.items]);
+  const finalTotal = useMemo(() => total + (shippingInfo?.shipping_cost || 0), [total, shippingInfo]);
 
   useEffect(() => {
     if (cart.items.length === 0) {
       router.push("/cart");
     }
   }, [cart.items, router]);
+
+  const handlePincodeChange = async (val: string) => {
+    setPincode(val);
+    setPincodeError("");
+    if (val.length === 6) {
+      setIsCheckingPincode(true);
+      try {
+        const response = await fetch(`/api/shipping/serviceability?pincode=${val}`);
+        const res = await response.json() as ServiceabilityResponse;
+        setShippingInfo(res);
+        if (!res.serviceable) {
+          setPincodeError(res.error || "Area not serviceable");
+        }
+      } catch (err) {
+        setPincodeError("Failed to check serviceability");
+      } finally {
+        setIsCheckingPincode(false);
+      }
+    } else {
+      setShippingInfo(null);
+    }
+  };
 
   const handlePayment = async () => {
     if (!isFormValid) {
@@ -43,7 +70,7 @@ export default function CheckoutPage() {
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total })
+        body: JSON.stringify({ amount: finalTotal })
       });
       
       const data = await res.json();
@@ -73,8 +100,13 @@ export default function CheckoutPage() {
                 orderDetails: {
                   customerName: name,
                   customerPhone: phone,
-                  totalAmount: total,
-                  shipping: { pincode, address, cost: 0, estimated_delivery: null },
+                  totalAmount: finalTotal,
+                  shipping: { 
+                    pincode, 
+                    address, 
+                    cost: shippingInfo?.shipping_cost || 0, 
+                    estimated_delivery: shippingInfo?.estimated_delivery || null 
+                  },
                   items: cart.items
                 }
               })
@@ -164,14 +196,39 @@ export default function CheckoutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-4">
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Pincode *</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 outline-none transition-all"
-                    placeholder="110001"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={pincode}
+                      onChange={(e) => handlePincodeChange(e.target.value.replace(/\D/g, ''))}
+                      className={`w-full rounded-2xl border ${pincodeError ? 'border-red-200 bg-red-50/30' : 'border-zinc-100 bg-zinc-50/50'} px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 outline-none transition-all`}
+                      placeholder="110001"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {isCheckingPincode ? (
+                        <Loader2 size={16} className="animate-spin text-zinc-400" />
+                      ) : shippingInfo?.serviceable ? (
+                        <ShieldCheck size={16} className="text-emerald-500" />
+                      ) : pincode.length === 6 ? (
+                        <AlertCircle size={16} className="text-red-500" />
+                      ) : (
+                        <MapPin size={16} className="text-zinc-300" />
+                      )}
+                    </div>
+                  </div>
+                  {pincodeError && (
+                    <p className="text-[11px] font-bold text-red-500 mt-2 ml-1 uppercase tracking-wider flex items-center gap-1">
+                      <AlertCircle size={12} />
+                      {pincodeError}
+                    </p>
+                  )}
+                  {shippingInfo?.serviceable && (
+                    <p className="text-[11px] font-bold text-emerald-600 mt-2 ml-1 uppercase tracking-wider flex items-center gap-1.5">
+                      <Truck size={12} />
+                      ~{shippingInfo.estimated_delivery}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Address *</label>
@@ -198,11 +255,15 @@ export default function CheckoutPage() {
              </div>
              <div className="flex justify-between items-center text-sm font-medium text-zinc-500">
                <span>Shipping</span>
-               <span className="text-emerald-500 font-bold uppercase text-[10px] tracking-widest">Free</span>
+               {shippingInfo?.serviceable ? (
+                 <span className="text-emerald-600 font-bold">₹{shippingInfo.shipping_cost}</span>
+               ) : (
+                 <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{pincode.length === 6 ? 'N/A' : 'Enter Pincode'}</span>
+               )}
              </div>
              <div className="pt-4 border-t border-zinc-50 flex justify-between items-center">
                <span className="text-lg font-bold text-zinc-900">Total</span>
-               <span className="text-2xl font-black text-zinc-900 tracking-tight">₹{total.toLocaleString()}</span>
+               <span className="text-2xl font-black text-zinc-900 tracking-tight">₹{finalTotal.toLocaleString()}</span>
              </div>
           </div>
 

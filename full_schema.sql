@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS shipping_details (
     state TEXT,
     shipping_partner TEXT DEFAULT 'deliveryone',
     tracking_id TEXT,
-    estimated_delivery DATE,
+    estimated_delivery TEXT,
     serviceability_status TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

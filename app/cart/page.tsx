@@ -4,13 +4,11 @@ import { useState, useMemo } from "react";
 import { useCart } from "@/components/cart/CartContext";
 import { FALLBACK_IMG } from "@/utils/images";
 import { MessageCircle, ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, MapPin, Truck, AlertCircle, Loader2 } from "lucide-react";
-import { deliveryOneService, ServiceabilityResponse } from "@/services/deliveryone.service";
+import type { ServiceabilityResponse } from "@/services/deliveryone.service";
 
 
 export default function CartPage() {
   const cart = useCart();
-  const [customerName, setCustomerName] = useState("");
-  const [address, setAddress] = useState("");
   const [pincode, setPincode] = useState("");
   const [shippingInfo, setShippingInfo] = useState<ServiceabilityResponse | null>(null);
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
@@ -30,9 +28,7 @@ export default function CartPage() {
     message += `*Total Amount: ₹${(total + (shippingInfo?.shipping_cost || 0)).toFixed(2)}*%0A`;
     message += `(Items: ₹${total.toFixed(2)} | Shipping: ₹${(shippingInfo?.shipping_cost || 0)})%0A%0A`;
     message += `*Delivery Details:*%0A`;
-    message += `- Name: ${customerName || "Not provided"}%0A`;
     message += `- Pincode: ${pincode || "Not provided"}%0A`;
-    message += `- Address: ${address || "Not provided"}%0A`;
     if (shippingInfo?.estimated_delivery) {
       message += `- Est. Delivery: ${shippingInfo.estimated_delivery}%0A`;
     }
@@ -48,7 +44,8 @@ export default function CartPage() {
     if (val.length === 6) {
       setIsCheckingPincode(true);
       try {
-        const res = await deliveryOneService.checkServiceability(val);
+        const response = await fetch(`/api/shipping/serviceability?pincode=${val}`);
+        const res = await response.json() as ServiceabilityResponse;
         setShippingInfo(res);
         if (!res.serviceable) {
           setPincodeError(res.error || "Area not serviceable");
@@ -164,21 +161,11 @@ export default function CartPage() {
           <aside className="lg:sticky lg:top-24 space-y-4">
             <div className="bg-white rounded-[2.5rem] border border-zinc-100 p-8 shadow-sm">
               <h2 className="text-lg font-bold text-zinc-900 mb-6 flex items-center gap-2">
-                Checkout Details
-                <ShieldCheck size={18} className="text-zinc-300" />
+                Shipping & Service
+                <Truck size={18} className="text-zinc-300" />
               </h2>
 
               <div className="space-y-4 mb-8">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Full Name</label>
-                  <input
-                    type="text"
-                    placeholder="Enter recipient name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 outline-none transition-all"
-                  />
-                </div>
                 <div>
                   <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Pin Code</label>
                   <div className="relative">
@@ -214,16 +201,6 @@ export default function CartPage() {
                       Delivery to your area in ~{shippingInfo.estimated_delivery}
                     </p>
                   )}
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Delivery Address</label>
-                  <textarea
-                    placeholder="Locality, landmarks, house no."
-                    value={address}
-                    rows={2}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 focus:bg-white focus:border-zinc-900 outline-none transition-all resize-none"
-                  />
                 </div>
 
               </div>

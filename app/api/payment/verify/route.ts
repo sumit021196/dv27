@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/utils/supabase/server';
+import { delhiveryService } from '@/services/delhivery.service';
 
 export async function POST(req: Request) {
   try {
@@ -85,6 +86,36 @@ export async function POST(req: Request) {
       });
 
     if (shippingError) throw new Error(`Shipping Details Creation Failed: ${shippingError.message}`);
+
+    // 4. Create Shipment in Delhivery Dashboard
+    try {
+      const shipmentData = {
+        name: orderDetails.customerName,
+        add: orderDetails.shipping.address,
+        pin: orderDetails.shipping.pincode,
+        phone: orderDetails.customerPhone ? orderDetails.customerPhone.replace(/\D/g, '').slice(-10) : '',
+        order: newOrderId,
+        payment_mode: 'Prepaid',
+        total_amount: orderDetails.totalAmount,
+        products_desc: orderDetails.items.map((item: any) => `${item.name} (x${item.qty})`).join(', ')
+      };
+
+      const delhiveryResponse = await delhiveryService.createShipment(shipmentData);
+      console.log("Delhivery Shipment Created:", delhiveryResponse);
+
+      // If Delhivery returns a waybill, we can update the shipping_details
+      if (delhiveryResponse.packages && delhiveryResponse.packages.length > 0) {
+        const waybill = delhiveryResponse.packages[0].waybill;
+        await supabase
+          .from('shipping_details')
+          .update({ tracking_id: waybill })
+          .eq('order_id', newOrderId);
+      }
+    } catch (shipmentErr) {
+      console.error("Delhivery Shipment Creation Failed:", shipmentErr);
+      // We don't throw here to avoid failing the whole request if Delhivery is down, 
+      // since the order is already saved in Supabase and payment is verified.
+    }
 
     return NextResponse.json({
       success: true,
