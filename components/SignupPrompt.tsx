@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function SignupPrompt() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  if (pathname.startsWith('/admin')) return null;
 
   useEffect(() => {
     const dismissed = localStorage.getItem("loginPrompt:dismissed");

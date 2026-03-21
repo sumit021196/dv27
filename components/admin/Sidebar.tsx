@@ -12,7 +12,9 @@ import {
     X,
     List,
     Star,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Settings,
+    UploadCloud
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useState } from "react";
@@ -25,6 +27,8 @@ const navItems = [
     { name: "Reviews", href: "/admin/reviews", icon: Star },
     { name: "Customers", href: "/admin/users", icon: Users },
     { name: "Banners", href: "/admin/banners", icon: ImageIcon },
+    { name: "Media", href: "/admin/media", icon: UploadCloud },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {

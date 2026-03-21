@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Type, Link as LinkIcon, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-
-import { use } from "react";
 
 export default function CategoryFormPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -46,7 +44,6 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
         }
     };
 
-    // Auto-generate slug from name if slug is untouched or empty
     useEffect(() => {
         if (isNew && name && !slug) {
             setSlug(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, ''));
@@ -76,87 +73,160 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
         }
     };
 
-    if (isFetching) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-gray-400" /></div>;
+    if (isFetching) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="animate-spin text-blue-600 h-10 w-10" />
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest italic">Loading category details...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-8 pb-20">
             <div className="flex items-center gap-4">
-                <Link href="/admin/categories" className="p-2 -ml-2 text-gray-400 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100">
+                <Link 
+                    href="/admin/categories" 
+                    className="p-3 text-gray-400 hover:text-gray-900 bg-white border border-gray-100 rounded-2xl shadow-sm transition-all hover:scale-110 active:scale-95"
+                >
                     <ArrowLeft size={20} />
                 </Link>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-                    {isNew ? "Create Category" : "Edit Category"}
-                </h1>
+                <div>
+                    <h1 className="text-3xl font-black tracking-tighter text-gray-900 uppercase">
+                        {isNew ? "Create Category" : "Edit Category"}
+                    </h1>
+                    <p className="mt-1 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Organize your products with bold visual headers
+                    </p>
+                </div>
             </div>
 
-            <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                {error && (
-                    <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
-                        {error}
-                    </div>
-                )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Form */}
+                <div className="lg:col-span-2 space-y-8">
+                    <form id="category-form" onSubmit={handleSave} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-8">
+                        {error && (
+                            <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-black uppercase tracking-widest border border-red-100 italic">
+                                {error}
+                            </div>
+                        )}
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                        <input
-                            type="text"
-                            required
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-                            placeholder="e.g., T-Shirts"
-                        />
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Slug *</label>
-                        <input
-                            type="text"
-                            required
-                            value={slug}
-                            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-                            placeholder="e.g., t-shirts"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">URL-friendly identifier. Must be unique.</p>
-                    </div>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                    <Type size={14} /> Category Name
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
+                                    placeholder="e.g., OVERSIZED TS"
+                                />
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                        <input
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
-                            placeholder="https://example.com/image.jpg"
-                        />
-                    </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                    <LinkIcon size={14} /> URL Slug
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={slug}
+                                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
+                                    placeholder="e.g., oversized-ts"
+                                />
+                            </div>
 
-                    <div className="flex items-center gap-3 pt-2">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
-                                checked={isActive} 
-                                onChange={(e) => setIsActive(e.target.checked)} 
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                        <span className="text-sm font-medium text-gray-900">Active</span>
-                    </div>
+                            <div>
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                    <ImageIcon size={14} /> Hero Image URL
+                                </label>
+                                <input
+                                    type="url"
+                                    value={imageUrl}
+                                    onChange={(e) => setImageUrl(e.target.value)}
+                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
+                                    placeholder="https://supabase.co/..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                             <div className="flex items-center gap-3">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only peer" 
+                                        checked={isActive} 
+                                        onChange={(e) => setIsActive(e.target.checked)} 
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                </label>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-900 px-2">
+                                    {isActive ? 'Published' : 'Hidden'}
+                                </span>
+                             </div>
+                             <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase italic">
+                                <CheckCircle2 size={12} /> Live Preview Ready
+                             </div>
+                        </div>
+
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-blue-600 px-8 py-4 text-sm font-black text-white shadow-lg hover:bg-blue-700 hover:shadow-blue-200 focus-visible:outline-none disabled:opacity-50 transition-all uppercase tracking-[0.2em]"
+                            >
+                                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><Save size={20} /> Update Category</>}
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <div className="pt-4 flex justify-end">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 min-w-[120px]"
-                    >
-                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Save</>}
-                    </button>
+                {/* Preview / Instructions */}
+                <div className="space-y-6">
+                    <div className="bg-black rounded-3xl p-6 border border-white/5 shadow-2xl">
+                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-4">
+                            Shop-the-look Preview
+                        </h4>
+                        <div className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 group">
+                            {imageUrl ? (
+                                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover grayscale-[30%]" />
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 space-y-2">
+                                    <ImageIcon size={32} />
+                                    <span className="text-[9px] font-black uppercase italic tracking-widest">No Image Defined</span>
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                                <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none">
+                                    {name || "CATEGORY"}
+                                </h3>
+                            </div>
+                        </div>
+                        <p className="mt-4 text-[9px] font-bold text-zinc-500 uppercase leading-loose tracking-widest">
+                            {name ? `Visual for "${name}" on collection grids.` : "Provide a name to see the display title."}
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">
+                            Editing Guidelines
+                        </h4>
+                        <ul className="space-y-3">
+                            {["Use clear, bold imagery.", "Keep names descriptive.", "Slugs are generated in Real-time."].map((tip, i) => (
+                                <li key={i} className="flex items-start gap-3 text-[10px] font-black text-gray-900 uppercase tracking-widest">
+                                    <span className="text-blue-600">•</span>
+                                    {tip}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     );
 }

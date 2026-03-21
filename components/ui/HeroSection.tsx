@@ -1,118 +1,106 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, BookOpen, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
 
-export default function HeroSection() {
+export default function HeroSection({ banners = [] }: { banners?: any[] }) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const activeBanners = banners.filter((b: any) => b.is_active && b.position === 'hero');
+
+    useEffect(() => {
+        if (activeBanners.length > 1) {
+            const timer = setInterval(() => {
+                setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
+            }, 6000);
+            return () => clearInterval(timer);
+        }
+    }, [activeBanners.length]);
+
+    if (activeBanners.length === 0) {
+        // Fallback if no banners defined
+        return (
+            <section className="h-[80vh] flex items-center justify-center bg-black">
+                <div className="text-center space-y-4">
+                    <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-white">THE DROP</h1>
+                    <button className="px-8 py-3 bg-white text-black font-black uppercase tracking-widest text-sm">Shop Now</button>
+                </div>
+            </section>
+        );
+    }
+
+    const banner = activeBanners[currentIndex];
+
     return (
-        <section className="px-4 mt-2">
-            <div className="mx-auto max-w-7xl py-6 md:py-12">
-                <div className="relative overflow-hidden rounded-[2rem] bg-white p-6 md:p-12 border border-stone-100 shadow-sm">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 md:gap-14 relative z-10">
+        <section className="relative h-[85vh] lg:h-[95vh] w-full overflow-hidden bg-black">
+            {activeBanners.map((b, idx) => (
+                <div 
+                    key={b.id} 
+                    className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                >
+                    {/* Background Overlay */}
+                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                    
+                    <img 
+                        src={b.image_url} 
+                        alt={b.title || 'Hero'} 
+                        className="h-full w-full object-cover grayscale-[30%] brightness-75 transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
+                    />
 
-                        {/* Text Content */}
-                        <div className="max-w-xl space-y-6 fade-in-up">
-                            {/* Badge */}
-                            <div className="inline-flex items-center rounded-full border border-stone-100 bg-stone-50 px-3 py-1.5 text-sm font-medium text-stone-600 gap-2">
-                                <Sparkles size={13} className="text-stone-500" />
-                                SS25 Collection Live
-                                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            </div>
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 z-20 flex items-center justify-center px-6 lg:px-12">
+                        <div className={`max-w-[1440px] w-full ${b.style_type === 'split' ? 'grid grid-cols-1 lg:grid-cols-2' : 'text-center'}`}>
+                            <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                {b.style_type === 'wtflex_bold' ? (
+                                    <>
+                                        <h1 className="text-6xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-white leading-[0.85] filter drop-shadow-2xl">
+                                            {b.title}
+                                        </h1>
+                                        <p className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-brand-accent animate-pulse-subtle">
+                                            {b.subtitle}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-white leading-[0.9]">
+                                            {b.title}
+                                        </h1>
+                                        <p className="text-base md:text-lg font-bold text-white/80 max-w-2xl mx-auto">
+                                            {b.subtitle}
+                                        </p>
+                                    </>
+                                )}
 
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-stone-900 leading-[1.1]">
-                                Redefining{" "}
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-stone-900 to-stone-600">
-                                    Modern Elegance
-                                </span>
-                                .
-                            </h1>
-
-                            <p className="text-stone-500 text-base md:text-lg leading-relaxed">
-                                Discover curated wardrobe essentials for the contemporary soul.
-                                Timeless silhouettes. Crafted with precision.
-                            </p>
-
-                            {/* CTA Buttons */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                                <Link
-                                    href="/products"
-                                    className="group w-full sm:w-auto inline-flex h-12 md:h-14 items-center justify-center gap-2.5 rounded-xl bg-stone-900 text-white px-7 text-sm md:text-base font-semibold hover:bg-stone-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                                >
-                                    <ShoppingBag size={18} strokeWidth={2} />
-                                    Shop Collection
-                                    <ArrowRight
-                                        size={16}
-                                        strokeWidth={2.5}
-                                        className="group-hover:translate-x-0.5 transition-transform duration-200"
-                                    />
-                                </Link>
-
-                                <a
-                                    href="#trending"
-                                    className="w-full sm:w-auto inline-flex h-12 md:h-14 items-center justify-center gap-2.5 rounded-xl border border-stone-200 bg-white px-7 text-sm md:text-base font-semibold text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-all duration-300"
-                                >
-                                    <BookOpen size={18} strokeWidth={2} />
-                                    View Lookbook
-                                </a>
-                            </div>
-
-                            {/* Trust badges - mobile friendly */}
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
-                                {[
-                                    "Free Shipping ₹999+",
-                                    "Easy Returns",
-                                    "100% Authentic",
-                                ].map((badge) => (
-                                    <span
-                                        key={badge}
-                                        className="flex items-center gap-1.5 text-xs font-medium text-stone-500"
+                                <div className={`flex flex-col sm:flex-row gap-4 pt-6 ${b.style_type === 'split' ? 'justify-start' : 'justify-center'}`}>
+                                    <Link
+                                        href={b.link_url || '/products'}
+                                        className="inline-flex items-center justify-center gap-3 px-12 py-5 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl"
                                     >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                        {badge}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Image Grid */}
-                        <div
-                            className="grid grid-cols-2 gap-3 w-full lg:w-[480px] fade-in-up"
-                            style={{ animationDelay: "150ms" }}
-                        >
-                            <div className="space-y-3">
-                                <img
-                                    className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm"
-                                    src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop"
-                                    alt="Fashion 1"
-                                    loading="lazy"
-                                />
-                                <img
-                                    className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm"
-                                    src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200&auto=format&fit=crop"
-                                    alt="Fashion 2"
-                                    loading="lazy"
-                                />
-                            </div>
-                            <div className="space-y-3 pt-8">
-                                <img
-                                    className="rounded-2xl object-cover w-full aspect-square hover:scale-[1.02] transition-transform duration-500 shadow-sm"
-                                    src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop"
-                                    alt="Fashion 3"
-                                    loading="lazy"
-                                />
-                                <img
-                                    className="rounded-2xl object-cover w-full aspect-[4/5] hover:scale-[1.02] transition-transform duration-500 shadow-sm"
-                                    src="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=1200&auto=format&fit=crop"
-                                    alt="Fashion 4"
-                                    loading="lazy"
-                                />
+                                        <ShoppingBag size={20} />
+                                        {b.cta_text || 'Shop Collection'}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* Background blobs */}
-                    <div className="absolute -top-40 -right-40 w-96 h-96 bg-stone-50 rounded-full blur-3xl opacity-60" />
-                    <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-stone-100 rounded-full blur-3xl opacity-60 animate-pulse" />
                 </div>
-            </div>
+            ))}
+
+            {/* Pagination Tabs */}
+            {activeBanners.length > 1 && (
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+                    {activeBanners.map((_, idx) => (
+                        <button 
+                            key={idx}
+                            onClick={() => setCurrentIndex(idx)}
+                            className={`h-1 transition-all duration-300 ${idx === currentIndex ? 'w-12 bg-white' : 'w-4 bg-white/30'}`}
+                        />
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
+
+// Add animation to globals or here via style tag if needed
+// @keyframes zoom-out { from { transform: scale(1.1); } to { transform: scale(1); } }

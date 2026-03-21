@@ -42,12 +42,14 @@ export async function createProductAction(formData: {
             .from('products')
             .insert([{
                 name: formData.name,
+                slug: formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(7),
                 price: formData.price,
                 description: formData.description || null,
-                category: formData.category || null,
                 category_id: formData.category_id || null,
-                size: formData.size || null,
-                image_url: finalImageUrl
+                media_url: finalImageUrl,
+                stock: 10, // Default stock
+                is_active: true,
+                rating: 4.5
             }]);
 
         if (dbError) throw dbError;

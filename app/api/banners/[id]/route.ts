@@ -30,11 +30,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { title, image_url, link_url, position, is_active } = body;
+        const { title, subtitle, image_url, link_url, cta_text, position, style_type, is_active } = body;
 
         const { data, error } = await supabase
             .from('banners')
-            .update({ title, image_url, link_url, position, is_active })
+            .update({ title, subtitle, image_url, link_url, cta_text, position, style_type, is_active })
             .eq('id', id)
             .select()
             .single();

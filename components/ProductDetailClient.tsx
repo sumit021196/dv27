@@ -65,8 +65,8 @@ export default function ProductDetailClient({ id }: { id: string }) {
   if (!product) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-        <p className="text-sm text-gray-900">Product not found.</p>
-        <Link className="mt-3 inline-block rounded-lg border px-4 py-2 text-sm" href="/products">Back to products</Link>
+        <p className="text-sm text-zinc-400">Product not found.</p>
+        <Link className="mt-3 inline-block rounded-lg border border-zinc-800 px-4 py-2 text-sm text-zinc-100 hover:bg-zinc-900" href="/products">Back to products</Link>
       </div>
     );
   }
@@ -94,10 +94,10 @@ export default function ProductDetailClient({ id }: { id: string }) {
               ♥
             </button>
           </div>
-          <div className="mt-1 text-sm text-gray-900">{rating}★ · {stock > 0 ? "In stock" : "Out of stock"}</div>
+          <div className="mt-1 text-sm text-zinc-400">{rating}★ · {stock > 0 ? "In stock" : "Out of stock"}</div>
           <div className="mt-3 text-brand-strong font-extrabold text-xl">₹{product.price}</div>
 
-          <p className="mt-4 text-sm text-gray-900 leading-6">
+          <p className="mt-4 text-sm text-zinc-300 leading-6">
             {product.description ?? "A premium wardrobe essential crafted with precision. High-quality materials and contemporary finish."}
           </p>
 
@@ -124,13 +124,13 @@ export default function ProductDetailClient({ id }: { id: string }) {
           <div className="mt-8">
             <h2 className="text-sm font-semibold text-foreground">Reviews</h2>
             <div className="mt-2 space-y-3">
-              <div className="rounded-lg border p-3 bg-white">
-                <div className="text-sm font-medium">Aarav • 4.5★</div>
-                <p className="text-sm text-gray-900">Great quality, arrived on time. Recommended.</p>
+              <div className="rounded-lg border border-zinc-800 p-3 bg-zinc-900/50">
+                <div className="text-sm font-medium text-zinc-100">Aarav • 4.5★</div>
+                <p className="text-sm text-zinc-400">Great quality, arrived on time. Recommended.</p>
               </div>
-              <div className="rounded-lg border p-3 bg-white">
-                <div className="text-sm font-medium">Misha • 4★</div>
-                <p className="text-sm text-gray-900">Looks classy and packaging was neat.</p>
+              <div className="rounded-lg border border-zinc-800 p-3 bg-zinc-900/50">
+                <div className="text-sm font-medium text-zinc-100">Misha • 4★</div>
+                <p className="text-sm text-zinc-400">Looks classy and packaging was neat.</p>
               </div>
             </div>
           </div>

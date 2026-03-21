@@ -22,6 +22,11 @@ export default function CheckoutPage() {
   const [shippingInfo, setShippingInfo] = useState<ServiceabilityResponse | null>(null);
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
   const [pincodeError, setPincodeError] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Basic validation
   const isFormValid = name.length > 2 && phone.length >= 10 && pincode.length === 6 && address.length > 5 && shippingInfo?.serviceable;
@@ -149,7 +154,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cart.items.length === 0) return null; // Or a loading spinner while redirecting
+  if (!isMounted || cart.items.length === 0) return null;
 
   return (
     <main className="min-h-screen bg-zinc-50/30 pb-32 pt-24 lg:pt-32">

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { FALLBACK_IMG } from "@/utils/images";
 import { useWishlist } from "./wishlist/WishlistContext";
-import { Heart, Eye } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 
 type Product = {
   id: string | number;
@@ -16,14 +16,14 @@ export default function ProductCard({ product }: { product: Product }) {
   const wished = wishlist.items.some((w) => w.id === product.id);
 
   return (
-    <div className="group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden fade-in-up">
-      {/* Image */}
-      <div className="relative aspect-[4/5] w-full bg-gray-50 overflow-hidden">
+    <div className="group flex flex-col bg-black overflow-hidden fade-in-up">
+      {/* Image Container */}
+      <div className="relative aspect-[3/4] w-full bg-zinc-900 overflow-hidden">
         <Link href={`/product/${product.id}`} className="block h-full w-full">
           <img
             src={product.mediaUrl || FALLBACK_IMG}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 group-hover:rotate-1"
             loading="lazy"
             onError={(e) => {
               const img = e.currentTarget as HTMLImageElement;
@@ -32,18 +32,11 @@ export default function ProductCard({ product }: { product: Product }) {
           />
         </Link>
 
-        {/* Hover overlay - desktop quick view */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 hidden sm:block" />
-
-        {/* Quick view badge - desktop hover */}
-        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hidden sm:block">
-          <Link
-            href={`/product/${product.id}`}
-            className="flex items-center justify-center gap-2 w-full h-10 bg-white/95 backdrop-blur-sm rounded-xl text-sm font-semibold text-gray-900 shadow-md hover:bg-white transition-colors"
-          >
-            <Eye size={15} strokeWidth={2} />
-            Quick View
-          </Link>
+        {/* Brand Label/Badge (Optional WTFlex Style) */}
+        <div className="absolute top-4 left-4 z-10">
+            <span className="px-2 py-1 bg-black text-[8px] font-black uppercase tracking-widest text-white backdrop-blur-md border border-white/10">
+                NEW DROP
+            </span>
         </div>
 
         {/* Wishlist button */}
@@ -58,37 +51,55 @@ export default function ProductCard({ product }: { product: Product }) {
               image: product.mediaUrl,
             });
           }}
-          className={`absolute top-3 right-3 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full shadow-sm backdrop-blur-md transition-all duration-200 z-10 ${wished
-              ? "bg-red-50 text-red-500 scale-110"
-              : "bg-white/80 text-gray-400 hover:bg-white hover:text-red-500 hover:scale-110"
+          className={`absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 border ${wished
+              ? "bg-brand-accent border-brand-accent text-white scale-110 shadow-[0_0_15px_rgba(255,0,255,0.4)]"
+              : "bg-black/40 border-white/10 text-white hover:bg-white hover:text-black hover:scale-110"
             }`}
         >
           <Heart
-            size={16}
-            strokeWidth={2}
+            size={18}
             className={wished ? "fill-current" : ""}
           />
         </button>
+
+        {/* Hover Action Bar (Desktop) */}
+        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 hidden md:block">
+             <Link 
+                href={`/product/${product.id}`}
+                className="flex items-center justify-center gap-3 w-full py-4 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-brand-accent hover:text-white transition-all"
+             >
+                <ShoppingBag size={16} />
+                Select Options
+             </Link>
+        </div>
       </div>
 
-      {/* Info */}
-      <div className="p-3.5 sm:p-4 flex flex-col gap-2">
-        <Link href={`/product/${product.id}`} className="block">
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight group-hover:text-stone-700 transition-colors">
+      {/* Info Section */}
+      <div className="py-4 md:py-6 flex flex-col items-center text-center gap-1.5 px-2">
+        <Link href={`/product/${product.id}`} className="block w-full">
+          <h3 className="text-[10px] md:text-xs font-black text-white/50 uppercase tracking-[0.2em] line-clamp-1 group-hover:text-white transition-colors duration-300">
             {product.name}
           </h3>
-          <span className="mt-1.5 block text-base font-bold text-gray-900">
-            ₹{product.price.toLocaleString("en-IN")}
-          </span>
+          <div className="flex items-center justify-center gap-3 mt-1">
+              <span className="text-lg md:text-2xl font-black italic uppercase tracking-tighter text-white">
+                ₹{product.price.toLocaleString("en-IN")}
+              </span>
+              {/* Optional: Add a fake old price for the 'sale' look if desired */}
+              <span className="text-[10px] font-bold text-white/20 line-through">
+                ₹{(product.price * 1.2).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              </span>
+          </div>
         </Link>
-
-        {/* Mobile-visible CTA */}
-        <Link
-          href={`/product/${product.id}`}
-          className="sm:hidden mt-1 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-stone-800 active:bg-stone-950 transition-colors"
-        >
-          View Item
-        </Link>
+        
+        {/* Mobile Action (Visible only on mobile) */}
+        <div className="w-full mt-2 md:hidden">
+             <Link 
+                href={`/product/${product.id}`}
+                className="flex items-center justify-center w-full py-3 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white active:bg-white active:text-black transition-all"
+             >
+                View
+             </Link>
+        </div>
       </div>
     </div>
   );

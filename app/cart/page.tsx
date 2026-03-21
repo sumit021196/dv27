@@ -127,7 +127,7 @@ export default function CartPage() {
                     </div>
                     <button
                       onClick={() => cart.remove(i.id)}
-                      className="p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                       aria-label="Remove item"
                     >
                       <Trash2 size={18} />
@@ -206,16 +206,16 @@ export default function CartPage() {
               </div>
 
               <div className="space-y-3 pt-6 border-t border-zinc-50">
-                <div className="flex justify-between items-center text-sm font-medium text-zinc-500">
+                <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
                   <span>Subtotal</span>
                   <span className="text-zinc-900 font-bold">₹{total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm font-medium text-zinc-500">
+                <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
                   <span>Shipping</span>
                   {shippingInfo?.serviceable ? (
                      <span className="text-emerald-600 font-bold">₹{shippingInfo.shipping_cost}</span>
                   ) : (
-                    <span className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest">{pincode.length === 6 ? 'N/A' : 'Enter Pincode'}</span>
+                    <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">{pincode.length === 6 ? 'N/A' : 'Enter Pincode'}</span>
                   )}
                 </div>
                 <div className="flex justify-between items-center pt-2">

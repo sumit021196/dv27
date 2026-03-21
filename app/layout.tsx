@@ -5,6 +5,7 @@ import SignupPrompt from "@/components/SignupPrompt";
 import { CartProvider } from "@/components/cart/CartContext";
 import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 const geistSans = Geist({
@@ -37,6 +38,7 @@ export default function RootLayout({
             <AnalyticsTracker />
             <Navbar />
             {children}
+            <Footer />
             <SignupPrompt />
           </CartProvider>
         </WishlistProvider>

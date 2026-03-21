@@ -19,19 +19,25 @@ type CartCtx = {
 const Ctx = createContext<CartCtx | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const raw = typeof window !== "undefined" ? localStorage.getItem("cart") : null;
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
+    setIsMounted(true);
+    try {
+      const raw = localStorage.getItem("cart");
+      if (raw) setItems(JSON.parse(raw));
+    } catch (err) {
+      console.error("Cart init error", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
     try {
       localStorage.setItem("cart", JSON.stringify(items));
     } catch {}
-  }, [items]);
+  }, [items, isMounted]);
 
   const api = useMemo<CartCtx>(() => ({
     items,
