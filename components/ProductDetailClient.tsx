@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FALLBACK_IMG } from "@/utils/images";
 import Link from "next/link";
 import { useCart } from "./cart/CartContext";
-import { MessageCircle } from "lucide-react";
+import { X } from "lucide-react";
 import { fallback } from "@/utils/data";
 import { productService } from "@/services/product.service";
 
@@ -16,6 +16,13 @@ type Product = {
   rating?: number | null;
   stock?: number | null;
   description?: string | null;
+  variants?: Array<{
+    id: string;
+    color?: string | null;
+    size?: string | null;
+    stock?: number;
+    sku?: string | null;
+  }>;
 };
 
 export default function ProductDetailClient({ id }: { id: string }) {
@@ -23,6 +30,20 @@ export default function ProductDetailClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const cart = useCart();
   const [wished, setWished] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const availableColors = useMemo(() => {
+    if (!product?.variants) return [];
+    const colors = product.variants.map(v => v.color).filter((c): c is string => !!c);
+    return Array.from(new Set(colors));
+  }, [product?.variants]);
+
+  const availableSizes = useMemo(() => {
+    if (!product?.variants) return [];
+    const sizes = product.variants.map(v => v.size).filter((s): s is string => !!s);
+    return Array.from(new Set(sizes));
+  }, [product?.variants]);
 
   useEffect(() => {
     const fetchOne = async () => {
@@ -47,15 +68,18 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="aspect-[4/5] bg-gray-100 rounded-2xl animate-pulse" />
-          <div className="space-y-3">
-            <div className="h-6 w-2/3 bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-1/3 bg-gray-100 rounded animate-pulse" />
-            <div className="h-10 w-1/2 bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
-            <div className="h-4 w-5/6 bg-gray-100 rounded animate-pulse" />
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="aspect-[3/4] bg-muted rounded-3xl animate-pulse" />
+          <div className="space-y-6">
+            <div className="h-10 w-2/3 bg-muted rounded-xl animate-pulse" />
+            <div className="h-4 w-1/3 bg-muted rounded-lg animate-pulse" />
+            <div className="h-12 w-1/2 bg-muted rounded-2xl animate-pulse" />
+            <div className="space-y-3 pt-4">
+              <div className="h-4 w-full bg-muted rounded-lg animate-pulse" />
+              <div className="h-4 w-5/6 bg-muted rounded-lg animate-pulse" />
+              <div className="h-4 w-4/6 bg-muted rounded-lg animate-pulse" />
+            </div>
           </div>
         </div>
       </div>
@@ -64,73 +88,155 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-        <p className="text-sm text-zinc-400">Product not found.</p>
-        <Link className="mt-3 inline-block rounded-lg border border-zinc-800 px-4 py-2 text-sm text-zinc-100 hover:bg-zinc-900" href="/products">Back to products</Link>
+      <div className="mx-auto max-w-6xl px-4 py-24 text-center">
+        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+          <X className="text-muted-foreground/30" size={32} />
+        </div>
+        <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground">Piece Not Found</h2>
+        <p className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">The item you're looking for might have been moved or archived.</p>
+        <Link className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-foreground text-background px-8 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-brand-accent hover:text-white transition-all shadow-lg" href="/products">
+          Browse Collection
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="rounded-2xl border bg-white p-3">
-          <Magnify src={src} alt={product.name} />
-          <div className="mt-3 grid grid-cols-4 gap-2">
+    <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="space-y-4">
+          <div className="rounded-[40px] border border-foreground/5 bg-background p-4 shadow-2xl overflow-hidden group">
+            <Magnify src={src} alt={product.name} />
+          </div>
+          <div className="grid grid-cols-4 gap-4">
             {[src].filter(Boolean).map((s, i) => (
-              <img key={i} src={s!} alt={`${product.name} ${i + 1}`} className="aspect-square object-cover rounded-lg border" />
+              <div key={i} className="aspect-square rounded-2xl border border-foreground/5 overflow-hidden bg-muted group cursor-pointer hover:border-foreground/20 transition-colors">
+                <img src={s!} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+              </div>
             ))}
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{product.name}</h1>
+        <div className="flex flex-col">
+          <div className="flex items-start justify-between">
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-foreground leading-none">{product.name}</h1>
             <button
               aria-label="Wishlist"
               onClick={() => setWished(v => !v)}
-              className={`rounded-full border bg-white px-3 py-1 text-sm ${wished ? "text-brand-strong" : "text-gray-800"}`}
+              className={`w-12 h-12 flex items-center justify-center rounded-2xl border transition-all ${wished ? "bg-brand-red text-white border-brand-red shadow-lg shadow-brand-red/20" : "bg-background text-foreground/20 border-foreground/5 hover:border-foreground/20 hover:text-foreground"}`}
             >
-              ♥
+              <span className={`text-xl transition-transform ${wished ? "scale-110" : ""}`}>♥</span>
             </button>
           </div>
-          <div className="mt-1 text-sm text-zinc-400">{rating}★ · {stock > 0 ? "In stock" : "Out of stock"}</div>
-          <div className="mt-3 text-brand-strong font-extrabold text-xl">₹{product.price}</div>
+          <div className="mt-4 flex items-center gap-3">
+             <div className="bg-foreground text-background px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full">{rating} ★</div>
+             <span className="w-1 h-1 bg-foreground/10 rounded-full" />
+             <div className={`text-[10px] font-black uppercase tracking-widest ${stock > 0 ? "text-emerald-500" : "text-brand-red"}`}>
+               {stock > 0 ? `In Stock (${stock} Pieces)` : "Archived / Out of Stock"}
+             </div>
+          </div>
 
-          <p className="mt-4 text-sm text-zinc-300 leading-6">
-            {product.description ?? "A premium wardrobe essential crafted with precision. High-quality materials and contemporary finish."}
+          <div className="mt-10 text-4xl font-black text-foreground flex items-baseline gap-2 italic">
+            <span className="text-xl non-italic text-muted-foreground mr-1">₹</span>
+            {product.price.toLocaleString()}
+          </div>
+
+          <p className="mt-8 text-sm font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">
+            {product.description ?? "An elevated essential designed for permanence. Meticulously crafted using sustainable textiles with a progressive silhouette for the modern wardrobe."}
           </p>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+          {/* Variants Selector */}
+          {(availableColors.length > 0 || availableSizes.length > 0) && (
+            <div className="mt-8 space-y-6">
+              {availableColors.length > 0 && (
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50 mb-3">Color</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {availableColors.map(color => (
+                        <button 
+                          key={color}
+                          onClick={() => setSelectedColor(color)}
+                          className={`px-4 py-2 border rounded-xl text-xs font-bold uppercase transition-all ${selectedColor === color ? "border-foreground bg-foreground text-background" : "border-foreground/10 text-foreground hover:border-foreground/30"}`}
+                        >
+                          {color}
+                        </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {availableSizes.length > 0 && (
+                <div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50 mb-3">Size</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {availableSizes.map(size => (
+                        <button 
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-4 py-2 border rounded-xl text-xs font-bold uppercase transition-all ${selectedSize === size ? "border-foreground bg-foreground text-background" : "border-foreground/10 text-foreground hover:border-foreground/30"}`}
+                        >
+                          {size}
+                        </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-12 flex flex-col gap-4">
             <button
-              onClick={() => cart.add({ id: product.id, name: product.name, price: product.price, image: src || undefined }, 1)}
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-brand/10 text-brand px-6 py-3.5 text-sm font-bold hover:bg-brand/20 transition-all active:scale-95"
+               onClick={() => {
+                const needsColor = availableColors.length > 0;
+                const needsSize = availableSizes.length > 0;
+                
+                if ((needsColor && !selectedColor) || (needsSize && !selectedSize)) {
+                    alert("Please select " + [needsColor && !selectedColor ? "Color" : "", needsSize && !selectedSize ? "Size" : ""].filter(Boolean).join(" and "));
+                    return;
+                }
+
+                const selectedVariant = product.variants?.find(v => 
+                    (needsColor ? v.color === selectedColor : true) && 
+                    (needsSize ? v.size === selectedSize : true)
+                );
+
+                cart.add({ 
+                    id: product.id, 
+                    name: product.name, 
+                    price: product.price, 
+                    image: src || undefined,
+                    variant_id: selectedVariant?.id,
+                    size: selectedSize || undefined,
+                    color: selectedColor || undefined
+                }, 1);
+              }}
+              className="w-full flex h-16 items-center justify-center rounded-3xl bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] hover:bg-brand-accent hover:text-white transition-all shadow-2xl active:scale-95"
             >
-              Add to Cart
+              Drop Into Bag
             </button>
-            <a
-              href={`https://wa.me/911234567890?text=${encodeURIComponent(
-                `Hi, I want to buy *${product.name}* (ID: ${product.id}). Price: ₹${product.price}. Link: ${typeof window !== "undefined" ? window.location.href : ""}`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] text-white px-8 py-3.5 text-sm font-bold hover:bg-[#20bd5a] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#25D366]/20"
-            >
-              <MessageCircle size={18} fill="currentColor" />
-              Order via WhatsApp
-            </a>
+
           </div>
 
-          <div className="mt-8">
-            <h2 className="text-sm font-semibold text-foreground">Reviews</h2>
-            <div className="mt-2 space-y-3">
-              <div className="rounded-lg border border-zinc-800 p-3 bg-zinc-900/50">
-                <div className="text-sm font-medium text-zinc-100">Aarav • 4.5★</div>
-                <p className="text-sm text-zinc-400">Great quality, arrived on time. Recommended.</p>
+          <div className="mt-16 space-y-6">
+            <div className="flex items-center justify-between border-b border-foreground/5 pb-2">
+               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Verified Feedback</h2>
+               <div className="flex gap-1">
+                 {[1,2,3,4,5].map(i => <div key={i} className="w-1 h-1 bg-foreground/10 rounded-full" />)}
+               </div>
+            </div>
+            <div className="space-y-4">
+              <div className="group">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-[10px] font-black uppercase text-foreground">Aarav</div>
+                  <div className="text-[10px] text-brand-accent font-black">4.5★</div>
+                </div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Exceptional structure and fabric weight. A definitive staple.</p>
               </div>
-              <div className="rounded-lg border border-zinc-800 p-3 bg-zinc-900/50">
-                <div className="text-sm font-medium text-zinc-100">Misha • 4★</div>
-                <p className="text-sm text-zinc-400">Looks classy and packaging was neat.</p>
+              <div className="group">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-[10px] font-black uppercase text-foreground">Misha</div>
+                  <div className="text-[10px] text-brand-accent font-black">5.0★</div>
+                </div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Perfectly oversized. The off-white shade is exactly what I wanted.</p>
               </div>
             </div>
           </div>

@@ -5,6 +5,15 @@ export interface Category {
     created_at?: string;
 }
 
+export interface ProductVariant {
+    id: string;
+    product_id?: string | number;
+    color?: string | null;
+    size?: string | null;
+    stock?: number;
+    sku?: string | null;
+}
+
 export interface Product {
     id: string | number;
     name: string;
@@ -16,6 +25,7 @@ export interface Product {
     category_id?: string;
     category_name?: string;
     description?: string;
+    variants?: ProductVariant[];
 }
 
 export interface IProductService {

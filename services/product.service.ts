@@ -9,7 +9,7 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await this.supabase
                 .from("products")
-                .select("*, categories(name)")
+                .select("*, categories(name), product_variants(*)")
                 .limit(64);
             if (error || !data || data.length === 0) {
                 return this.mapFallback(fallback);
@@ -24,7 +24,7 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await this.supabase
                 .from("products")
-                .select("*, categories(name)")
+                .select("*, categories(name), product_variants(*)")
                 .eq("id", id)
                 .single();
             if (error || !data) throw error;
@@ -102,7 +102,8 @@ export class ProductService implements IProductService {
             rating: d.rating || 4,
             category_id: d.category_id || undefined,
             category_name: d.categories?.name || d.category || undefined,
-            description: d.description || undefined
+            description: d.description || undefined,
+            variants: d.product_variants || []
         }));
     }
 
@@ -116,7 +117,8 @@ export class ProductService implements IProductService {
             size: d.size,
             rating: d.rating,
             category: d.category,
-            description: d.description
+            description: d.description,
+            variants: d.variants || []
         }));
     }
 }

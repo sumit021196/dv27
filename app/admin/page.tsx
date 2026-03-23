@@ -59,7 +59,7 @@ export default async function AdminDashboardPage() {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                     title="Total Revenue"
-                    value={`₹${totalRevenue.toLocaleString()}`}
+                    value={`₹${totalRevenue.toLocaleString('en-IN')}`}
                     trend="Lifetime"
                     trendUp={null}
                     icon={<IndianRupee className="h-6 w-6 text-gray-400" />}

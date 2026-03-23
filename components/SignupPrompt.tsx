@@ -7,8 +7,6 @@ export default function SignupPrompt() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  if (pathname.startsWith('/admin')) return null;
-
   useEffect(() => {
     const dismissed = localStorage.getItem("loginPrompt:dismissed");
     const seen = sessionStorage.getItem("loginPrompt:seen");
@@ -17,6 +15,8 @@ export default function SignupPrompt() {
       return () => clearTimeout(t);
     }
   }, []);
+
+  if (pathname.startsWith('/admin')) return null;
 
   const closeForSession = () => {
     sessionStorage.setItem("loginPrompt:seen", "true");

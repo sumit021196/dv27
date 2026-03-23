@@ -56,25 +56,25 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="w-6 h-6 border-2 border-zinc-100 border-t-zinc-900 rounded-full animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="w-6 h-6 border-2 border-muted border-t-foreground rounded-full animate-spin" />
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
-                <div className="w-16 h-16 bg-zinc-50 rounded-3xl flex items-center justify-center mb-6">
-                    <ShieldCheck className="text-zinc-300" size={32} />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
+                <div className="w-16 h-16 bg-muted rounded-3xl flex items-center justify-center mb-6">
+                    <ShieldCheck className="text-muted-foreground/30" size={32} />
                 </div>
-                <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Login Required</h1>
-                <p className="text-zinc-500 mt-2 text-center text-sm max-w-[280px]">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Login Required</h1>
+                <p className="text-muted-foreground mt-2 text-center text-sm max-w-[280px]">
                     Please sign in to access your orders and account settings.
                 </p>
                 <Link
                     href="/login"
-                    className="mt-8 w-full max-w-[200px] py-4 bg-zinc-900 text-white text-sm font-bold rounded-2xl hover:bg-zinc-800 transition active:scale-[0.98] flex items-center justify-center"
+                    className="mt-8 w-full max-w-[200px] py-4 bg-foreground text-background text-sm font-bold rounded-2xl hover:opacity-90 transition active:scale-[0.98] flex items-center justify-center"
                 >
                     Go to Login
                 </Link>
@@ -83,20 +83,20 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-white pb-24">
+        <div className="min-h-screen bg-background pb-24">
             {/* ── Compact Header ── */}
-            <div className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-zinc-50">
+            <div className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-20 border-b border-foreground/5">
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <div className="w-14 h-14 bg-zinc-100 rounded-2xl flex items-center justify-center overflow-hidden border border-zinc-50">
+                        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center overflow-hidden border border-foreground/5">
                             {profile?.avatar_url ? (
                                 <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                                <UserIcon size={24} className="text-zinc-400" />
+                                <UserIcon size={24} className="text-muted-foreground" />
                             )}
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-black border-2 border-white rounded-full flex items-center justify-center">
-                            <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-foreground border-2 border-background rounded-full flex items-center justify-center">
+                            <div className="w-1 h-1 bg-background rounded-full animate-pulse" />
                         </div>
                     </div>
                     <div>
@@ -117,32 +117,32 @@ export default function ProfilePage() {
 
                 {/* ── Quick Stats Grid ── */}
                 <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-zinc-50 rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-zinc-900">0</p>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Orders</p>
+                    <div className="bg-muted rounded-2xl p-4 text-center">
+                        <p className="text-lg font-bold text-foreground">0</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Orders</p>
                     </div>
-                    <div className="bg-zinc-50 rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-zinc-900">12</p>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Wishlist</p>
+                    <div className="bg-muted rounded-2xl p-4 text-center">
+                        <p className="text-lg font-bold text-foreground">12</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Wishlist</p>
                     </div>
-                    <div className="bg-zinc-50 rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-zinc-900">350</p>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase">Points</p>
+                    <div className="bg-muted rounded-2xl p-4 text-center">
+                        <p className="text-lg font-bold text-foreground">350</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Points</p>
                     </div>
                 </div>
 
                 {/* ── Active Order Card (Compact) ── */}
                 <section>
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">My Orders</h2>
-                        <span className="text-xs font-bold text-zinc-400">{orders.length} total</span>
+                        <h2 className="text-sm font-bold text-foreground uppercase tracking-widest">My Orders</h2>
+                        <span className="text-xs font-bold text-muted-foreground">{orders.length} total</span>
                     </div>
                     
                     {orders.length === 0 ? (
-                         <div className="bg-zinc-50 border border-zinc-100 border-dashed rounded-3xl p-8 text-center flex flex-col items-center">
-                            <Package className="text-zinc-300 w-10 h-10 mb-3" />
-                            <p className="text-sm font-bold text-zinc-500">No orders yet</p>
-                            <Link href="/products" className="text-xs font-bold text-blue-600 mt-2">Start shopping</Link>
+                         <div className="bg-muted border border-foreground/5 border-dashed rounded-3xl p-8 text-center flex flex-col items-center">
+                            <Package className="text-muted-foreground/30 w-10 h-10 mb-3" />
+                            <p className="text-sm font-bold text-muted-foreground">No orders yet</p>
+                            <Link href="/products" className="text-xs font-bold text-brand-accent mt-2">Start shopping</Link>
                          </div>
                     ) : (
                         <div className="space-y-3">
@@ -150,30 +150,30 @@ export default function ProfilePage() {
                                 <Link 
                                     href={`/profile/orders/${order.id}`} 
                                     key={order.id} 
-                                    className="bg-white border border-zinc-100 hover:border-zinc-300 rounded-3xl p-5 flex items-center justify-between shadow-sm transition-colors block"
+                                    className="bg-background border border-foreground/5 hover:border-foreground/10 rounded-3xl p-5 flex items-center justify-between shadow-sm transition-colors block"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                                             order.status === 'delivered' ? 'bg-emerald-50' : 
-                                            order.status === 'cancelled' ? 'bg-red-50' : 'bg-zinc-900 text-white'
+                                            order.status === 'cancelled' ? 'bg-red-50' : 'bg-foreground text-background'
                                         }`}>
                                             <Package className={
                                                 order.status === 'delivered' ? 'text-emerald-500' : 
-                                                order.status === 'cancelled' ? 'text-red-500' : 'text-white'
+                                                order.status === 'cancelled' ? 'text-red-500' : 'text-background'
                                             } size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-0.5">
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">
                                                 Order #{order.id.split('-')[0]}
                                             </p>
-                                            <p className="text-sm font-bold text-zinc-900 capitalize">
+                                            <p className="text-sm font-bold text-foreground capitalize">
                                                 {order.status}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <p className="text-sm font-black text-zinc-900">₹{order.total_amount}</p>
-                                        <ChevronRight size={18} className="text-zinc-300" />
+                                        <p className="text-sm font-black text-foreground">₹{order.total_amount}</p>
+                                        <ChevronRight size={18} className="text-muted-foreground/30" />
                                     </div>
                                 </Link>
                             ))}

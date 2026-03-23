@@ -14,7 +14,8 @@ import {
     Star,
     Image as ImageIcon,
     Settings,
-    UploadCloud
+    UploadCloud,
+    Ticket
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useState } from "react";
@@ -28,6 +29,7 @@ const navItems = [
     { name: "Customers", href: "/admin/users", icon: Users },
     { name: "Banners", href: "/admin/banners", icon: ImageIcon },
     { name: "Media", href: "/admin/media", icon: UploadCloud },
+    { name: "Coupons", href: "/admin/coupons", icon: Ticket },
     { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

@@ -9,36 +9,51 @@ export async function createProductAction(formData: {
     description?: string | null;
     category?: string | null;
     category_id?: string | null;
-    size?: string | null;
-    image?: File | null;
+    images?: File[];
+    video?: File | null;
+    variants?: string | null; // JSON string of { size, color, stock, sku }
 }) {
     try {
         const supabase = await createClient(true); // Create admin client
 
-        let finalImageUrl = null;
+        let finalVideoUrl = null;
+        let finalImageUrls: string[] = [];
 
-        // 1. Upload to Storage if file exists
-        if (formData.image && formData.image.size > 0) {
-            const file = formData.image;
+        // 1. Upload Video if provided
+        if (formData.video && formData.video.size > 0) {
+            const file = formData.video;
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
+            const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
             const { error: uploadError } = await supabase.storage
                 .from('products')
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+                .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
             if (uploadError) throw uploadError;
-
-            // 2. Get Public URL
             const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
-            finalImageUrl = urlData.publicUrl;
+            finalVideoUrl = urlData.publicUrl;
+        }
+
+        // 2. Upload Images if provided
+        if (formData.images && formData.images.length > 0) {
+            for (const file of formData.images) {
+                if (file.size > 0) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('products')
+                        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+                    
+                    if (uploadError) throw uploadError;
+                    const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
+                    finalImageUrls.push(urlData.publicUrl);
+                }
+            }
         }
 
         // 3. Insert into Database
-        const { error: dbError } = await supabase
+        const mainMediaUrl = finalImageUrls.length > 0 ? finalImageUrls[0] : null;
+
+        const { data: productData, error: dbError } = await supabase
             .from('products')
             .insert([{
                 name: formData.name,
@@ -46,13 +61,48 @@ export async function createProductAction(formData: {
                 price: formData.price,
                 description: formData.description || null,
                 category_id: formData.category_id || null,
-                media_url: finalImageUrl,
-                stock: 10, // Default stock
+                media_url: mainMediaUrl,
+                video_url: finalVideoUrl,
+                stock: 10, // Fallback default stock
                 is_active: true,
                 rating: 4.5
-            }]);
+            }])
+            .select()
+            .single();
 
         if (dbError) throw dbError;
+        const productId = productData.id;
+
+        // 4. Insert extra images into product_images
+        if (finalImageUrls.length > 0) {
+            const imageInserts = finalImageUrls.map((url, idx) => ({
+                product_id: productId,
+                image_url: url,
+                display_order: idx
+            }));
+            const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
+            if (imgError) console.error("Error inserting multiple images:", imgError);
+        }
+
+        // 5. Insert Variants
+        if (formData.variants) {
+            try {
+                const parsedVariants = JSON.parse(formData.variants);
+                if (Array.isArray(parsedVariants) && parsedVariants.length > 0) {
+                    const variantInserts = parsedVariants.map((v: any) => ({
+                        product_id: productId,
+                        color: v.color || null,
+                        size: v.size || null,
+                        stock: Number(v.stock) || 0,
+                        sku: v.sku || null
+                    }));
+                    const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
+                    if (varError) console.error("Error inserting variants:", varError);
+                }
+            } catch (jsonErr) {
+                console.error("Failed to parse variants JSON", jsonErr);
+            }
+        }
 
         revalidatePath("/admin/products");
         revalidatePath("/");

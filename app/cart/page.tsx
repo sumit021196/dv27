@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 import { useCart } from "@/components/cart/CartContext";
 import { FALLBACK_IMG } from "@/utils/images";
-import { MessageCircle, ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, MapPin, Truck, AlertCircle, Loader2 } from "lucide-react";
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, MapPin, Truck, AlertCircle, Loader2 } from "lucide-react";
 import type { ServiceabilityResponse } from "@/services/deliveryone.service";
 
 
@@ -16,27 +16,7 @@ export default function CartPage() {
 
   const total = useMemo(() => cart.items.reduce((s, i) => s + i.price * i.qty, 0), [cart.items]);
 
-  const generateWhatsAppLink = () => {
-    const phoneNumber = "911234567890"; // Placeholder
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    let message = `*Hi, I want to place an order!*%0A%0A`;
-    cart.items.forEach((item, index) => {
-      message += `${index + 1}. *${item.name}* (ID: ${item.id})%0A`;
-      message += `   Qty: ${item.qty} | Price: ₹${item.price}%0A`;
-      message += `   Link: ${baseUrl}/product/${item.id}%0A%0A`;
-    });
-    message += `*Total Amount: ₹${(total + (shippingInfo?.shipping_cost || 0)).toFixed(2)}*%0A`;
-    message += `(Items: ₹${total.toFixed(2)} | Shipping: ₹${(shippingInfo?.shipping_cost || 0)})%0A%0A`;
-    message += `*Delivery Details:*%0A`;
-    message += `- Pincode: ${pincode || "Not provided"}%0A`;
-    if (shippingInfo?.estimated_delivery) {
-      message += `- Est. Delivery: ${shippingInfo.estimated_delivery}%0A`;
-    }
-    message += `%0A`;
 
-    message += `Please confirm my order.`;
-    return `https://wa.me/${phoneNumber}?text=${message}`;
-  };
 
   const handlePincodeChange = async (val: string) => {
     setPincode(val);
@@ -119,6 +99,13 @@ export default function CartPage() {
                   <div className="flex justify-between items-start gap-2">
                     <div>
                       <h3 className="text-[15px] font-bold text-zinc-900 leading-tight line-clamp-1">{i.name}</h3>
+                      {(i.size || i.color) && (
+                          <p className="text-[11px] font-bold text-zinc-500 uppercase mt-0.5 flex items-center gap-1.5">
+                              {i.size && <span>Size: {i.size}</span>}
+                              {i.size && i.color && <span className="w-1 h-1 rounded-full bg-zinc-200" />}
+                              {i.color && <span>Color: {i.color}</span>}
+                          </p>
+                      )}
                       <p className="text-[13px] font-bold text-zinc-400 mt-0.5 tracking-tight flex items-center gap-1.5">
                         <span className="text-zinc-800">₹{i.price.toLocaleString()}</span>
                         <span className="w-1 h-1 rounded-full bg-zinc-200" />
@@ -137,14 +124,14 @@ export default function CartPage() {
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center bg-zinc-50 rounded-xl p-1 border border-zinc-100">
                       <button
-                        onClick={() => cart.add({ id: i.id, name: i.name, price: i.price, image: i.image }, -1)}
+                        onClick={() => cart.add({ id: i.id, name: i.name, price: i.price, image: i.image, variant_id: i.variant_id, size: i.size, color: i.color }, -1)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition active:scale-90"
                       >
                         <Minus size={14} className="text-zinc-600" />
                       </button>
                       <span className="w-8 text-center text-sm font-black text-zinc-900">{i.qty}</span>
                       <button
-                        onClick={() => cart.add({ id: i.id, name: i.name, price: i.price, image: i.image }, 1)}
+                        onClick={() => cart.add({ id: i.id, name: i.name, price: i.price, image: i.image, variant_id: i.variant_id, size: i.size, color: i.color }, 1)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition active:scale-90"
                       >
                         <Plus size={14} className="text-zinc-600" />
@@ -232,15 +219,7 @@ export default function CartPage() {
                   Proceed to Checkout
                 </Link>
                 
-                <a
-                  href={generateWhatsAppLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 flex items-center justify-center gap-3 w-full rounded-2xl bg-emerald-50 text-emerald-600 px-6 py-4 font-bold hover:bg-emerald-100 transition-all active:scale-[0.98]"
-                >
-                  <MessageCircle size={20} fill="currentColor" />
-                  Order via WhatsApp
-                </a>
+
               </div>
             </div>
 

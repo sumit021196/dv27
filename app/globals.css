@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #fafafa;
+  --foreground: #000000;
   --brand-accent: #FF00FF;
   --brand-red: #FF0000;
-  --muted: #171717;
-  --muted-foreground: #a3a3a3;
-  --border: #262626;
-  color-scheme: dark;
+  --muted: #f2f2f2;
+  --muted-foreground: #737373;
+  --border: #e5e5e5;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -23,14 +23,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-.light {
-  --background: #ffffff;
-  --foreground: #000000;
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
   --brand-accent: #FF00FF;
   --brand-red: #FF0000;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373;
-  --border: #e5e5e5;
+  --muted: #171717;
+  --muted-foreground: #a3a3a3;
+  --border: #262626;
 }
 
 body {
@@ -78,19 +78,39 @@ body {
 }
 
 .wtflex-outline-text {
-  -webkit-text-stroke: 2px white;
+  -webkit-text-stroke: 1.5px black;
   color: transparent;
 }
 
 .bg-grid-white {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.bg-grid-black {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
+@keyframes logo-flip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.animate-logo-flip {
+  animation: logo-flip 6s linear infinite;
+  transform-style: preserve-3d;
+}
+
+

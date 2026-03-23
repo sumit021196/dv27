@@ -32,19 +32,19 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     const banner = activeBanners[currentIndex];
 
     return (
-        <section className="relative h-[85vh] lg:h-[95vh] w-full overflow-hidden bg-black">
+        <section className="relative h-[85vh] lg:h-[95vh] w-full overflow-hidden bg-background">
             {activeBanners.map((b, idx) => (
                 <div 
                     key={b.id} 
                     className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
                 >
-                    {/* Background Overlay */}
-                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                    {/* Background Overlay - subtly darker for text readability */}
+                    <div className="absolute inset-0 z-10 bg-gradient-to-t from-background via-transparent to-transparent" />
                     
                     <img 
                         src={b.image_url} 
                         alt={b.title || 'Hero'} 
-                        className="h-full w-full object-cover grayscale-[30%] brightness-75 transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
+                        className="h-full w-full object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
                     />
 
                     {/* Content Overlay */}
@@ -53,7 +53,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                             <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 {b.style_type === 'wtflex_bold' ? (
                                     <>
-                                        <h1 className="text-6xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-white leading-[0.85] filter drop-shadow-2xl">
+                                        <h1 className="text-6xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-foreground leading-[0.85] filter drop-shadow-2xl">
                                             {b.title}
                                         </h1>
                                         <p className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-brand-accent animate-pulse-subtle">
@@ -62,10 +62,10 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-white leading-[0.9]">
+                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-foreground leading-[0.9]">
                                             {b.title}
                                         </h1>
-                                        <p className="text-base md:text-lg font-bold text-white/80 max-w-2xl mx-auto">
+                                        <p className="text-base md:text-lg font-bold text-foreground/80 max-w-2xl mx-auto">
                                             {b.subtitle}
                                         </p>
                                     </>
@@ -74,7 +74,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                                 <div className={`flex flex-col sm:flex-row gap-4 pt-6 ${b.style_type === 'split' ? 'justify-start' : 'justify-center'}`}>
                                     <Link
                                         href={b.link_url || '/products'}
-                                        className="inline-flex items-center justify-center gap-3 px-12 py-5 bg-white text-black font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl"
+                                        className="inline-flex items-center justify-center gap-3 px-12 py-5 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl"
                                     >
                                         <ShoppingBag size={20} />
                                         {b.cta_text || 'Shop Collection'}
@@ -93,7 +93,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                         <button 
                             key={idx}
                             onClick={() => setCurrentIndex(idx)}
-                            className={`h-1 transition-all duration-300 ${idx === currentIndex ? 'w-12 bg-white' : 'w-4 bg-white/30'}`}
+                            className={`h-1 transition-all duration-300 ${idx === currentIndex ? 'w-12 bg-foreground' : 'w-4 bg-foreground/30'}`}
                         />
                     ))}
                 </div>
