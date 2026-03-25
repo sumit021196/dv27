@@ -8,21 +8,11 @@ interface TickerProps {
   className?: string;
 }
 
-export default function Ticker({ text, speed = 30, className = "" }: TickerProps) {
-  const [tickerText, setTickerText] = useState(text);
+import { useSettings } from "@/components/SettingsContext";
 
-  useEffect(() => {
-    if (!text) {
-      fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-          if (data.settings?.ticker_text) {
-            setTickerText(data.settings.ticker_text);
-          }
-        })
-        .catch(err => console.error("Failed to load ticker text", err));
-    }
-  }, [text]);
+export default function Ticker({ text, speed = 30, className = "" }: TickerProps) {
+  const { settings } = useSettings();
+  const tickerText = text || settings.ticker_text;
 
   if (!tickerText) return null;
 

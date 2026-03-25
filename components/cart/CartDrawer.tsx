@@ -7,11 +7,19 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useSettings } from "@/components/SettingsContext";
+import { Truck } from "lucide-react";
+
 export default function CartDrawer() {
+    const { settings } = useSettings();
     const cart = useCart();
     const { isOpen, closeCart, items, discount, coupon, showConfetti, setShowConfetti } = cart;
     const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
     const total = Math.max(0, subtotal - discount);
+
+    const shippingThreshold = settings.shipping_threshold || 0;
+    const isFreeShipping = subtotal >= shippingThreshold;
+    const progress = Math.min((subtotal / shippingThreshold) * 100, 100);
 
     // Prevent background scroll when drawer is open
     useEffect(() => {
@@ -91,17 +99,45 @@ export default function CartDrawer() {
                         )}
 
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b px-6 py-4">
-                            <div className="flex items-center gap-2">
-                                <ShoppingBag className="text-brand-accent" size={20} />
-                                <h2 className="text-lg font-black uppercase tracking-tighter text-foreground">Your Bag ({items.length})</h2>
+                        <div className="flex flex-col border-b border-foreground/5">
+                            <div className="flex items-center justify-between px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                    <ShoppingBag className="text-brand-accent" size={20} />
+                                    <h2 className="text-lg font-black uppercase tracking-tighter text-foreground">Your Bag ({items.length})</h2>
+                                </div>
+                                <button
+                                    onClick={closeCart}
+                                    className="rounded-full p-2 text-foreground/40 hover:bg-foreground/5 hover:text-foreground transition-colors"
+                                >
+                                    <X size={20} />
+                                </button>
                             </div>
-                            <button
-                                onClick={closeCart}
-                                className="rounded-full p-2 text-foreground/40 hover:bg-foreground/5 hover:text-foreground transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
+
+                            {/* Shipping Progress */}
+                            {shippingThreshold > 0 && items.length > 0 && (
+                                <div className="px-6 pb-4 animate-in slide-in-from-top duration-500">
+                                    <div className="bg-muted/50 rounded-xl p-3 border border-foreground/5">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                                <Truck size={14} className={isFreeShipping ? "text-green-500" : "text-brand-accent"} />
+                                                {isFreeShipping ? (
+                                                    <span className="text-green-500">You&#39;ve unlocked FREE SHIPPING!</span>
+                                                ) : (
+                                                    <span>Add ₹{(shippingThreshold - subtotal).toLocaleString()} more for FREE SHIPPING</span>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] font-bold text-muted-foreground">{Math.round(progress)}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-background rounded-full overflow-hidden">
+                                            <motion.div 
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${progress}%` }}
+                                                className={`h-full transition-all duration-1000 ${isFreeShipping ? "bg-green-500" : "bg-brand-accent"}`}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Cart Items */}
@@ -122,7 +158,7 @@ export default function CartDrawer() {
                                 </div>
                             ) : (
                                 items.map((item) => (
-                                    <div key={item.id} className="flex gap-4 border-b border-foreground/5 pb-4 last:border-0 last:pb-0">
+                                    <div key={`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`} className="flex gap-4 border-b border-foreground/5 pb-4 last:border-0 last:pb-0">
                                         <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                                             <img
                                                 src={item.image || FALLBACK_IMG}
@@ -161,7 +197,7 @@ export default function CartDrawer() {
                                                     </button>
                                                 </div>
                                                 <button
-                                                    onClick={() => cart.remove(item.id)}
+                                                    onClick={() => cart.remove(`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`)}
                                                     className="text-foreground/20 hover:text-brand-red transition-colors"
                                                 >
                                                     <Trash2 size={16} />

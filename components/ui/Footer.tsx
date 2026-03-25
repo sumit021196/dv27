@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useSettings } from "@/components/SettingsContext";
+
 export default function Footer() {
+  const { settings } = useSettings();
   const pathname = usePathname();
   if (pathname.startsWith('/admin')) return null;
 
@@ -12,7 +15,9 @@ export default function Footer() {
       <div className="mx-auto max-w-[1440px] px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
           <div className="space-y-8">
-             <h2 className="text-4xl font-black italic tracking-tighter uppercase text-foreground">THE DV27</h2>
+             <h2 className="text-4xl font-black italic tracking-tighter uppercase text-foreground">
+               {settings.site_name || "THE DV27"}
+             </h2>
              <p className="text-xs font-medium text-foreground/40 leading-relaxed uppercase tracking-widest max-w-[240px]">
                  Providing premium streetwear for the bold and contemporary soul.
              </p>
@@ -38,15 +43,28 @@ export default function Footer() {
 
           <div className="space-y-6 text-right lg:text-right">
              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Social</h4>
-             <div className="flex justify-end gap-6 items-center">
-                <Link href="#" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-brand-accent italic transition-colors">Instagram</Link>
-                <Link href="#" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-brand-red italic transition-colors">Youtube</Link>
+             <div className="flex justify-end gap-6 items-center flex-wrap">
+                {settings.social_links?.instagram && (
+                  <Link href={settings.social_links.instagram} target="_blank" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-brand-accent italic transition-colors">Instagram</Link>
+                )}
+                {settings.social_links?.youtube && (
+                  <Link href={settings.social_links.youtube} target="_blank" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-brand-red italic transition-colors">Youtube</Link>
+                )}
+                {settings.social_links?.facebook && (
+                  <Link href={settings.social_links.facebook} target="_blank" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-blue-600 italic transition-colors">Facebook</Link>
+                )}
+                {settings.social_links?.twitter && (
+                  <Link href={settings.social_links.twitter} target="_blank" className="text-xs font-black uppercase tracking-widest text-foreground/40 hover:text-sky-400 italic transition-colors">Twitter</Link>
+                )}
+                {(!settings.social_links || Object.keys(settings.social_links).length === 0) && (
+                  <span className="text-xs font-medium text-foreground/20 italic tracking-widest uppercase">Coming Soon</span>
+                )}
              </div>
           </div>
         </div>
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-12 border-t border-foreground/5 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
-          <p>© {new Date().getFullYear()} DV27. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {settings.site_name || "DV27"}. All rights reserved.</p>
           <div className="flex gap-8">
               <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>

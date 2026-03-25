@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "category_id": "e76a130f-ac0c-4e27-af42-a053f3367f2c",
+    "name": "Urban Stealth Hoodie",
+    "slug": "urban-stealth-hoodie",
+    "description": "Heavyweight 450GSM French Terry cotton hoodie in midnight black. Features a relaxed drop-shoulder fit and high-density 3D puff print branding on the chest.",
+    "price": 4999,
+    "stock": 50,
+    "media_url": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=1000&auto=format&fit=crop",
+    "is_active": true,
+    "is_trending": true,
+    "rating": 4.8,
+    "created_at": "2026-03-19T11:33:12.954198+00:00",
+    "updated_at": "2026-03-19T11:33:12.954198+00:00",
+    "video_url": null
+  },
+  {
+    "id": 2,
+    "category_id": "e76a130f-ac0c-4e27-af42-a053f3367f2c",
+    "name": "Gravity Cargo Pants",
+    "slug": "gravity-cargo-pants",
+    "description": "Technical utility pants in olive drab. Reinforced stitching, 8-pocket configuration, and adjustable ankle toggles for a custom tapered look.",
+    "price": 3599,
+    "stock": 35,
+    "media_url": "https://images.unsplash.com/photo-1621072156002-e2fcced0b170?q=80&w=1000&auto=format&fit=crop",
+    "is_active": true,
+    "is_trending": false,
+    "rating": 4.5,
+    "created_at": "2026-03-19T11:33:12.954198+00:00",
+    "updated_at": "2026-03-19T11:33:12.954198+00:00",
+    "video_url": null
+  },
+  {
+    "id": 3,
+    "category_id": "e76a130f-ac0c-4e27-af42-a053f3367f2c",
+    "name": "Neon Drift Oversized Tee",
+    "slug": "neon-drift-oversized-tee",
+    "description": "Limited edition graphic tee. 100% premium cotton with a vintage wash and bio-silicon finish. Neon cyberpunk aesthetics inspired by Tokyo nights.",
+    "price": 1899,
+    "stock": 100,
+    "media_url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1000&auto=format&fit=crop",
+    "is_active": true,
+    "is_trending": true,
+    "rating": 4.7,
+    "created_at": "2026-03-19T11:33:12.954198+00:00",
+    "updated_at": "2026-03-19T11:33:12.954198+00:00",
+    "video_url": null
+  }
+]

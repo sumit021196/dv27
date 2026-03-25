@@ -51,7 +51,7 @@ export async function signup(formData: FormData) {
     }
 
     revalidatePath("/", "layout");
-    redirect("/");
+    redirect("/?signup=success");
 }
 
 export async function login(formData: FormData) {

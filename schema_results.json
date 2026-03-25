@@ -1,0 +1,52 @@
+{
+  "product_variants_columns": null,
+  "products_columns": null,
+  "top_products": [
+    {
+      "id": 1,
+      "name": "Urban Stealth Hoodie"
+    },
+    {
+      "id": 2,
+      "name": "Gravity Cargo Pants"
+    },
+    {
+      "id": 3,
+      "name": "Neon Drift Oversized Tee"
+    },
+    {
+      "id": 4,
+      "name": "Midnight Runner Sneakers"
+    },
+    {
+      "id": 5,
+      "name": "Vortex Bucket Hat"
+    },
+    {
+      "id": 6,
+      "name": "vest"
+    },
+    {
+      "id": 7,
+      "name": "Test Subagent Clothing"
+    }
+  ],
+  "variants_data": [
+    {
+      "id": "00cb056d-69d0-4249-845c-86268706d3f4",
+      "product_id": 7,
+      "color": "Black",
+      "size": "M",
+      "stock": 50,
+      "sku": null
+    },
+    {
+      "id": "e4173413-1e33-45e5-b298-b3b6a2b3bbe5",
+      "product_id": 7,
+      "color": "White",
+      "size": "L",
+      "stock": 35,
+      "sku": null
+    }
+  ]
+}

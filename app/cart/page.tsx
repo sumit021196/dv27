@@ -85,7 +85,7 @@ export default function CartPage() {
           {/* ── Cart Items ── */}
           <section className="space-y-3">
             {cart.items.map((i) => (
-              <div key={i.id} className="group relative bg-white rounded-3xl p-3 flex gap-4 border border-zinc-100 hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-500">
+              <div key={`${i.id}-${i.variant_id || 'base'}-${i.size || 'none'}-${i.color || 'none'}`} className="group relative bg-white rounded-3xl p-3 flex gap-4 border border-zinc-100 hover:shadow-xl hover:shadow-zinc-200/50 transition-all duration-500">
                 <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-50">
                   <img
                     src={i.image || FALLBACK_IMG}
@@ -113,7 +113,7 @@ export default function CartPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => cart.remove(i.id)}
+                      onClick={() => cart.remove(`${i.id}-${i.variant_id || 'base'}-${i.size || 'none'}-${i.color || 'none'}`)}
                       className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                       aria-label="Remove item"
                     >
@@ -211,13 +211,30 @@ export default function CartPage() {
                 </div>
 
 
-                <Link
-                  href="/checkout"
-                  className="mt-6 flex items-center justify-center gap-3 w-full rounded-2xl bg-zinc-900 text-white px-6 py-4 font-bold hover:bg-zinc-800 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-zinc-200"
-                >
-                  <ShieldCheck size={20} fill="currentColor" className="text-zinc-900 bg-white rounded-full p-0.5" />
-                  Proceed to Checkout
-                </Link>
+                <div className="space-y-2">
+                  <Link
+                    href={shippingInfo?.serviceable ? "/checkout" : "#"}
+                    onClick={(e) => {
+                      if (!shippingInfo?.serviceable) {
+                        e.preventDefault();
+                        setPincodeError("Please enter a valid pincode first");
+                      }
+                    }}
+                    className={`mt-6 flex items-center justify-center gap-3 w-full rounded-2xl px-6 py-4 font-bold transition-all shadow-xl ${
+                      shippingInfo?.serviceable 
+                        ? "bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-[1.02] active:scale-[0.98] shadow-zinc-200" 
+                        : "bg-zinc-200 text-zinc-400 cursor-not-allowed shadow-none"
+                    }`}
+                  >
+                    <ShieldCheck size={20} fill="currentColor" className={shippingInfo?.serviceable ? "text-zinc-900 bg-white rounded-full p-0.5" : "text-zinc-300"} />
+                    Proceed to Checkout
+                  </Link>
+                  {!shippingInfo?.serviceable && (
+                    <p className="text-[10px] text-zinc-400 text-center font-bold uppercase tracking-wider">
+                      Please enter a serviceable pincode to continue
+                    </p>
+                  )}
+                </div>
                 
 
               </div>
@@ -245,8 +262,18 @@ export default function CartPage() {
 
           </div>
           <Link
-            href="/checkout"
-            className="flex-1 flex items-center justify-center gap-2 bg-zinc-900 text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-zinc-200 active:scale-[0.98] transition-transform"
+            href={shippingInfo?.serviceable ? "/checkout" : "#"}
+            onClick={(e) => {
+              if (!shippingInfo?.serviceable) {
+                e.preventDefault();
+                setPincodeError("Please enter a valid pincode first");
+              }
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm shadow-xl transition-all ${
+              shippingInfo?.serviceable 
+                ? "bg-zinc-900 text-white shadow-zinc-200 active:scale-[0.98]" 
+                : "bg-zinc-200 text-zinc-400 cursor-not-allowed"
+            }`}
           >
             Proceed to Checkout
           </Link>

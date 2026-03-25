@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 type CartItem = {
   id: string | number;
@@ -15,7 +16,7 @@ type CartItem = {
 type CartCtx = {
   items: CartItem[];
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (id: string | number) => void;
+  remove: (uniqueId: string) => void;
   clear: () => void;
   isOpen: boolean;
   openCart: () => void;
@@ -52,6 +53,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Cart init error", err);
     }
+  }, []);
+
+  // Clear cart on logout
+  useEffect(() => {
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setItems([]);
+        setCoupon(null);
+        setDiscount(0);
+        localStorage.removeItem("cart");
+        localStorage.removeItem("applied_coupon");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -113,7 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           }
       }
     },
-    remove: (id) => setItems((p) => p.filter((x) => x.id !== id)),
+    remove: (uniqueId) => setItems((p) => p.filter((x) => `${x.id}-${x.variant_id || 'base'}-${x.size || 'none'}-${x.color || 'none'}` !== uniqueId)),
     clear: () => {
         setItems([]);
         setCoupon(null);

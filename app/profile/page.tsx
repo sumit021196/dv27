@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useCart } from "@/components/cart/CartContext";
 import {
     User as UserIcon,
     Package,
@@ -22,6 +23,7 @@ import { logout } from "../(auth)/auth.actions";
 import Link from "next/link";
 
 export default function ProfilePage() {
+    const cart = useCart();
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [orders, setOrders] = useState<any[]>([]);
@@ -196,7 +198,10 @@ export default function ProfilePage() {
                 <div className="space-y-2 pt-4">
                     <h3 className="text-[10px] font-bold text-zinc-300 uppercase tracking-[0.2em] px-2 mb-4">Help & Security</h3>
                     <MenuLink icon={ShieldCheck} label="Privacy & Security" />
-                    <MenuLink icon={LogOut} label="Sign Out" onClick={() => logout()} variant="danger" />
+                    <MenuLink icon={LogOut} label="Sign Out" onClick={() => {
+                        cart.clear();
+                        logout();
+                    }} variant="danger" />
                 </div>
 
                 {/* ── Footer Branding ── */}

@@ -33,11 +33,15 @@ export async function POST(req: Request) {
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { key, value } = body;
+        const { key, value, type, description } = body;
+
+        const upsertData: any = { key, value, updated_at: new Date() };
+        if (type) upsertData.type = type;
+        if (description) upsertData.description = description;
 
         const { data, error } = await supabase
             .from('settings')
-            .upsert({ key, value, updated_at: new Date() }, { onConflict: 'key' })
+            .upsert(upsertData, { onConflict: 'key' })
             .select()
             .single();
 

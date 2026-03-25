@@ -30,7 +30,10 @@ const navLinks = [
     { href: "/#trending", label: "Trending" },
 ];
 
+import { useSettings } from "@/components/SettingsContext";
+
 export default function Navbar() {
+    const { settings } = useSettings();
     const pathname = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -143,7 +146,7 @@ export default function Navbar() {
                             <Link href="/" className="flex items-center transition-all hover:scale-110">
                                 <Image
                                     src="/logo.svg"
-                                    alt="DV27"
+                                    alt={settings.site_name || "DV27"}
                                     width={120}
                                     height={40}
                                     className="h-8 sm:h-10 w-auto animate-logo-flip"
@@ -201,6 +204,7 @@ export default function Navbar() {
                                                 </Link>
                                                 <button
                                                     onClick={async () => {
+                                                        cart.clear();
                                                         await logout();
                                                         setProfileOpen(false);
                                                         router.push('/');
@@ -308,7 +312,10 @@ export default function Navbar() {
 
                         <div className="mt-auto pb-12">
                              <button 
-                                onClick={() => logout()}
+                                onClick={() => {
+                                    cart.clear();
+                                    logout();
+                                }}
                                 className="w-full py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm"
                              >
                                  Logout

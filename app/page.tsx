@@ -5,6 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import HeroSection from "@/components/ui/HeroSection";
 import { createClient } from "@/utils/supabase/server";
 import Ticker from "@/components/ui/Ticker";
+import InstagramReels from "@/components/ui/InstagramReels";
 
 export default async function Page() {
   const trending = await productService.getTrendingProducts();
@@ -38,25 +39,7 @@ export default async function Page() {
         </div>
       </Section>
 
-      <div className="py-12 md:py-24 bg-muted/30 border-y border-foreground/5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-black opacity-10" />
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-12 relative z-10">
-               <h2 className="text-5xl md:text-8xl lg:text-[140px] font-black italic uppercase tracking-tighter text-foreground/5 leading-none absolute -top-10 left-0 w-full text-center select-none">
-                   THE DV27 FLEX
-               </h2>
-               <div className="text-center relative py-12">
-                   <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-foreground mb-6">
-                       Our FlexFam is now 150k strong
-                   </h3>
-                   <p className="text-brand-accent text-sm font-black uppercase tracking-[0.4em] italic mb-10">
-                       JOIN THE MOVEMENT
-                   </p>
-                   <button className="px-12 py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all">
-                       Follow on Instagram
-                   </button>
-               </div>
-          </div>
-      </div>
+      <InstagramReels />
 
       <Section
         title="Trending"

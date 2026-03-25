@@ -1,0 +1,58 @@
+[
+  {
+    "id": "6139e381-7b0b-4379-a02d-33ac07f322ef",
+    "key": "site_name",
+    "value": "THE DV27",
+    "type": "text",
+    "description": "The name of the website",
+    "created_at": "2026-03-20T18:12:12.03817+00:00",
+    "updated_at": "2026-03-20T18:12:12.03817+00:00"
+  },
+  {
+    "id": "ceb3bbca-59d6-4d8b-8d44-fddd4a52ba2b",
+    "key": "ticker_text",
+    "value": "OUR FLEXFAM IS NOW 150K STRONG • NEW ARRIVALS EVERY WEEK • FREE SHIPPING ON ORDERS ABOVE ₹999",
+    "type": "text",
+    "description": "The scrolling announcement text at the top and bottom",
+    "created_at": "2026-03-20T18:12:12.03817+00:00",
+    "updated_at": "2026-03-20T18:12:12.03817+00:00"
+  },
+  {
+    "id": "0c046787-8a67-44ff-a0a7-652e2b64dd98",
+    "key": "theme_colors",
+    "value": {
+      "text": "#FFFFFF",
+      "accent": "#FF00FF",
+      "primary": "#000000"
+    },
+    "type": "json",
+    "description": "Global theme colors",
+    "created_at": "2026-03-20T18:12:12.03817+00:00",
+    "updated_at": "2026-03-20T18:12:12.03817+00:00"
+  },
+  {
+    "id": "d84331e0-2ae6-4616-b643-873821e8e607",
+    "key": "contact_info",
+    "value": {
+      "email": "contact@dv27.in",
+      "phone": "+91 98765 43210",
+      "address": "New Delhi, India"
+    },
+    "type": "json",
+    "description": "Contact information for footer",
+    "created_at": "2026-03-20T18:12:12.03817+00:00",
+    "updated_at": "2026-03-20T18:12:12.03817+00:00"
+  },
+  {
+    "id": "9ced80b6-c956-4d42-b8de-b2f090b39a93",
+    "key": "social_links",
+    "value": {
+      "youtube": "https://youtube.com/@dv27",
+      "instagram": "https://instagram.com/dv27"
+    },
+    "type": "json",
+    "description": "Social media links",
+    "created_at": "2026-03-20T18:12:12.03817+00:00",
+    "updated_at": "2026-03-20T18:12:12.03817+00:00"
+  }
+]

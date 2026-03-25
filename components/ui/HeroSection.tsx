@@ -20,10 +20,10 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     if (activeBanners.length === 0) {
         // Fallback if no banners defined
         return (
-            <section className="h-[80vh] flex items-center justify-center bg-black">
+            <section className="h-[80vh] flex items-center justify-center bg-background">
                 <div className="text-center space-y-4">
-                    <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-white">THE DROP</h1>
-                    <button className="px-8 py-3 bg-white text-black font-black uppercase tracking-widest text-sm">Shop Now</button>
+                    <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-foreground">THE DROP</h1>
+                    <button className="px-8 py-3 bg-foreground text-background font-black uppercase tracking-widest text-sm">Shop Now</button>
                 </div>
             </section>
         );

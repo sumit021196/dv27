@@ -32,6 +32,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
   const [wished, setWished] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [isAdded, setIsAdded] = useState(false);
 
   const availableColors = useMemo(() => {
     if (!product?.variants) return [];
@@ -44,6 +45,14 @@ export default function ProductDetailClient({ id }: { id: string }) {
     const sizes = product.variants.map(v => v.size).filter((s): s is string => !!s);
     return Array.from(new Set(sizes));
   }, [product?.variants]);
+
+  const virtualSizes = useMemo(() => {
+    if (availableSizes.length > 0) return availableSizes;
+    const lowerName = product?.name.toLowerCase() || "";
+    const isClothing = lowerName.includes("hoodie") || lowerName.includes("tee") || lowerName.includes("pants") || lowerName.includes("shirt") || lowerName.includes("cargo") || lowerName.includes("vest");
+    if (isClothing) return ["S", "M", "L", "XL"];
+    return [];
+  }, [availableSizes, product?.name]);
 
   useEffect(() => {
     const fetchOne = async () => {
@@ -146,7 +155,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
           </p>
 
           {/* Variants Selector */}
-          {(availableColors.length > 0 || availableSizes.length > 0) && (
+          {(availableColors.length > 0 || virtualSizes.length > 0) && (
             <div className="mt-8 space-y-6">
               {availableColors.length > 0 && (
                 <div>
@@ -164,11 +173,11 @@ export default function ProductDetailClient({ id }: { id: string }) {
                   </div>
                 </div>
               )}
-              {availableSizes.length > 0 && (
+              {virtualSizes.length > 0 && (
                 <div>
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50 mb-3">Size</h3>
                   <div className="flex flex-wrap gap-3">
-                    {availableSizes.map(size => (
+                    {virtualSizes.map(size => (
                         <button 
                           key={size}
                           onClick={() => setSelectedSize(size)}
@@ -187,7 +196,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
             <button
                onClick={() => {
                 const needsColor = availableColors.length > 0;
-                const needsSize = availableSizes.length > 0;
+                const needsSize = virtualSizes.length > 0;
                 
                 if ((needsColor && !selectedColor) || (needsSize && !selectedSize)) {
                     alert("Please select " + [needsColor && !selectedColor ? "Color" : "", needsSize && !selectedSize ? "Size" : ""].filter(Boolean).join(" and "));
@@ -208,10 +217,17 @@ export default function ProductDetailClient({ id }: { id: string }) {
                     size: selectedSize || undefined,
                     color: selectedColor || undefined
                 }, 1);
+
+                // Show success feedback
+                setIsAdded(true);
+                setTimeout(() => setIsAdded(false), 2000);
               }}
-              className="w-full flex h-16 items-center justify-center rounded-3xl bg-foreground text-background font-black text-xs uppercase tracking-[0.2em] hover:bg-brand-accent hover:text-white transition-all shadow-2xl active:scale-95"
+              disabled={isAdded}
+              className={`w-full flex h-16 items-center justify-center rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl active:scale-95 ${
+                isAdded ? "bg-emerald-500 text-white" : "bg-foreground text-background hover:bg-brand-accent hover:text-white"
+              }`}
             >
-              Drop Into Bag
+              {isAdded ? "Added to Bag" : "Drop Into Bag"}
             </button>
 
           </div>
