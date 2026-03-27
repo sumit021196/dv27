@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { FALLBACK_IMG } from "@/utils/images";
 
 export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -42,8 +43,14 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     <div className="absolute inset-0 z-10 bg-gradient-to-t from-background via-transparent to-transparent" />
                     
                     <img 
-                        src={b.image_url} 
+                        src={b.image_url || FALLBACK_IMG}
                         alt={b.title || 'Hero'} 
+                        onError={(e) => {
+                            const img = e.currentTarget as HTMLImageElement;
+                            if (img.src !== FALLBACK_IMG) {
+                                img.src = FALLBACK_IMG;
+                            }
+                        }}
                         className="h-full w-full object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
                     />
 

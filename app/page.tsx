@@ -7,6 +7,8 @@ import { createClient } from "@/utils/supabase/server";
 import Ticker from "@/components/ui/Ticker";
 import InstagramReels from "@/components/ui/InstagramReels";
 
+export const revalidate = 0; // Ensures fresh data is fetched for the homepage
+
 export default async function Page() {
   const trending = await productService.getTrendingProducts();
   const newArrivals = await productService.getNewArrivals();
