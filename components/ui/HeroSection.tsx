@@ -23,7 +23,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
         return (
             <section className="h-[80vh] flex items-center justify-center bg-background">
                 <div className="text-center space-y-4">
-                    <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-foreground">THE DROP</h1>
+                    <h1 className="text-5xl md:text-9xl font-black italic uppercase tracking-tighter text-foreground">THE DROP</h1>
                     <button className="px-8 py-3 bg-foreground text-background font-black uppercase tracking-widest text-sm">Shop Now</button>
                 </div>
             </section>
@@ -60,19 +60,19 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                             <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 {b.style_type === 'wtflex_bold' ? (
                                     <>
-                                        <h1 className="text-6xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-foreground leading-[0.85] filter drop-shadow-2xl">
+                                        <h1 className="text-4xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-foreground leading-[0.85] filter drop-shadow-2xl">
                                             {b.title}
                                         </h1>
-                                        <p className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-brand-accent animate-pulse-subtle">
+                                        <p className="text-xs md:text-base font-black uppercase tracking-[0.3em] text-brand-accent animate-pulse-subtle">
                                             {b.subtitle}
                                         </p>
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-foreground leading-[0.9]">
+                                        <h1 className="text-4xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-foreground leading-[0.9]">
                                             {b.title}
                                         </h1>
-                                        <p className="text-base md:text-lg font-bold text-foreground/80 max-w-2xl mx-auto">
+                                        <p className="text-sm md:text-lg font-bold text-foreground/80 max-w-2xl mx-auto">
                                             {b.subtitle}
                                         </p>
                                     </>
