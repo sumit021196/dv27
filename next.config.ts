@@ -2,16 +2,28 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    domains: ["res.cloudinary.com", "images.unsplash.com", "bjhuvekaehvyzzptszmq.supabase.co"],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "**.unsplash.com",
       },
       {
         protocol: "https",
-        hostname: "uqdprscrscskfadbsvxz.supabase.co",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/**",
       },
     ],
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "100mb",
+    },
   },
 };
 

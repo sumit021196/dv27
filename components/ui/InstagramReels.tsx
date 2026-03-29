@@ -18,9 +18,9 @@ export default function InstagramReels() {
                     <p className="text-brand-accent text-sm font-black uppercase tracking-[0.4em] italic mb-10">
                         Follow us for the latest drops
                     </p>
-                    <a 
-                        href="https://instagram.com/thedv27" 
-                        target="_blank" 
+                    <a
+                        href="https://instagram.com/thedv27"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-12 py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all"
                     >
@@ -42,9 +42,9 @@ export default function InstagramReels() {
                         <Instagram size={16} /> @thedv27 • Our FlexFam is now 150k strong
                     </p>
                 </div>
-                <a 
-                    href="https://instagram.com/thedv27" 
-                    target="_blank" 
+                <a
+                    href="https://instagram.com/thedv27"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 font-black uppercase tracking-widest text-sm text-foreground hover:text-brand-accent transition-colors"
                 >
@@ -64,28 +64,28 @@ export default function InstagramReels() {
                                 const reelId = parts[1]; // reels/ID/
                                 embedUrl = `https://www.instagram.com/reels/${reelId}/embed`;
                             }
-                        } catch (e) {}
+                        } catch (e) { }
 
                         return (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 className="flex-none w-[280px] md:w-[320px] aspect-[9/16] bg-muted/50 rounded-3xl overflow-hidden snap-start relative group/reel shadow-xl"
                             >
-                                <iframe 
+                                <iframe
                                     src={embedUrl}
                                     className="w-full h-full border-0"
                                     allowFullScreen
                                     scrolling="no"
                                     allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
                                 ></iframe>
-                                
+
                                 {/* Overlay to prevent direct interaction and scroll issues on mobile if needed, 
                                     but here we want them to play. Instagram embed handles its own interaction. */}
                             </div>
                         );
                     })}
                 </div>
-                
+
                 {/* Visual Indicators */}
                 <div className="flex justify-center gap-2 mt-4">
                     {reels.map((_: any, index: number) => (

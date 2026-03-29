@@ -120,7 +120,7 @@ export default function Navbar() {
                             >
                                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
-                            
+
                             <nav className="hidden md:flex items-center gap-6">
                                 {navLinks.map(({ href, label }) => (
                                     <Link
@@ -133,7 +133,7 @@ export default function Navbar() {
                                 ))}
                             </nav>
 
-                            <button 
+                            <button
                                 onClick={() => setSearchOpen(true)}
                                 className="p-2 text-foreground/70 hover:text-foreground transition-colors"
                             >
@@ -248,15 +248,15 @@ export default function Navbar() {
             {searchOpen && (
                 <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-3xl animate-in fade-in duration-300">
                     <div className="flex flex-col h-full px-6 pt-24 pb-12 items-center">
-                        <button 
+                        <button
                             onClick={() => setSearchOpen(false)}
                             className="absolute top-6 right-6 p-3 text-foreground/50 hover:text-foreground transition-colors"
                         >
                             <X size={32} />
                         </button>
-                        
+
                         <div className="w-full max-w-2xl text-center">
-                             <input 
+                            <input
                                 autoFocus
                                 type="text"
                                 value={searchQuery}
@@ -269,10 +269,10 @@ export default function Navbar() {
                                 }}
                                 placeholder="Search products..."
                                 className="w-full bg-transparent border-b-2 border-foreground/20 pb-4 text-4xl sm:text-6xl font-black italic uppercase placeholder:text-foreground/10 outline-none focus:border-foreground transition-colors text-center"
-                             />
-                             <p className="mt-8 text-[10px] font-bold text-foreground/30 uppercase tracking-[0.3em] animate-pulse">
+                            />
+                            <p className="mt-8 text-[10px] font-bold text-foreground/30 uppercase tracking-[0.3em] animate-pulse">
                                 Press Enter to search
-                             </p>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -286,12 +286,12 @@ export default function Navbar() {
                 <div className="fixed inset-0 z-[70] bg-background md:hidden animate-in slide-in-from-left duration-300">
                     <div className="p-6 h-full flex flex-col">
                         <div className="flex items-center justify-between mb-12 perspective-1000">
-                             <Image src="/logo.svg" alt="DV27" width={100} height={30} className="h-8 w-auto animate-logo-flip" />
-                             <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-foreground"><X size={30} /></button>
+                            <Image src="/logo.svg" alt="DV27" width={100} height={30} className="h-8 w-auto animate-logo-flip" />
+                            <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-foreground"><X size={30} /></button>
                         </div>
-                        
+
                         <nav className="flex flex-col gap-8">
-                             {navLinks.map(({ href, label }) => (
+                            {navLinks.map(({ href, label }) => (
                                 <Link
                                     key={href}
                                     href={href}
@@ -301,8 +301,8 @@ export default function Navbar() {
                                     {label}
                                 </Link>
                             ))}
-                            <Link 
-                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"} 
+                            <Link
+                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="text-4xl font-black italic uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
                             >
@@ -311,15 +311,15 @@ export default function Navbar() {
                         </nav>
 
                         <div className="mt-auto pb-12">
-                             <button 
+                            <button
                                 onClick={() => {
                                     cart.clear();
                                     logout();
                                 }}
                                 className="w-full py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm"
-                             >
-                                 Logout
-                             </button>
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
                 </div>

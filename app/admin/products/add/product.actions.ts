@@ -14,6 +14,11 @@ export async function createProductAction(formData: {
     variants?: string | null; // JSON string of { size, color, stock, sku }
 }) {
     try {
+        console.log("--- createProductAction Start ---");
+        console.log("FormData Name:", formData.name);
+        console.log("Images count:", formData.images?.length || 0);
+        console.log("Video present:", !!formData.video);
+
         const supabase = await createClient(true); // Create admin client
 
         let finalVideoUrl = null;
@@ -21,38 +26,49 @@ export async function createProductAction(formData: {
 
         // 1. Upload Video if provided
         if (formData.video && formData.video.size > 0) {
+            console.log("Uploading video...");
             const file = formData.video;
-            const fileExt = file.name.split('.').pop();
+            const fileExt = file.name.split('.').pop() || 'mp4';
             const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
             const { error: uploadError } = await supabase.storage
                 .from('products')
                 .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error("Video Upload Error:", uploadError);
+                throw uploadError;
+            }
             const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
             finalVideoUrl = urlData.publicUrl;
+            console.log("Video URL:", finalVideoUrl);
         }
 
         // 2. Upload Images if provided
         if (formData.images && formData.images.length > 0) {
+            console.log("Uploading images...");
             for (const file of formData.images) {
                 if (file.size > 0) {
-                    const fileExt = file.name.split('.').pop();
+                    const fileExt = file.name.split('.').pop() || 'jpg';
                     const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                     const { error: uploadError } = await supabase.storage
                         .from('products')
                         .upload(fileName, file, { cacheControl: '3600', upsert: false });
                     
-                    if (uploadError) throw uploadError;
+                    if (uploadError) {
+                        console.error("Image Upload Error:", uploadError);
+                        throw uploadError;
+                    }
                     const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
                     finalImageUrls.push(urlData.publicUrl);
                 }
             }
+            console.log("Images count uploaded:", finalImageUrls.length);
         }
 
         // 3. Insert into Database
         const mainMediaUrl = finalImageUrls.length > 0 ? finalImageUrls[0] : null;
 
+        console.log("Inserting into products table...");
         const { data: productData, error: dbError } = await supabase
             .from('products')
             .insert([{
@@ -63,15 +79,20 @@ export async function createProductAction(formData: {
                 category_id: formData.category_id || null,
                 media_url: mainMediaUrl,
                 video_url: finalVideoUrl,
-                stock: 10, // Fallback default stock
+                stock: 10,
                 is_active: true,
                 rating: 4.5
             }])
             .select()
             .single();
 
-        if (dbError) throw dbError;
+        if (dbError) {
+            console.error("Database Insert Error (Products):", dbError);
+            throw dbError;
+        }
+        
         const productId = productData.id;
+        console.log("Product Inserted with ID:", productId);
 
         // 4. Insert extra images into product_images
         if (finalImageUrls.length > 0) {
@@ -81,7 +102,7 @@ export async function createProductAction(formData: {
                 display_order: idx
             }));
             const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
-            if (imgError) console.error("Error inserting multiple images:", imgError);
+            if (imgError) console.error("Error inserting multiple images (Logged and continuing):", imgError);
         }
 
         // 5. Insert Variants
@@ -97,19 +118,20 @@ export async function createProductAction(formData: {
                         sku: v.sku || null
                     }));
                     const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
-                    if (varError) console.error("Error inserting variants:", varError);
+                    if (varError) console.error("Error inserting variants (Logged and continuing):", varError);
                 }
             } catch (jsonErr) {
-                console.error("Failed to parse variants JSON", jsonErr);
+                console.error("Failed to parse variants JSON:", jsonErr);
             }
         }
 
         revalidatePath("/admin/products");
         revalidatePath("/");
 
+        console.log("--- createProductAction Success ---");
         return { success: true };
     } catch (error: any) {
-        console.error("Error creating product:", error);
+        console.error("--- createProductAction Error ---", error);
         return {
             success: false,
             error: error.message || "An unexpected error occurred while creating the product."

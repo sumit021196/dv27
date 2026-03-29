@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Syne, JetBrains_Mono } from "next/font/google";
+import { Assistant, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SignupPrompt from "@/components/SignupPrompt";
 import { CartProvider } from "@/components/cart/CartContext";
@@ -8,16 +8,10 @@ import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const assistant = Assistant({
+  variable: "--font-assistant",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-});
-
-const syne = Syne({
-  variable: "--font-syne",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -26,11 +20,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export async function generateMetadata() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/settings`, { cache: 'no-store' });
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    // Use revalidate instead of no-store for better performance
+    const res = await fetch(`${siteUrl}/api/settings`, { 
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+    
+    if (!res.ok) throw new Error('Failed to fetch settings');
+    
     const data = await res.json();
     const settings = data.settings || {};
     const seo = settings.seo_meta || {};
@@ -41,6 +39,7 @@ export async function generateMetadata() {
       keywords: seo.keywords || "streetwear, fashion, dv27",
     };
   } catch (e) {
+    console.error("Metadata error:", e);
     return {
       title: "DV27",
       description: "Curated wardrobe essentials for the contemporary soul. Redefining modern elegance.",
@@ -62,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${outfit.variable} ${syne.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${assistant.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <SettingsProvider>
           <WishlistProvider>

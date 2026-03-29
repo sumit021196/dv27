@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 
 export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const activeBanners = banners.filter((b: any) => b.is_active && b.position === 'hero');
+    
+    // Get active hero banners from the provided banners list
+    const activeBanners = (banners || []).filter((b: any) => b.is_active && b.position === 'hero');
 
     useEffect(() => {
         if (activeBanners.length > 1) {
@@ -41,11 +44,17 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     {/* Background Overlay - subtly darker for text readability */}
                     <div className="absolute inset-0 z-10 bg-gradient-to-t from-background via-transparent to-transparent" />
                     
-                    <img 
-                        src={b.image_url} 
-                        alt={b.title || 'Hero'} 
-                        className="h-full w-full object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
-                    />
+                    <div className="relative h-full w-full overflow-hidden">
+                        <Image 
+                            src={b.image_url} 
+                            alt={b.title || 'Hero'} 
+                            fill
+                            priority={idx === 0}
+                            unoptimized={true}
+                            className="object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
+                            sizes="100vw"
+                        />
+                    </div>
 
                     {/* Content Overlay */}
                     <div className="absolute inset-0 z-20 flex items-center justify-center px-6 lg:px-12">
@@ -53,19 +62,19 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                             <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 {b.style_type === 'wtflex_bold' ? (
                                     <>
-                                        <h1 className="text-6xl md:text-8xl lg:text-[180px] font-black italic uppercase tracking-tighter text-foreground leading-[0.85] filter drop-shadow-2xl">
+                                        <h1 className="text-6xl md:text-8xl lg:text-[140px] font-bold uppercase tracking-tight text-foreground leading-[0.9] filter drop-shadow-2xl">
                                             {b.title}
                                         </h1>
-                                        <p className="text-sm md:text-base font-black uppercase tracking-[0.3em] text-brand-accent animate-pulse-subtle">
+                                        <p className="text-sm md:text-base font-semibold uppercase tracking-[0.1em] text-brand-accent">
                                             {b.subtitle}
                                         </p>
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-black italic uppercase tracking-tighter text-foreground leading-[0.9]">
+                                        <h1 className="text-5xl md:text-7xl lg:text-9xl font-bold uppercase tracking-tight text-foreground leading-[1.0]">
                                             {b.title}
                                         </h1>
-                                        <p className="text-base md:text-lg font-bold text-foreground/80 max-w-2xl mx-auto">
+                                        <p className="text-base md:text-lg font-medium text-foreground/80 max-w-2xl mx-auto">
                                             {b.subtitle}
                                         </p>
                                     </>

@@ -107,6 +107,14 @@ export default function AddProductPage() {
             return;
         }
 
+        console.log("Client: Form Submission Start", {
+            name: formData.name,
+            price: formData.price,
+            imagesCount: images.length,
+            video: !!video,
+            variantsCount: variants.length
+        });
+
         setLoading(true);
         try {
             const result = await createProductAction({
@@ -114,16 +122,19 @@ export default function AddProductPage() {
                 price: Number(formData.price),
                 description: formData.description,
                 category: formData.category,
-                category_id: formData.category_id,
+                category_id: formData.category_id || null,
                 images: images.map(img => img.file),
                 video: video?.file || null,
                 variants: JSON.stringify(variants.map(v => ({ size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku })))
             });
 
+            console.log("Client: Action Result", result);
+
             if (!result.success) throw new Error(result.error);
             setSuccess(true);
             setTimeout(() => router.push("/admin/products"), 1500);
         } catch (err: any) {
+            console.error("Client: Submission Error", err);
             setErrorParam(err?.message || "An unexpected error occurred.");
         } finally {
             setLoading(false);

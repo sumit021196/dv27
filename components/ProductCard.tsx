@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { FALLBACK_IMG } from "@/utils/images";
 import { useWishlist } from "./wishlist/WishlistContext";
 import { Heart, ShoppingBag } from "lucide-react";
@@ -20,15 +21,12 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Image Container */}
       <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
         <Link href={`/product/${product.id}`} className="block h-full w-full">
-          <img
+          <Image
             src={product.mediaUrl || FALLBACK_IMG}
             alt={product.name}
-            className="h-full w-full object-cover transition-all duration-1000 group-hover:scale-110 group-hover:rotate-1"
-            loading="lazy"
-            onError={(e) => {
-              const img = e.currentTarget as HTMLImageElement;
-              if (img.src !== FALLBACK_IMG) img.src = FALLBACK_IMG;
-            }}
+            fill
+            className="object-cover transition-all duration-1000 group-hover:scale-110 group-hover:rotate-1"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
           />
         </Link>
 
@@ -77,11 +75,11 @@ export default function ProductCard({ product }: { product: Product }) {
       {/* Info Section */}
       <div className="py-4 md:py-6 flex flex-col items-center text-center gap-1.5 px-2">
         <Link href={`/product/${product.id}`} className="block w-full">
-          <h3 className="text-[10px] md:text-xs font-black text-foreground/50 uppercase tracking-[0.2em] line-clamp-1 group-hover:text-foreground transition-colors duration-300">
+          <h3 className="text-sm font-medium text-foreground/70 line-clamp-1 group-hover:text-foreground transition-colors duration-300">
             {product.name}
           </h3>
-          <div className="flex items-center justify-center gap-3 mt-1">
-              <span className="text-lg md:text-2xl font-black italic uppercase tracking-tighter text-foreground">
+          <div className="flex items-center justify-center gap-2 mt-1">
+              <span className="text-base md:text-xl font-bold text-foreground">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
               {/* Optional: Add a fake old price for the 'sale' look if desired */}
@@ -95,7 +93,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="w-full mt-2 md:hidden">
              <Link 
                 href={`/product/${product.id}`}
-                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-black uppercase tracking-widest text-foreground active:bg-foreground active:text-background transition-all"
+                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground active:bg-foreground active:text-background transition-all"
              >
                 View
              </Link>

@@ -7,14 +7,19 @@ import { createClient } from "@/utils/supabase/server";
 import Ticker from "@/components/ui/Ticker";
 import InstagramReels from "@/components/ui/InstagramReels";
 
-export default async function Page() {
-  const trending = await productService.getTrendingProducts();
-  const newArrivals = await productService.getNewArrivals();
-  const allProducts = await productService.getProducts();
+export const revalidate = 3600; // Cache for 1 hour
 
+export default async function Page() {
   const supabase = await createClient();
-  const { data: banners } = await supabase.from('banners').select('*').eq('is_active', true);
-  const { data: settingsData } = await supabase.from('settings').select('*');
+
+  // Fetch all data in parallel
+  const [trending, newArrivals, allProducts, { data: banners }, { data: settingsData }] = await Promise.all([
+    productService.getTrendingProducts(8), // Trending can be simplified if needed, but let's keep for now or use select
+    productService.getNewArrivals(8),
+    productService.getProductsForCards(12),
+    supabase.from('banners').select('id, image_url, title, subtitle, position, is_active, style_type, link_url, cta_text').eq('is_active', true),
+    supabase.from('settings').select('key, value')
+  ]);
   
   const settings = settingsData?.reduce((acc: any, curr: any) => {
     acc[curr.key] = curr.value;
