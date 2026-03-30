@@ -25,18 +25,19 @@ export default function ProductCard({ product }: { product: Product }) {
             src={getOptimizedImageUrl(product.mediaUrl)}
             alt={product.name}
             fill
-            unoptimized={true}
             className="object-cover transition-all duration-1000 group-hover:scale-110 group-hover:rotate-1"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
           />
         </Link>
 
         {/* Brand Label/Badge (Optional WTFlex Style) */}
-        <div className="absolute top-4 left-4 z-10">
-            <span className="px-2 py-1 bg-foreground text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-md border border-foreground/10">
-                NEW DROP
-            </span>
-        </div>
+        {(product.name.toLowerCase().includes('cap') || product.name.toLowerCase().includes('v1')) && (
+          <div className="absolute top-4 left-4 z-10">
+              <span className="px-2 py-1 bg-foreground text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-md border border-foreground/10">
+                  NEW DROP
+              </span>
+          </div>
+        )}
 
         {/* Wishlist button */}
         <button

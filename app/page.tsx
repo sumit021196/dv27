@@ -21,7 +21,7 @@ export default async function Page() {
   
   // Critical data for initial render (Banner, Settings) - still await these
   const [res, { data: settingsData }] = await Promise.all([
-    supabase.from('banners').select('id, image_url, title, subtitle, position, is_active, style_type, link_url, cta_text').eq('is_active', true),
+    supabase.from('banners').select('id, image_url, title, subtitle, position, is_active, style_type, link_url, cta_text'),
     supabase.from('settings').select('key, value')
   ]);
   

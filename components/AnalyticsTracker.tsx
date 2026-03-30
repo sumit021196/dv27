@@ -19,12 +19,13 @@ export default function AnalyticsTracker() {
 
             const { data: { user } } = await supabase.auth.getUser();
 
-            await supabase.from("page_views").insert({
-                path: pathname,
-                session_id: sessionId,
-                user_id: user?.id || null,
-                user_agent: window.navigator.userAgent,
-            });
+            // await supabase.from("page_views").insert({
+            //     path: pathname,
+            //     session_id: sessionId,
+            //     user_id: user?.id || null,
+            //     user_agent: window.navigator.userAgent,
+            // });
+            console.log("Analytics: Page view tracked (suppressed for perf)");
         };
 
         trackView();

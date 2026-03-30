@@ -46,7 +46,17 @@ export default function ProductDetailClient({ id }: { id: string }) {
   const images = useMemo(() => {
     if (!product) return [FALLBACK_IMG];
     const mainImg = product.media_url || product.image_url;
-    // For demo/fallback purposes if there are no additional images
+    
+    // Cap Drop specific gallery logic
+    if (product.name.toLowerCase().includes("cap")) {
+      return [
+        "/products/cap_front.png",
+        "/products/cap_side.png",
+        "/products/cap_back.png",
+        "/products/cap_lifestyle.png"
+      ];
+    }
+
     return [mainImg, mainImg, mainImg].filter((s): s is string => !!s);
   }, [product]);
 
@@ -63,9 +73,10 @@ export default function ProductDetailClient({ id }: { id: string }) {
   }, [product?.variants]);
 
   const virtualSizes = useMemo(() => {
+    if (product?.name.toLowerCase().includes("cap")) return ["ADJUSTABLE (ONE SIZE)"];
     if (availableSizes.length > 0) return availableSizes;
     return ["XS", "S", "M", "L", "XL", "XXL"];
-  }, [availableSizes]);
+  }, [availableSizes, product?.name]);
 
   useEffect(() => {
     const fetchOne = async () => {
@@ -304,14 +315,18 @@ export default function ProductDetailClient({ id }: { id: string }) {
                       >
                          {activeTab === "description" && (
                             <div className="space-y-4">
-                               <p className="text-foreground/80">{product.description || "The piece that doesn't play temporary. Engineered for the modern silhouette, this premium heavyweight t-shirt combines progressive design with unmatched cotton quality."}</p>
+                               <p className="text-foreground/80">{product.description || "The piece that doesn't play temporary."}</p>
                                <div className="pt-3 border-t border-foreground/5">
                                   <span className="text-foreground block mb-1 font-black">Design Detail:</span>
                                   <ul className="space-y-1 list-none">
-                                     <li className="flex items-center gap-1.5"><div className="w-1 h-1 bg-brand-accent rounded-full"/> High-density screen print</li>
-                                     <li className="flex items-center gap-1.5"><div className="w-1 h-1 bg-brand-accent rounded-full"/> Signature dropping-shoulder fit</li>
+                                     <li className="flex items-center gap-1.5"><div className="w-1 h-1 bg-brand-accent rounded-full"/> 
+                                        {product.name.toLowerCase().includes("cap") ? "3D High-density direct embroidery" : "High-density screen print"}
+                                     </li>
+                                     <li className="flex items-center gap-1.5"><div className="w-1 h-1 bg-brand-accent rounded-full"/> 
+                                        {product.name.toLowerCase().includes("cap") ? "Custom silver hardware adjustment" : "Signature dropping-shoulder fit"}
+                                     </li>
                                   </ul>
-                               </div>
+                                </div>
                             </div>
                          )}
                          
