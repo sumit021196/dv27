@@ -346,7 +346,7 @@ export default function AdminSettingsPage() {
                         >
                             + Add Reel URL
                         </button>
-                        <p className="text-[10px] text-gray-400 italic">
+                        <p className="text-[10px] text-gray-400">
                             Tip: Use standard Reel URLs like https://www.instagram.com/reels/C8wXy_yv2kS/
                         </p>
                     </div>

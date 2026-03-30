@@ -90,7 +90,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
             <div className="flex items-center gap-4">
-                <Link href="/admin/banners" className="p-2 -ml-2 text-gray-400 hover:text-blue-600 transition-colors rounded-full hover:bg-gray-100 italic">
+                <Link href="/admin/banners" className="p-2 -ml-2 text-gray-400 hover:text-blue-600 transition-colors rounded-full hover:bg-gray-100">
                     <ArrowLeft size={24} />
                 </Link>
                 <div>
@@ -255,10 +255,10 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                         <div className="relative z-10 flex flex-col items-center justify-center text-center h-full pt-10">
                             {styleType === 'wtflex_bold' ? (
                                 <>
-                                    <h3 className="text-white text-4xl font-black italic tracking-tighter uppercase leading-none drop-shadow-2xl">
+                                    <h3 className="text-white text-4xl font-black tracking-tighter uppercase leading-none drop-shadow-2xl">
                                         {title || "YOUR HEADING"}
                                     </h3>
-                                    <p className="text-blue-400 text-xs font-black uppercase tracking-[0.2em] mt-2 italic">
+                                    <p className="text-blue-400 text-xs font-black uppercase tracking-[0.2em] mt-2">
                                         {subtitle || "Secondary tagline goes here"}
                                     </p>
                                     <button className="mt-8 px-10 py-4 bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all transform hover:-translate-y-1">

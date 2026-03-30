@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { Plus, Pencil, Trash2, Image as ImageIcon, LayoutGrid } from "lucide-react";
-import { FALLBACK_IMG } from "@/utils/images";
+import AdminImageWithFallback from "@/components/admin/AdminImageWithFallback";
 
 export default async function AdminCategoriesPage() {
     const supabase = await createClient();
@@ -36,11 +36,10 @@ export default async function AdminCategoriesPage() {
                     <div key={category.id} className="group relative bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500">
                         <div className="aspect-square bg-gray-50 relative overflow-hidden">
                             {category.image_url ? (
-                                <img 
+                                <AdminImageWithFallback 
                                     src={category.image_url} 
                                     alt={category.name} 
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                    onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} 
                                 />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-200 space-y-2">
@@ -52,7 +51,7 @@ export default async function AdminCategoriesPage() {
                                 <span className={`w-fit px-2 py-1 mb-2 text-[8px] font-black uppercase tracking-widest rounded-full ${category.is_active ? 'bg-green-500/80 text-white' : 'bg-red-500/80 text-white'}`}>
                                     {category.is_active ? 'Active' : 'Private'}
                                 </span>
-                                <h3 className="text-2xl font-black italic uppercase tracking-tighter text-white leading-none">
+                                <h3 className="text-2xl font-black uppercase tracking-tighter text-white leading-none">
                                     {category.name}
                                 </h3>
                                 <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mt-1">/ {category.slug}</p>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Assistant, JetBrains_Mono } from "next/font/google";
+import { Bodoni_Moda, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SignupPrompt from "@/components/SignupPrompt";
 import { CartProvider } from "@/components/cart/CartContext";
@@ -8,14 +8,15 @@ import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 
-const assistant = Assistant({
-  variable: "--font-assistant",
+const bodoniModa = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -61,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${assistant.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${bodoniModa.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <SettingsProvider>
           <WishlistProvider>

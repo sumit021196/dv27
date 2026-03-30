@@ -77,7 +77,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
                 <Loader2 className="animate-spin text-blue-600 h-10 w-10" />
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest italic">Loading category details...</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading category details...</p>
             </div>
         );
     }
@@ -106,14 +106,14 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                 <div className="lg:col-span-2 space-y-8">
                     <form id="category-form" onSubmit={handleSave} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm space-y-8">
                         {error && (
-                            <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-black uppercase tracking-widest border border-red-100 italic">
+                            <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-black uppercase tracking-widest border border-red-100">
                                 {error}
                             </div>
                         )}
 
                         <div className="space-y-6">
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
                                     <Type size={14} /> Category Name
                                 </label>
                                 <input
@@ -127,7 +127,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
                                     <LinkIcon size={14} /> URL Slug
                                 </label>
                                 <input
@@ -141,7 +141,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 italic">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
                                     <ImageIcon size={14} /> Hero Image URL
                                 </label>
                                 <input
@@ -169,7 +169,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                     {isActive ? 'Published' : 'Hidden'}
                                 </span>
                              </div>
-                             <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase italic">
+                             <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase">
                                 <CheckCircle2 size={12} /> Live Preview Ready
                              </div>
                         </div>
@@ -189,7 +189,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                 {/* Preview / Instructions */}
                 <div className="space-y-6">
                     <div className="bg-black rounded-3xl p-6 border border-white/5 shadow-2xl">
-                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] italic mb-4">
+                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-4">
                             Shop-the-look Preview
                         </h4>
                         <div className="relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-white/10 group">
@@ -198,11 +198,11 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                             ) : (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 space-y-2">
                                     <ImageIcon size={32} />
-                                    <span className="text-[9px] font-black uppercase italic tracking-widest">No Image Defined</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest">No Image Defined</span>
                                 </div>
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                                <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white leading-none">
+                                <h3 className="text-3xl font-black uppercase tracking-tighter text-white leading-none">
                                     {name || "CATEGORY"}
                                 </h3>
                             </div>

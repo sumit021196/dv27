@@ -12,14 +12,14 @@ export default function InstagramReels() {
             <div className="py-12 md:py-24 bg-muted/30 border-y border-foreground/5 relative overflow-hidden">
                 <div className="absolute inset-0 bg-grid-black opacity-10" />
                 <div className="max-w-[1440px] mx-auto px-6 lg:px-12 relative z-10 text-center">
-                    <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-foreground mb-6">
+                    <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-foreground mb-6">
                         Join the Movement
                     </h3>
-                    <p className="text-brand-accent text-sm font-black uppercase tracking-[0.4em] italic mb-10">
+                    <p className="text-brand-accent text-sm font-black uppercase tracking-[0.4em] mb-10">
                         Follow us for the latest drops
                     </p>
                     <a
-                        href="https://instagram.com/thedv27"
+                        href="https://instagram.com/thedv_27"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-12 py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-brand-accent hover:text-white transition-all"
@@ -35,7 +35,7 @@ export default function InstagramReels() {
         <section className="py-20 bg-background overflow-hidden">
             <div className="max-w-[1440px] mx-auto px-6 lg:px-12 mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h2 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter text-foreground leading-none">
+                    <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-foreground leading-none">
                         The DV27 <span className="text-brand-accent">Flex</span>
                     </h2>
                     <p className="mt-4 text-muted-foreground font-medium flex items-center gap-2">

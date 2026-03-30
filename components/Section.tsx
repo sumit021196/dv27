@@ -16,11 +16,11 @@ export default function Section({
       <div className="mx-auto w-full max-w-[1440px] px-6 lg:px-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter uppercase italic text-foreground leading-none">
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter uppercase text-foreground leading-none">
               {title}
             </h2>
             {subtitle ? (
-              <p className="mt-4 text-xs md:text-sm font-black uppercase tracking-[0.2em] text-foreground/40 italic">
+              <p className="mt-4 text-xs md:text-sm font-black uppercase tracking-[0.2em] text-foreground/40">
                 {subtitle}
               </p>
             ) : null}

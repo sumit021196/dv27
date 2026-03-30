@@ -62,7 +62,7 @@ export default function AdminBannersPage() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
                     <Loader2 className="animate-spin text-blue-600 h-10 w-10" />
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest italic">Fetching visual assets...</p>
+                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Fetching visual assets...</p>
                 </div>
             ) : banners.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-gray-100 p-20 text-center shadow-sm">
@@ -104,7 +104,7 @@ export default function AdminBannersPage() {
                                             {banner.title || "Untitled Banner"}
                                         </h3>
                                     </div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] line-clamp-1 italic">
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] line-clamp-1">
                                         {banner.subtitle || "No subtitle provided"}
                                     </p>
                                 </div>

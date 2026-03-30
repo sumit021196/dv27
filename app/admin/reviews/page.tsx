@@ -89,13 +89,13 @@ export default function AdminReviewsPage() {
                                                     {review.profiles?.first_name ? `${review.profiles.first_name} ${review.profiles.last_name || ''}` : "Anonymous User"}
                                                 </span>
                                             </div>
-                                            <div className="text-xs text-gray-400 mt-1">
+                                            <p className="text-[10px] text-gray-400">
                                                 {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
-                                            </div>
+                                            </p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900 line-clamp-3">
-                                                {review.comment || <span className="text-gray-400 italic">No comment provided</span>}
+                                                {review.comment || <span className="text-gray-400">No comment provided</span>}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

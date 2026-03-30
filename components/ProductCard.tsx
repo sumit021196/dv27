@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { FALLBACK_IMG } from "@/utils/images";
+import { FALLBACK_IMG, getOptimizedImageUrl } from "@/utils/images";
 import { useWishlist } from "./wishlist/WishlistContext";
 import { Heart, ShoppingBag } from "lucide-react";
 
@@ -22,9 +22,10 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
         <Link href={`/product/${product.id}`} className="block h-full w-full">
           <Image
-            src={product.mediaUrl || FALLBACK_IMG}
+            src={getOptimizedImageUrl(product.mediaUrl)}
             alt={product.name}
             fill
+            unoptimized={true}
             className="object-cover transition-all duration-1000 group-hover:scale-110 group-hover:rotate-1"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
           />

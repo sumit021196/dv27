@@ -3,11 +3,16 @@ import { Product, Category, IProductService } from "@/types/product";
 import { fallback } from "@/utils/data";
 
 export class ProductService implements IProductService {
-    private supabase = createClient();
+    private defaultSupabase = createClient();
 
-    async getProducts(): Promise<Product[]> {
+    private getClient(supabase?: any) {
+        return supabase || this.defaultSupabase;
+    }
+
+    async getProducts(supabase?: any): Promise<Product[]> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("products")
                 .select("*, categories(name), product_variants(*)")
                 .limit(64);
@@ -20,9 +25,10 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getProductById(id: string | number): Promise<Product | null> {
+    async getProductById(id: string | number, supabase?: any): Promise<Product | null> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("products")
                 .select("*, categories(name), product_variants(*)")
                 .eq("id", id)
@@ -35,11 +41,13 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getTrendingProducts(limit: number = 8): Promise<Product[]> {
+    async getTrendingProducts(limit: number = 8, supabase?: any): Promise<Product[]> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("products")
-                .select("*, categories(name), product_variants(*)")
+                .select("id, name, price, media_url, rating, created_at, category_id")
+                .eq("is_trending", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -48,11 +56,12 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getNewArrivals(limit: number = 8): Promise<Product[]> {
+    async getNewArrivals(limit: number = 8, supabase?: any): Promise<Product[]> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("products")
-                .select("*, categories(name), product_variants(*)")
+                .select("id, name, price, media_url, rating, created_at, category_id")
                 .order("created_at", { ascending: false })
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
@@ -62,11 +71,12 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getProductsForCards(limit: number = 8): Promise<Product[]> {
+    async getProductsForCards(limit: number = 8, supabase?: any): Promise<Product[]> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("products")
-                .select("id, name, price, media_url, created_at")
+                .select("id, name, price, media_url, rating, created_at, category_id")
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -75,25 +85,32 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getCategories(): Promise<Category[]> {
+    async getMinimalProducts(ids: (string | number)[], supabase?: any): Promise<Product[]> {
+        const client = this.getClient(supabase);
         try {
-            // Fetch categories that have at least one product
-            const { data, error } = await this.supabase
-                .from("categories")
-                .select("id, name, slug")
-                .not("id", "is", null); // Placeholder for logic "at least one product" if needed via join, but simple fetch for now
+            const { data, error } = await client
+                .from("products")
+                .select("id, name, price, media_url")
+                .in("id", ids);
+            if (error || !data) return [];
+            return this.mapSupabaseData(data);
+        } catch {
+            return [];
+        }
+    }
 
-            // More accurate: categories JOIN products
-            const { data: catWithProds, error: joinError } = await this.supabase
+    async getCategories(supabase?: any): Promise<Category[]> {
+        const client = this.getClient(supabase);
+        try {
+            const { data: catWithProds, error: joinError } = await client
                 .from("categories")
                 .select("id, name, slug, products!inner(id)");
 
             if (joinError || !catWithProds) return [];
 
-            // Remove duplicates (Supabase might return multiple rows if not careful with inner join)
-            const uniqueCats = Array.from(new Map(catWithProds.map(c => [c.id, c])).values());
+            const uniqueCats = Array.from(new Map(catWithProds.map((c: any) => [c.id, c])).values());
 
-            return uniqueCats.map(c => ({
+            return uniqueCats.map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 slug: c.slug
@@ -103,9 +120,10 @@ export class ProductService implements IProductService {
         }
     }
 
-    async createCategory(name: string, slug: string): Promise<Category | null> {
+    async createCategory(name: string, slug: string, supabase?: any): Promise<Category | null> {
+        const client = this.getClient(supabase);
         try {
-            const { data, error } = await this.supabase
+            const { data, error } = await client
                 .from("categories")
                 .insert([{ name, slug }])
                 .select()
@@ -149,5 +167,4 @@ export class ProductService implements IProductService {
     }
 }
 
-// Singleton instance for client-side usage if needed, or instantiate per request on server.
 export const productService = new ProductService();

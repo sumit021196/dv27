@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { getOptimizedImageUrl } from "@/utils/images";
 
 export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -25,7 +26,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
         return (
             <section className="h-[80vh] flex items-center justify-center bg-background">
                 <div className="text-center space-y-4">
-                    <h1 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-foreground">THE DROP</h1>
+                    <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter text-foreground">THE DROP</h1>
                     <button className="px-8 py-3 bg-foreground text-background font-black uppercase tracking-widest text-sm">Shop Now</button>
                 </div>
             </section>
@@ -46,12 +47,12 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     
                     <div className="relative h-full w-full overflow-hidden">
                         <Image 
-                            src={b.image_url} 
+                            src={getOptimizedImageUrl(b.image_url)} 
                             alt={b.title || 'Hero'} 
                             fill
                             priority={idx === 0}
                             unoptimized={true}
-                            className="object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards]"
+                            className="object-cover transition-transform duration-[10000ms] ease-out scale-100 animate-[zoom-out_10s_ease-out_forwards] will-change-transform"
                             sizes="100vw"
                         />
                     </div>

@@ -177,7 +177,7 @@ export default function CartDrawer() {
                                                         {item.color && <span>Color: {item.color}</span>}
                                                     </p>
                                                 )}
-                                                <p className="text-sm font-black text-brand-accent mt-1 italic tracking-tighter">₹{item.price}</p>
+                                                <p className="text-sm font-black text-brand-accent mt-1 tracking-tighter">₹{item.price}</p>
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
                                                 <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-foreground/5">
@@ -230,7 +230,7 @@ export default function CartDrawer() {
                                     <div className="group flex items-center justify-between border border-dashed border-foreground/10 rounded-xl p-3 hover:border-brand-accent/50 transition-colors">
                                         <div className="flex items-center gap-2">
                                             <Ticket size={14} className="text-muted-foreground" />
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider italic">Add a coupon code?</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Add a coupon code?</p>
                                         </div>
                                         <p className="text-[10px] font-black uppercase text-brand-accent cursor-pointer">Apply</p>
                                     </div>

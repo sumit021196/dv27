@@ -27,7 +27,12 @@ import Ticker from "./Ticker";
 
 const navLinks = [
     { href: "/products", label: "Shop All" },
-    { href: "/#trending", label: "Trending" },
+    { href: "/products?category=new-arrivals", label: "New Arrivals" },
+    { href: "/products?category=topwear", label: "Topwear" },
+    { href: "/products?category=bottomwear", label: "Bottomwear" },
+    { href: "/products?category=outerwear", label: "Outerwear" },
+    { href: "/products?category=accessories", label: "Accessories" },
+    { href: "/products?category=sale", label: "Sale" },
 ];
 
 import { useSettings } from "@/components/SettingsContext";
@@ -268,7 +273,7 @@ export default function Navbar() {
                                     }
                                 }}
                                 placeholder="Search products..."
-                                className="w-full bg-transparent border-b-2 border-foreground/20 pb-4 text-4xl sm:text-6xl font-black italic uppercase placeholder:text-foreground/10 outline-none focus:border-foreground transition-colors text-center"
+                                className="w-full bg-transparent border-b-2 border-foreground/20 pb-4 text-4xl sm:text-6xl font-black uppercase placeholder:text-foreground/10 outline-none focus:border-foreground transition-colors text-center"
                             />
                             <p className="mt-8 text-[10px] font-bold text-foreground/30 uppercase tracking-[0.3em] animate-pulse">
                                 Press Enter to search
@@ -296,7 +301,7 @@ export default function Navbar() {
                                     key={href}
                                     href={href}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="text-4xl font-black italic uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
+                                    className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
                                 >
                                     {label}
                                 </Link>
@@ -304,7 +309,7 @@ export default function Navbar() {
                             <Link
                                 href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="text-4xl font-black italic uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
+                                className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
                             >
                                 {user ? (isAdmin ? "Admin" : "Profile") : "Account"}
                             </Link>

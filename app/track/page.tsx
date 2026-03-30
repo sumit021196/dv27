@@ -2,7 +2,7 @@ export default function TrackOrderPage() {
   return (
     <main className="min-h-screen bg-black pt-32 pb-20 px-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter text-white mb-12">Track Order</h1>
+        <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-white mb-12">Track Order</h1>
         <div className="max-w-md">
            <input 
             type="text" 

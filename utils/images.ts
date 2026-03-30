@@ -12,3 +12,20 @@ export const FALLBACK_IMG =
       </text>
     </svg>`
   );
+
+export function getOptimizedImageUrl(url: string | null | undefined): string {
+    if (!url) return FALLBACK_IMG;
+    
+    // Cloudinary optimization
+    if (url.includes('res.cloudinary.com')) {
+        // If it already has optimization flags, return as is
+        if (url.includes('/f_auto,q_auto/')) return url;
+        
+        // Insert optimization flags after /upload/
+        if (url.includes('/upload/')) {
+            return url.replace('/upload/', '/upload/f_auto,q_auto/');
+        }
+    }
+    
+    return url;
+}
