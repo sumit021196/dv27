@@ -3,7 +3,7 @@ import { productService } from "@/services/product.service";
 import Section from "@/components/Section";
 import ProductCard from "@/components/ProductCard";
 import HeroSection from "@/components/ui/HeroSection";
-import { createClient } from "@/utils/supabase/server";
+import { createStaticClient } from "@/utils/supabase/server";
 import Ticker from "@/components/ui/Ticker";
 import InstagramReels from "@/components/ui/InstagramReels";
 import ProductGrid from "@/components/ProductGrid";
@@ -12,7 +12,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function Page() {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   
   // Start fetches but don't await yet for sections we want to stream
   const trendingPromise = productService.getTrendingProducts(8, supabase);

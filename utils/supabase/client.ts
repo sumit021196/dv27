@@ -8,6 +8,6 @@ const supabaseKey =
 
 export const createClient = () =>
   createBrowserClient(
-    supabaseUrl!,
-    supabaseKey!,
+    supabaseUrl || 'http://localhost:54321',
+    supabaseKey || 'dummy_anon_key',
   );

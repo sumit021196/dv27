@@ -20,22 +20,26 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+import { createStaticClient } from "@/utils/supabase/server";
+
 export async function generateMetadata() {
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    // Use revalidate instead of no-store for better performance
-    const res = await fetch(`${siteUrl}/api/settings`, { 
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
-    
-    if (!res.ok) throw new Error('Failed to fetch settings');
-    
-    const data = await res.json();
-    const settings = data.settings || {};
-    const seo = settings.seo_meta || {};
+    const supabase = createStaticClient();
+    const { data: settingsData, error } = await supabase
+      .from('settings')
+      .select('key, value');
+
+    if (error) throw error;
+
+    const settingsMap = settingsData?.reduce((acc: any, curr: any) => {
+      acc[curr.key] = curr.value;
+      return acc;
+    }, {}) || {};
+
+    const seo = settingsMap.seo_meta || {};
     
     return {
-      title: settings.site_name || "DV27",
+      title: settingsMap.site_name || "DV27",
       description: seo.description || "Curated wardrobe essentials for the contemporary soul. Redefining modern elegance.",
       keywords: seo.keywords || "streetwear, fashion, dv27",
     };
