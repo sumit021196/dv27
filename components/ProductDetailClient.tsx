@@ -26,6 +26,7 @@ type Product = {
     stock?: number;
     sku?: string | null;
   }>;
+  images?: string[];
 };
 
 export default function ProductDetailClient({ id }: { id: string }) {
@@ -45,19 +46,15 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
   const images = useMemo(() => {
     if (!product) return [FALLBACK_IMG];
-    const mainImg = product.media_url || product.image_url;
     
-    // Cap Drop specific gallery logic
-    if (product.name.toLowerCase().includes("cap")) {
-      return [
-        "/products/cap_front.png",
-        "/products/cap_side.png",
-        "/products/cap_back.png",
-        "/products/cap_lifestyle.png"
-      ];
+    // 1. Use the gallery images if they exist
+    if (product.images && product.images.length > 0) {
+      return product.images;
     }
 
-    return [mainImg, mainImg, mainImg].filter((s): s is string => !!s);
+    // 2. Fallback to main media_url
+    const mainImg = product.media_url || product.image_url;
+    return [mainImg].filter((s): s is string => !!s) || [FALLBACK_IMG];
   }, [product]);
 
   const availableColors = useMemo(() => {
@@ -84,7 +81,16 @@ export default function ProductDetailClient({ id }: { id: string }) {
       try {
         const data = await productService.getProductById(id);
         if (!data) throw new Error("Not found");
-        setProduct(data as unknown as Product);
+        const prod = data as unknown as Product;
+        setProduct(prod);
+        
+        // Auto-select first available color
+        if (prod.variants) {
+          const colors = prod.variants.map(v => v.color).filter((c): c is string => !!c);
+          if (colors.length > 0) {
+            setSelectedColor(Array.from(new Set(colors))[0]);
+          }
+        }
       } catch {
         const fallbackItem = fallback.find((i) => String(i.id) === String(id));
         setProduct(fallbackItem ? (fallbackItem as unknown as Product) : null);
@@ -242,6 +248,31 @@ export default function ProductDetailClient({ id }: { id: string }) {
                 </div>
             </div>
 
+            {/* Color Selection */}
+            {availableColors.length > 0 && (
+              <div className="mt-6 space-y-3 px-2">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.2em]">Select Color — <span className="text-brand-accent">{selectedColor}</span></h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {availableColors.map(color => (
+                        <button 
+                          key={color}
+                          onClick={() => setSelectedColor(color)}
+                          className={cn(
+                            "min-w-[80px] px-4 h-9 flex items-center justify-center rounded-full text-[8px] font-black uppercase tracking-widest transition-all border",
+                            selectedColor === color 
+                              ? "bg-foreground text-background border-foreground shadow-lg" 
+                              : "bg-transparent text-foreground border-foreground/10 hover:border-foreground/30"
+                          )}
+                        >
+                          {color}
+                        </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Size Selection */}
             <div className="mt-6 space-y-3 px-2">
                <div className="flex justify-between items-center">
@@ -389,7 +420,10 @@ export default function ProductDetailClient({ id }: { id: string }) {
                 </div>
                 <div className="flex flex-col">
                    <span className="text-[9px] font-black uppercase truncate max-w-[150px]">{product.name}</span>
-                   <span className="text-xs font-black text-brand-red">₹{product.price.toLocaleString()}</span>
+                   <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-brand-red">₹{product.price.toLocaleString()}</span>
+                      {selectedColor && <span className="text-[8px] font-bold text-muted-foreground uppercase">{selectedColor}</span>}
+                   </div>
                 </div>
              </div>
              <button 

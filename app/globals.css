@@ -19,8 +19,8 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
-  --font-sans: var(--font-bodoni);
-  --font-heading: var(--font-bodoni);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
   --font-mono: var(--font-mono);
 }
 
@@ -37,7 +37,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-bodoni), serif;
+  font-family: var(--font-inter), sans-serif;
 }
 
 h1,
@@ -46,7 +46,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-bodoni), serif;
+  font-family: var(--font-inter), sans-serif;
 }
 
 .no-scrollbar {
@@ -90,7 +90,7 @@ h6 {
 
 .glass-heading {
   @apply font-black tracking-tighter uppercase;
-  font-family: var(--font-bodoni);
+  font-family: var(--font-inter);
 }
 
 .wtflex-outline-text {

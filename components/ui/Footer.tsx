@@ -19,7 +19,7 @@ export default function Footer() {
                {settings.site_name || "THE DV27"}
              </h2>
              <p className="text-xs font-medium text-foreground/40 leading-relaxed uppercase tracking-widest max-w-[240px]">
-                 Providing premium streetwear for the bold and contemporary soul.
+                 {settings.tagline || "Providing premium streetwear for the bold and contemporary soul."}
              </p>
           </div>
           
@@ -64,7 +64,7 @@ export default function Footer() {
         </div>
         
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-12 border-t border-foreground/5 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20">
-          <p>© {new Date().getFullYear()} {settings.site_name || "DV27"}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {settings.copyright_text || `${settings.site_name || "DV27"}. All rights reserved.`}</p>
           <div className="flex gap-8">
               <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>

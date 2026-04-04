@@ -3,10 +3,9 @@ import { Product, Category, IProductService } from "@/types/product";
 import { fallback } from "@/utils/data";
 
 export class ProductService implements IProductService {
-    private defaultSupabase = createClient();
-
     private getClient(supabase?: any) {
-        return supabase || this.defaultSupabase;
+        if (supabase) return supabase;
+        return createClient();
     }
 
     async getProducts(supabase?: any): Promise<Product[]> {
@@ -14,7 +13,7 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("*, categories(name), product_variants(*)")
+                .select("*, categories(name), product_variants(*), product_images(*)")
                 .limit(64);
             if (error || !data || data.length === 0) {
                 return this.mapFallback(fallback);
@@ -30,7 +29,7 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("*, categories(name), product_variants(*)")
+                .select("*, categories(name), product_variants(*), product_images(*) ")
                 .eq("id", id)
                 .single();
             if (error || !data) throw error;
@@ -104,13 +103,11 @@ export class ProductService implements IProductService {
         try {
             const { data: catWithProds, error: joinError } = await client
                 .from("categories")
-                .select("id, name, slug, products!inner(id)");
+                .select("id, name, slug");
 
             if (joinError || !catWithProds) return [];
 
-            const uniqueCats = Array.from(new Map(catWithProds.map((c: any) => [c.id, c])).values());
-
-            return uniqueCats.map((c: any) => ({
+            return catWithProds.map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 slug: c.slug
@@ -119,7 +116,6 @@ export class ProductService implements IProductService {
             return [];
         }
     }
-
     async createCategory(name: string, slug: string, supabase?: any): Promise<Category | null> {
         const client = this.getClient(supabase);
         try {
@@ -147,7 +143,12 @@ export class ProductService implements IProductService {
             category_id: d.category_id || undefined,
             category_name: d.categories?.name || d.category || undefined,
             description: d.description || undefined,
-            variants: d.product_variants || []
+            variants: d.product_variants || [],
+            images: d.product_images
+                ? d.product_images
+                    .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+                    .map((img: any) => img.image_url)
+                : []
         }));
     }
 

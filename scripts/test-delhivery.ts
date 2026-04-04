@@ -1,9 +1,10 @@
-import { delhiveryService } from '../services/delhivery.service';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables from .env.local
+// Load environment variables from .env.local BEFORE importing services
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+import { delhiveryService } from '../services/delhivery.service';
 
 async function verifyDelhivery() {
     console.log('--- Testing Delhivery API ---');

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Bodoni_Moda, JetBrains_Mono } from "next/font/google";
+import { getStaticClient } from "@/utils/supabase/static";
+import { Inter, Bodoni_Moda, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import SignupPrompt from "@/components/SignupPrompt";
 import { CartProvider } from "@/components/cart/CartContext";
@@ -7,6 +8,11 @@ import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 const bodoniModa = Bodoni_Moda({
   variable: "--font-bodoni",
@@ -22,16 +28,14 @@ const jetbrainsMono = JetBrains_Mono({
 
 export async function generateMetadata() {
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    // Use revalidate instead of no-store for better performance
-    const res = await fetch(`${siteUrl}/api/settings`, { 
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    const staticClient = getStaticClient();
+    const { data: settingsData } = await staticClient.from('settings').select('*');
     
-    if (!res.ok) throw new Error('Failed to fetch settings');
+    const settings = settingsData?.reduce((acc: any, curr: any) => {
+        acc[curr.key] = curr.value;
+        return acc;
+    }, {}) || {};
     
-    const data = await res.json();
-    const settings = data.settings || {};
     const seo = settings.seo_meta || {};
     
     return {
@@ -62,7 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${bodoniModa.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${inter.variable} ${bodoniModa.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <SettingsProvider>
           <WishlistProvider>

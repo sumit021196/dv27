@@ -24,16 +24,10 @@ import { logout } from "@/app/(auth)/auth.actions";
 import { User as UserType } from "@supabase/supabase-js";
 import Image from "next/image";
 import Ticker from "./Ticker";
+import { productService } from "@/services/product.service";
+import { Category } from "@/types/product";
 
-const navLinks = [
-    { href: "/products", label: "Shop All" },
-    { href: "/products?category=new-arrivals", label: "New Arrivals" },
-    { href: "/products?category=topwear", label: "Topwear" },
-    { href: "/products?category=bottomwear", label: "Bottomwear" },
-    { href: "/products?category=outerwear", label: "Outerwear" },
-    { href: "/products?category=accessories", label: "Accessories" },
-    { href: "/products?category=sale", label: "Sale" },
-];
+
 
 import { useSettings } from "@/components/SettingsContext";
 
@@ -49,6 +43,7 @@ export default function Navbar() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [categories, setCategories] = useState<Category[]>([]);
     const router = useRouter();
     const supabase = createClient();
 
@@ -56,7 +51,7 @@ export default function Navbar() {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
 
-        const fetchUser = async () => {
+        const fetchInitialData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
             if (user) {
@@ -69,8 +64,16 @@ export default function Navbar() {
             } else {
                 setIsAdmin(false);
             }
+
+            // Fetch Categories
+            try {
+                const cats = await productService.getCategories();
+                setCategories(cats);
+            } catch (err) {
+                console.error("Failed to fetch nav categories", err);
+            }
         };
-        fetchUser();
+        fetchInitialData();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             const newUser = session?.user ?? null;
@@ -127,15 +130,29 @@ export default function Navbar() {
                             </button>
 
                             <nav className="hidden md:flex items-center gap-6">
-                                {navLinks.map(({ href, label }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70 hover:text-foreground transition-colors"
-                                    >
-                                        {label}
-                                    </Link>
-                                ))}
+                                <Link 
+                                    href="/products" 
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70 hover:text-foreground transition-colors"
+                                >
+                                    Shop All
+                                </Link>
+                                {categories
+                                    .filter(cat => cat.name.toLowerCase() !== 'sale')
+                                    .map((cat) => (
+                                        <Link
+                                            key={cat.id}
+                                            href={`/products?category=${cat.slug}`}
+                                            className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70 hover:text-foreground transition-colors"
+                                        >
+                                            {cat.name}
+                                        </Link>
+                                    ))}
+                                <Link 
+                                    href="/products?category=sale" 
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-red hover:text-brand-red transition-colors"
+                                >
+                                    Sale
+                                </Link>
                             </nav>
 
                             <button
@@ -296,16 +313,32 @@ export default function Navbar() {
                         </div>
 
                         <nav className="flex flex-col gap-8">
-                            {navLinks.map(({ href, label }) => (
-                                <Link
-                                    key={href}
-                                    href={href}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
-                                >
-                                    {label}
-                                </Link>
-                            ))}
+                           <Link
+                                href="/products"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
+                            >
+                                Shop All
+                            </Link>
+                            {categories
+                                .filter(cat => cat.name.toLowerCase() !== 'sale')
+                                .map((cat) => (
+                                    <Link
+                                        key={cat.id}
+                                        href={`/products?category=${cat.slug}`}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
+                                    >
+                                        {cat.name}
+                                    </Link>
+                                ))}
+                            <Link
+                                href="/products?category=sale"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="text-4xl font-black uppercase tracking-tighter text-brand-red hover:text-brand-red transition-colors"
+                            >
+                                Sale
+                            </Link>
                             <Link
                                 href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
                                 onClick={() => setMobileMenuOpen(false)}

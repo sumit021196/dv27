@@ -30,6 +30,8 @@ interface Settings {
     keywords?: string;
   };
   instagram_reels?: string[];
+  tagline?: string;
+  copyright_text?: string;
 }
 
 interface SettingsContextType {

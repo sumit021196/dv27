@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/server";
+import { getStaticClient } from "@/utils/supabase/static";
 
 export default async function CategoryGrid() {
-  const supabase = await createClient();
+  const supabase = getStaticClient();
   
   // Fetch top-level categories (parent_id is null)
   const { data: categories, error } = await supabase

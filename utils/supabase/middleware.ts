@@ -37,9 +37,17 @@ export const updateSession = async (request: NextRequest) => {
     },
   );
 
-  // refreshing the auth token
-  await supabase.auth.getUser()
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // supabase.auth.getUser(). A simple mistake can make it very hard to debug
+  // auth issues.
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // You can add centralized redirect logic here if needed, but for now we'll 
+  // just return the refreshed session response.
+  
   return supabaseResponse
 };
 

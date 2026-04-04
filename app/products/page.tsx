@@ -39,11 +39,8 @@ export default function ProductList() {
   }, []);
 
   const filtered = useMemo(() => {
-    let result = [...items];
-    if (activeCatId !== "all") {
-      result = result.filter((p) => p.category_id === activeCatId);
-    }
-    return result;
+    if (activeCatId === "all") return items;
+    return items.filter((p) => p.category_id === activeCatId);
   }, [items, activeCatId]);
 
   const visible = filtered.slice(0, page * pageSize);

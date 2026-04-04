@@ -1,9 +1,12 @@
 import { createClient } from '@/utils/supabase/client';
 
-const supabase = createClient();
-
 export const couponClientService = {
+  getClient() {
+    return createClient();
+  },
+
   async getAllCoupons() {
+    const supabase = this.getClient();
     const { data, error } = await supabase
       .from('coupons')
       .select('*')
@@ -13,6 +16,7 @@ export const couponClientService = {
   },
 
   async createCoupon(coupon: any) {
+    const supabase = this.getClient();
     const { data, error } = await supabase
       .from('coupons')
       .insert(coupon)
@@ -23,6 +27,7 @@ export const couponClientService = {
   },
 
   async updateCoupon(id: string, updates: any) {
+    const supabase = this.getClient();
     const { data, error } = await supabase
       .from('coupons')
       .update(updates)
@@ -34,6 +39,7 @@ export const couponClientService = {
   },
 
   async deleteCoupon(id: string) {
+    const supabase = this.getClient();
     const { error } = await supabase
       .from('coupons')
       .delete()

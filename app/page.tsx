@@ -3,7 +3,7 @@ import { productService } from "@/services/product.service";
 import Section from "@/components/Section";
 import ProductCard from "@/components/ProductCard";
 import HeroSection from "@/components/ui/HeroSection";
-import { createClient } from "@/utils/supabase/server";
+import { getStaticClient } from "@/utils/supabase/static";
 import Ticker from "@/components/ui/Ticker";
 import InstagramReels from "@/components/ui/InstagramReels";
 import ProductGrid from "@/components/ProductGrid";
@@ -12,12 +12,11 @@ import CategoryGrid from "@/components/CategoryGrid";
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function Page() {
-  const supabase = await createClient();
+  const supabase = getStaticClient();
   
   // Start fetches but don't await yet for sections we want to stream
-  const trendingPromise = productService.getTrendingProducts(8, supabase);
-  const newArrivalsPromise = productService.getNewArrivals(8, supabase);
-  const allProductsPromise = productService.getProductsForCards(12, supabase);
+  const trendingPromise = productService.getTrendingProducts(4, supabase);
+  const newArrivalsPromise = productService.getNewArrivals(4, supabase);
   
   // Critical data for initial render (Banner, Settings) - still await these
   const [res, { data: settingsData }] = await Promise.all([
@@ -37,37 +36,28 @@ export default async function Page() {
       <CategoryGrid />
 
       <Section
-        title="New Drops"
-        subtitle="Exclusive styles for the contemporary soul"
+        title={settings.section_new_drops_title || "New Drops"}
+        subtitle={settings.section_new_drops_subtitle || "Exclusive styles for the contemporary soul"}
         ctaHref="/products"
         ctaLabel="Shop the drop"
       >
-        <ProductGrid productsPromise={newArrivalsPromise} limit={8} />
+        <ProductGrid productsPromise={newArrivalsPromise} limit={4} />
       </Section>
 
       <InstagramReels />
 
       <Section
-        title="Trending"
-        subtitle="Pieces our community is loving"
+        title={settings.section_trending_title || "Trending"}
+        subtitle={settings.section_trending_subtitle || "Pieces our community is loving"}
         ctaHref="/products"
         ctaLabel="View all"
       >
         <div id="trending">
-            <ProductGrid productsPromise={trendingPromise} limit={8} />
+            <ProductGrid productsPromise={trendingPromise} limit={4} />
         </div>
       </Section>
 
       <Ticker className="my-12" />
-
-      <Section
-        title="Full Edit"
-        subtitle="Explore the complete collection"
-        ctaHref="/products"
-        ctaLabel="See all"
-      >
-        <ProductGrid productsPromise={allProductsPromise} limit={8} />
-      </Section>
 
     </main>
   );

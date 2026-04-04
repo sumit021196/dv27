@@ -26,6 +26,7 @@ export interface Product {
     category_name?: string;
     description?: string;
     variants?: ProductVariant[];
+    images?: string[];
 }
 
 export interface IProductService {

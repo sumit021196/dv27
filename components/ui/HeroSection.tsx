@@ -39,7 +39,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
         return (
             <section className="h-[85vh] lg:h-[95vh] flex items-center justify-center bg-background border-b border-foreground/5">
                 <div className="text-center space-y-8 px-6">
-                    <h1 className="text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
                         THE DROP
                     </h1>
                     <Link 
@@ -79,7 +79,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     <div className="absolute inset-0 z-20 flex items-center justify-center px-6 lg:px-12">
                         <div className={`max-w-[1440px] w-full text-center`}>
                             <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                                <h1 className="text-5xl md:text-8xl lg:text-[140px] font-black uppercase tracking-tight text-foreground leading-[0.85] filter drop-shadow-2xl">
+                                <h1 className="text-4xl md:text-6xl lg:text-8xl font-black uppercase tracking-tight text-foreground leading-[0.85] filter drop-shadow-2xl">
                                     {b.title}
                                 </h1>
                                 <p className="text-sm md:text-lg font-bold uppercase tracking-[0.25em] text-foreground/70 max-w-2xl mx-auto drop-shadow-lg">

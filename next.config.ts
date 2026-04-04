@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
         hostname: "**.supabase.co",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "**.cdninstagram.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.fbcdn.net",
+        pathname: "/**",
+      },
     ],
   },
   experimental: {

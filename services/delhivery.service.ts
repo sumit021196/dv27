@@ -26,18 +26,29 @@ export interface DelhiveryPincodeResponse {
 }
 
 export class DelhiveryService {
-    private apiToken: string | undefined;
     private baseUrl: string = 'https://track.delhivery.com';
     private pickupLocationName: string = 'Dinu waghade';
 
     constructor() {
-        this.apiToken = process.env.DELHIVERY_API_TOKEN;
+        // Token is now retrieved statically from environment at runtime
     }
 
     private getHeaders() {
+        const token = process.env.DELHIVERY_API_TOKEN?.trim();
+        
+        if (!token) {
+            console.error('DELHIVERY_API_TOKEN is missing in process.env. Please check your .env.local file.');
+        } else {
+            // Masked log to confirm token is being read without exposure
+            const masked = token.substring(0, 4) + "...." + token.substring(token.length - 4);
+            console.log(`[DEBUG] Using Delhivery Token: ${masked} (Length: ${token.length})`);
+        }
+
         return {
-            'Authorization': `Token ${this.apiToken}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         };
     }
 
@@ -91,7 +102,14 @@ export class DelhiveryService {
 
             return { serviceable: false, error: "Pincode not found in Delhivery records" };
         } catch (error: any) {
-            console.error('Delhivery Serviceability Error:', error.response?.data || error.message);
+            const errorData = error.response?.data;
+            console.error('Delhivery Serviceability Error:', JSON.stringify(errorData, null, 2) || error.message);
+            
+            // Helpful hint for the specific common Delhivery error
+            if (JSON.stringify(errorData).includes("Login or API Key Required")) {
+                console.warn("[HINT] Delhivery rejected your key. Ensure the Key in .env.local matches exactly.");
+            }
+            
             return { serviceable: false, error: "Failed to check serviceability" };
         }
     }
