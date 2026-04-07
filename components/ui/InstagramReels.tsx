@@ -116,23 +116,23 @@ export default function InstagramReels() {
     }
 
     return (
-        <section className="py-20 bg-background overflow-hidden font-inter">
-            <div className="max-w-[1440px] mx-auto px-6 lg:px-12 mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <section className="py-8 md:py-20 bg-background overflow-hidden font-inter">
+            <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 mb-6 md:mb-12 flex flex-col md:flex-row md:items-end justify-between gap-3 md:gap-6">
                 <div>
-                    <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-foreground leading-none">
+                    <h2 className="text-2xl md:text-7xl font-black uppercase tracking-tighter text-foreground leading-none">
                         The {settings.site_name || "DV27"} <span className="text-brand-accent">Flex</span>
                     </h2>
-                    <p className="mt-4 text-muted-foreground font-medium flex items-center gap-2">
-                        <Instagram size={16} /> @{settings.social_links?.instagram?.split('/').filter(Boolean).pop() || "thedv27"} • Our FlexFam is now 150k strong
+                    <p className="mt-2 md:mt-4 text-[10px] md:text-sm text-muted-foreground font-medium flex items-center gap-1 md:gap-2">
+                        <Instagram size={12} className="md:w-4 md:h-4" /> @{settings.social_links?.instagram?.split('/').filter(Boolean).pop() || "thedv27"} • Our FlexFam is now 150k strong
                     </p>
                 </div>
                 <a
                     href={settings.social_links?.instagram || "https://instagram.com/thedv27"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 font-black uppercase tracking-widest text-sm text-foreground hover:text-brand-accent transition-colors"
+                    className="group inline-flex items-center gap-1 md:gap-2 font-black uppercase tracking-[0.2em] md:tracking-widest text-[9px] md:text-sm text-foreground hover:text-brand-accent transition-colors"
                 >
-                    View All Reels <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                    View All Reels <ArrowRight size={14} className="md:w-[18px] md:h-[18px] group-hover:translate-x-2 transition-transform" />
                 </a>
             </div>
 
@@ -155,13 +155,13 @@ export default function InstagramReels() {
 
                 <div 
                     ref={containerRef}
-                    className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory px-6 lg:px-12 pb-8 scroll-smooth"
+                    className="flex gap-2 md:gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory px-4 md:px-6 lg:px-12 pb-4 md:pb-8 scroll-smooth"
                 >
                     {displayReels.map((reel: any, index: number) => {
                         return (
                             <div
                                 key={reel.id}
-                                className="flex-none w-[calc(50%-0.5rem)] md:w-[320px] aspect-[9/16] bg-muted/20 rounded-3xl overflow-hidden snap-center relative group/reel shadow-xl cursor-pointer"
+                                className="flex-none w-[calc(40%-0.5rem)] md:w-[320px] aspect-[9/16] bg-muted/20 rounded-xl md:rounded-3xl overflow-hidden snap-center relative group/reel shadow-xl cursor-pointer"
                                 onClick={() => window.open(reel.permalink, "_blank")}
                             >
                                 {reel.url.includes('.mp4') || reel.url.includes('cdninstagram.com') || reel.url.includes('scontent') ? (

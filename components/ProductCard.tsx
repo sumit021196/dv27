@@ -51,14 +51,14 @@ export default function ProductCard({ product }: { product: Product }) {
               image: product.mediaUrl,
             });
           }}
-          className={`absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 border ${wished
-              ? "bg-brand-accent border-brand-accent text-white scale-110 shadow-[0_0_15px_rgba(255,0,255,0.4)]"
-              : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background hover:scale-110"
+          className={`absolute top-2 right-2 md:top-4 md:right-4 flex h-7 w-7 md:h-10 md:w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 border ${wished
+              ? "bg-brand-accent border-brand-accent text-white md:scale-110 shadow-[0_0_15px_rgba(255,0,255,0.4)]"
+              : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background md:hover:scale-110"
             }`}
         >
           <Heart
-            size={18}
-            className={wished ? "fill-current" : ""}
+            size={14}
+            className={`md:w-[18px] md:h-[18px] ${wished ? "fill-current" : ""}`}
           />
         </button>
 
@@ -75,27 +75,27 @@ export default function ProductCard({ product }: { product: Product }) {
       </div>
 
       {/* Info Section */}
-      <div className="py-4 md:py-6 flex flex-col items-center text-center gap-1.5 px-2">
+      <div className="py-2 md:py-6 flex flex-col items-center text-center gap-1 md:gap-1.5 px-1 md:px-2">
         <Link href={`/product/${product.id}`} className="block w-full">
-          <h3 className="text-sm font-medium text-foreground/70 line-clamp-1 group-hover:text-foreground transition-colors duration-300">
+          <h3 className="text-[11px] md:text-sm font-medium text-foreground/70 line-clamp-1 group-hover:text-foreground transition-colors duration-300">
             {product.name}
           </h3>
-          <div className="flex items-center justify-center gap-2 mt-1">
-              <span className="text-base md:text-xl font-bold text-foreground">
+          <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-0.5 md:mt-1">
+              <span className="text-sm md:text-xl font-bold text-foreground">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
               {/* Optional: Add a fake old price for the 'sale' look if desired */}
-              <span className="text-[10px] font-bold text-foreground/20 line-through">
+              <span className="text-[8px] md:text-[10px] font-bold text-foreground/20 line-through">
                 ₹{(product.price * 1.2).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
               </span>
           </div>
         </Link>
         
         {/* Mobile Action (Visible only on mobile) */}
-        <div className="w-full mt-2 md:hidden">
+        <div className="w-full mt-1.5 md:hidden">
              <Link 
                 href={`/product/${product.id}`}
-                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground active:bg-foreground active:text-background transition-all"
+                className="flex items-center justify-center w-full py-1.5 border border-foreground/10 text-[9px] font-semibold tracking-tight text-foreground active:bg-foreground active:text-background transition-all"
              >
                 View
              </Link>

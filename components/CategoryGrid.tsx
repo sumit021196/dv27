@@ -15,14 +15,14 @@ export default async function CategoryGrid() {
   }
 
   return (
-    <section className="py-6 md:py-12 bg-background">
+    <section className="py-4 md:py-12 bg-background">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 md:gap-6">
           {categories.map((category) => (
             <Link 
               key={category.id} 
               href={`/products?category=${category.slug}`}
-              className="group relative aspect-square overflow-hidden rounded-lg bg-muted border border-foreground/5 shadow-sm"
+              className="group relative aspect-[4/5] sm:aspect-square overflow-hidden rounded-md sm:rounded-lg bg-muted border border-foreground/5 shadow-sm"
             >
               <Image
                 src={category.image_url || "/placeholder-category.png"}
