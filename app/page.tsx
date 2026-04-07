@@ -28,7 +28,7 @@ export default async function Page() {
   const settings = settingsData?.reduce((acc: any, curr: any) => {
     acc[curr.key] = curr.value;
     return acc;
-  }, {});
+  }, {}) || {};
   
   return (
     <main className="bg-background min-h-screen text-foreground transition-colors duration-500">

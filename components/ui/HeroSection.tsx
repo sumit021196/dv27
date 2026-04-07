@@ -26,7 +26,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     // Prevent hydration mismatch by returning a consistent placeholder or skeleton
     if (!mounted) {
         return (
-            <section className="h-[85vh] lg:h-[95vh] w-full bg-background flex items-center justify-center">
+            <section className="h-[calc(100dvh-7rem)] lg:h-[calc(100vh-7rem)] w-full bg-background flex items-center justify-center">
                 <div className="animate-pulse space-y-4">
                     <div className="h-12 w-64 bg-foreground/5 rounded" />
                 </div>
@@ -37,7 +37,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     if (activeBanners.length === 0) {
         // Fallback if no banners defined
         return (
-            <section className="h-[85vh] lg:h-[95vh] flex items-center justify-center bg-background border-b border-foreground/5">
+            <section className="h-[calc(100dvh-7rem)] lg:h-[calc(100vh-7rem)] flex items-center justify-center bg-background border-b border-foreground/5">
                 <div className="text-center space-y-8 px-6">
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
                         THE DROP
@@ -55,7 +55,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     }
 
     return (
-        <section className="relative h-[85vh] lg:h-[95vh] w-full overflow-hidden bg-background">
+        <section className="relative h-[calc(100dvh-7rem)] lg:h-[calc(100vh-7rem)] w-full overflow-hidden bg-background">
             {activeBanners.map((b, idx) => (
                 <div 
                     key={b.id || idx} 
