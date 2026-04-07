@@ -37,16 +37,16 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     if (activeBanners.length === 0) {
         // Fallback if no banners defined
         return (
-            <section className="h-[calc(100dvh-7rem)] lg:h-[calc(100vh-7rem)] flex items-center justify-center bg-background border-b border-foreground/5">
-                <div className="text-center space-y-8 px-6">
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
+            <section className="h-[calc(100dvh-5rem)] lg:h-[calc(100vh-7rem)] flex items-center justify-center bg-background border-b border-foreground/5">
+                <div className="text-center space-y-4 md:space-y-8 px-4 md:px-6">
+                    <h1 className="text-4xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
                         THE DROP
                     </h1>
                     <Link 
                         href="/products" 
-                        className="inline-flex items-center justify-center gap-3 px-12 py-5 bg-foreground text-background font-black uppercase tracking-widest text-sm hover:bg-brand-accent transition-all animate-in slide-in-from-bottom-4 duration-1000 delay-300"
+                        className="inline-flex items-center justify-center gap-2 md:gap-3 px-6 py-3 md:px-12 md:py-5 bg-foreground text-background font-black uppercase tracking-widest text-xs md:text-sm hover:bg-brand-accent transition-all animate-in slide-in-from-bottom-4 duration-1000 delay-300"
                     >
-                        <ShoppingBag size={20} />
+                        <ShoppingBag size={16} className="md:w-5 md:h-5" />
                         Shop the Collection
                     </Link>
                 </div>
@@ -55,7 +55,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     }
 
     return (
-        <section className="relative h-[calc(100dvh-7rem)] lg:h-[calc(100vh-7rem)] w-full overflow-hidden bg-background">
+        <section className="relative h-[calc(100dvh-5rem)] lg:h-[calc(100vh-7rem)] w-full overflow-hidden bg-background">
             {activeBanners.map((b, idx) => (
                 <div 
                     key={b.id || idx} 
@@ -76,22 +76,22 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     </div>
 
                     {/* Content Overlay */}
-                    <div className="absolute inset-0 z-20 flex items-center justify-center px-6 lg:px-12">
+                    <div className="absolute inset-0 z-20 flex items-center justify-center px-4 md:px-6 lg:px-12">
                         <div className={`max-w-[1440px] w-full text-center`}>
-                            <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                                <h1 className="text-4xl md:text-6xl lg:text-8xl font-black uppercase tracking-tight text-foreground leading-[0.85] filter drop-shadow-2xl">
+                            <div className="space-y-3 md:space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-12 duration-1000">
+                                <h1 className="text-3xl md:text-6xl lg:text-8xl font-black uppercase tracking-tight text-foreground leading-[0.85] filter drop-shadow-2xl">
                                     {b.title}
                                 </h1>
-                                <p className="text-sm md:text-lg font-bold uppercase tracking-[0.25em] text-foreground/70 max-w-2xl mx-auto drop-shadow-lg">
+                                <p className="text-xs md:text-lg font-bold uppercase tracking-[0.25em] text-foreground/70 max-w-2xl mx-auto drop-shadow-lg">
                                     {b.subtitle}
                                 </p>
 
-                                <div className="flex flex-col sm:flex-row gap-4 pt-8 justify-center items-center">
+                                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-8 justify-center items-center">
                                     <Link
                                         href={b.link_url || '/products'}
-                                        className="inline-flex items-center justify-center gap-3 px-12 py-5 bg-foreground text-background font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-brand-accent hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl"
+                                        className="inline-flex items-center justify-center gap-2 md:gap-3 px-6 py-3 md:px-12 md:py-5 bg-foreground text-background font-black uppercase tracking-widest text-[10px] sm:text-sm hover:bg-brand-accent hover:text-white transition-all transform hover:-translate-y-1 active:scale-95 shadow-2xl"
                                     >
-                                        <ShoppingBag size={20} />
+                                        <ShoppingBag size={16} className="md:w-5 md:h-5" />
                                         {b.cta_text || 'Shop the Drop'}
                                     </Link>
                                 </div>
@@ -103,14 +103,14 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
 
             {/* Pagination Line Indicators */}
             {activeBanners.length > 1 && (
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 flex gap-4">
+                <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 z-30 flex gap-2 md:gap-4">
                     {activeBanners.map((_, idx) => (
                         <button 
                             key={idx}
                             onClick={() => setCurrentIndex(idx)}
-                            className="group relative py-4"
+                            className="group relative py-2 md:py-4"
                         >
-                            <div className={`h-[2px] transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-16 bg-foreground' : 'w-6 bg-foreground/20 group-hover:bg-foreground/40'}`} />
+                            <div className={`h-[2px] transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-8 md:w-16 bg-foreground' : 'w-4 md:w-6 bg-foreground/20 group-hover:bg-foreground/40'}`} />
                         </button>
                     ))}
                 </div>

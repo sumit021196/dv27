@@ -114,7 +114,7 @@ export default function Navbar() {
             <div className="fixed inset-x-0 top-0 z-[60]">
                 <Ticker />
                 <header
-                    className={`transition-all duration-300 bg-background/80 backdrop-blur-xl border-b border-foreground/5 ${isScrolled ? "h-14" : "h-16"}`}
+                    className={`transition-all duration-300 bg-background/80 backdrop-blur-xl border-b border-foreground/5 ${isScrolled ? "h-12 md:h-14" : "h-14 md:h-16"}`}
                 >
                     <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-12">
 
@@ -171,7 +171,7 @@ export default function Navbar() {
                                     alt={settings.site_name || "DV27"}
                                     width={120}
                                     height={40}
-                                    className="h-8 sm:h-10 w-auto animate-logo-flip"
+                                    className="h-6 sm:h-10 w-auto animate-logo-flip"
                                     priority
                                 />
                             </Link>
@@ -364,7 +364,7 @@ export default function Navbar() {
             )}
 
             {/* Spacer for fixed header (Ticker + Navbar) */}
-            <div className={`transition-all duration-300 ${isScrolled ? "h-24" : "h-28"}`} />
+            <div className={`transition-all duration-300 ${isScrolled ? "h-20 md:h-24" : "h-20 md:h-28"}`} />
         </>
     );
 }

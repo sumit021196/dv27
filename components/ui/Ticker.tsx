@@ -20,26 +20,26 @@ export default function Ticker({ text, speed = 30, className = "" }: TickerProps
   const messages = tickerText.split('•').map(m => m.trim());
 
   return (
-    <div className={`overflow-hidden bg-black py-2 border-y border-white/10 ${className}`}>
+    <div className={`overflow-hidden bg-black py-1 sm:py-2 border-y border-white/10 ${className}`}>
       <div className="flex animate-ticker whitespace-nowrap w-max">
-        <div className="flex items-center gap-8 px-4">
+        <div className="flex items-center gap-4 sm:gap-8 px-4">
           {messages.map((m, i) => (
-            <span key={i} className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-white">
+            <span key={i} className="text-[8px] sm:text-xs font-black uppercase tracking-[0.2em] text-white">
               {m}
-              {i < messages.length - 1 && <span className="ml-8 text-brand-accent">•</span>}
+              {i < messages.length - 1 && <span className="ml-4 sm:ml-8 text-brand-accent">•</span>}
             </span>
           ))}
-          <span className="ml-8 text-brand-accent">•</span>
+          <span className="ml-4 sm:ml-8 text-brand-accent">•</span>
         </div>
         {/* Duplicate for seamless scrolling */}
-        <div className="flex items-center gap-8 px-4">
+        <div className="flex items-center gap-4 sm:gap-8 px-4">
           {messages.map((m, i) => (
-            <span key={`dup-${i}`} className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-white">
+            <span key={`dup-${i}`} className="text-[8px] sm:text-xs font-black uppercase tracking-[0.2em] text-white">
               {m}
-              {i < messages.length - 1 && <span className="ml-8 text-brand-accent">•</span>}
+              {i < messages.length - 1 && <span className="ml-4 sm:ml-8 text-brand-accent">•</span>}
             </span>
           ))}
-          <span className="ml-8 text-brand-accent">•</span>
+          <span className="ml-4 sm:ml-8 text-brand-accent">•</span>
         </div>
       </div>
     </div>
