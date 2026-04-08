@@ -314,7 +314,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
             {/* Content Tabs */}
             <div className="mt-8 border-t border-foreground/5">
                 <div className="flex border-b border-foreground/5">
-                   {["description", "details", "exchange policy"].map((tab) => (
+                   {["description", "details", "return policy"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -382,17 +382,17 @@ export default function ProductDetailClient({ id }: { id: string }) {
                             </div>
                          )}
                          
-                         {activeTab === "exchange policy" && (
+                         {activeTab === "return policy" && (
                             <div className="space-y-4">
-                               <p className="bg-muted/40 p-2.5 rounded-lg text-foreground/50 border border-foreground/5">Hassle-free 7-day exchange window for all unworn garments with original tags.</p>
+                               <p className="bg-muted/40 p-2.5 rounded-lg text-foreground/50 border border-foreground/5">Returns within 48 hours for defects or damage. Mandatory unboxing video required.</p>
                                <div className="flex flex-col gap-2.5">
                                   <div className="flex items-center gap-2.5">
-                                     <Truck size={12} className="text-brand-accent" />
-                                     <span>Free reverse pick-up</span>
+                                     <ShieldCheck size={12} className="text-brand-accent" />
+                                     <span>Strict Quality Check</span>
                                   </div>
                                   <div className="flex items-center gap-2.5">
                                      <RefreshCw size={12} className="text-brand-accent" />
-                                     <span>Quick QC & Reshipment</span>
+                                     <span>5-7 Days Refund Processing</span>
                                   </div>
                                </div>
                             </div>

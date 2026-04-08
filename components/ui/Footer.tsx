@@ -36,7 +36,7 @@ export default function Footer() {
              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">Support</h4>
              <nav className="flex flex-col gap-4">
                 <Link href="/shipping" className="text-xs font-bold text-foreground/40 hover:text-foreground uppercase tracking-widest transition-colors">Shipping & Delivery</Link>
-                <Link href="/returns" className="text-xs font-bold text-foreground/40 hover:text-foreground uppercase tracking-widest transition-colors">Exchange & Returns</Link>
+                <Link href="/returns" className="text-xs font-bold text-foreground/40 hover:text-foreground uppercase tracking-widest transition-colors">Return Policy</Link>
                 <Link href="/track" className="text-xs font-bold text-foreground/40 hover:text-foreground uppercase tracking-widest transition-colors">Track Order</Link>
              </nav>
           </div>
