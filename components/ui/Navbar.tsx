@@ -91,7 +91,7 @@ export default function Navbar() {
 
         fetchInitialData();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
             const newUser = session?.user ?? null;
             setUser(newUser);
             
