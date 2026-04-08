@@ -25,11 +25,15 @@ import { User as UserType } from "@supabase/supabase-js";
 import Image from "next/image";
 import Ticker from "./Ticker";
 import { productService } from "@/services/product.service";
-import { Category } from "@/types/product";
+import { Category, Product } from "@/types/product";
+import { ChevronRight, ArrowLeft } from "lucide-react";
 
 
 
 import { useSettings } from "@/components/SettingsContext";
+
+// Cache navigation data to prevent redundant fetches across session
+let navDataCache: { categories: any[], recent: any[] } | null = null;
 
 export default function Navbar() {
     const { settings } = useSettings();
@@ -44,52 +48,73 @@ export default function Navbar() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [categories, setCategories] = useState<Category[]>([]);
+    const [recentProducts, setRecentProducts] = useState<Product[]>([]);
+    const [menuStep, setMenuStep] = useState<'main' | 'categories'>('main');
     const router = useRouter();
     const supabase = createClient();
 
+    // Initial Data Fetch & Auth Listener
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
 
         const fetchInitialData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-            if (user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('is_admin')
-                    .eq('id', user.id)
-                    .single();
-                setIsAdmin(!!profile?.is_admin);
-            } else {
-                setIsAdmin(false);
-            }
-
-            // Fetch Categories
             try {
-                const cats = await productService.getCategories();
-                setCategories(cats);
+                // 1. Auth Sync
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+                if (currentUser) {
+                    setUser(currentUser);
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('is_admin')
+                        .eq('id', currentUser.id)
+                        .single();
+                    setIsAdmin(!!profile?.is_admin);
+                }
+
+                // 2. Data Cache Handling
+                if (!navDataCache) {
+                    const [cats, recent] = await Promise.all([
+                        productService.getCategories(),
+                        productService.getNewArrivals(6)
+                    ]);
+                    navDataCache = { categories: cats, recent };
+                }
+                
+                setCategories(navDataCache.categories);
+                setRecentProducts(navDataCache.recent);
+
             } catch (err) {
-                console.error("Failed to fetch nav categories", err);
+                console.error("Failed to fetch nav data", err);
             }
         };
+
         fetchInitialData();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             const newUser = session?.user ?? null;
             setUser(newUser);
-            if (newUser) {
+            
+            if (event === 'SIGNED_IN' && newUser) {
                 const { data: profile } = await supabase
                     .from('profiles')
                     .select('is_admin')
                     .eq('id', newUser.id)
                     .single();
                 setIsAdmin(!!profile?.is_admin);
-            } else {
+            } else if (event === 'SIGNED_OUT') {
                 setIsAdmin(false);
             }
         });
 
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            subscription.unsubscribe();
+        };
+    }, []); // Only run on mount
+
+    // Click Outside Handling
+    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
             if (profileOpen && !target.closest('.profile-container')) {
@@ -97,14 +122,14 @@ export default function Navbar() {
             }
         };
 
-        window.addEventListener("mousedown", handleClickOutside);
+        if (profileOpen) {
+            window.addEventListener("mousedown", handleClickOutside);
+        }
 
         return () => {
-            window.removeEventListener("scroll", handleScroll);
             window.removeEventListener("mousedown", handleClickOutside);
-            subscription.unsubscribe();
         };
-    }, [supabase.auth, profileOpen]);
+    }, [profileOpen]);
 
     if (pathname.startsWith('/admin')) return null;
     const totalItems = cart.items.reduce((acc, current) => acc + current.qty, 0);
@@ -179,7 +204,7 @@ export default function Navbar() {
 
                         {/* Right: Actions */}
                         <div className="flex items-center justify-end gap-2 sm:gap-4 flex-1">
-                            <div className="relative profile-container">
+                            <div className="hidden md:block relative profile-container">
                                 {user ? (
                                     <>
                                         <button
@@ -256,7 +281,7 @@ export default function Navbar() {
                             >
                                 <ShoppingBag size={22} />
                                 {totalItems > 0 && (
-                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[9px] font-black text-black">
+                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[9px] font-black text-white">
                                         {totalItems}
                                     </span>
                                 )}
@@ -305,59 +330,178 @@ export default function Navbar() {
 
             {/* Mobile Nav Overlay */}
             {mobileMenuOpen && (
-                <div className="fixed inset-0 z-[70] bg-background md:hidden animate-in slide-in-from-left duration-300">
-                    <div className="p-6 h-full flex flex-col">
-                        <div className="flex items-center justify-between mb-12 perspective-1000">
-                            <Image src="/logo.svg" alt="DV27" width={100} height={30} className="h-8 w-auto animate-logo-flip" />
-                            <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-foreground"><X size={30} /></button>
+                <div className="fixed inset-0 z-[70] bg-background md:hidden animate-in slide-in-from-left duration-500">
+                    <div className="flex flex-col h-full relative overflow-hidden">
+                        
+                        {/* Header */}
+                        <div className="p-6 flex items-center justify-between border-b border-foreground/5 bg-background/80 backdrop-blur-md sticky top-0 z-10">
+                            <div className="flex items-center gap-3">
+                                {menuStep !== 'main' && (
+                                    <button 
+                                        onClick={() => setMenuStep('main')}
+                                        className="p-2 -ml-2 text-foreground/50 hover:text-foreground transition-colors"
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                )}
+                                <Image src="/logo.svg" alt="DV27" width={80} height={24} className="h-6 w-auto animate-logo-flip" />
+                            </div>
+                            <button onClick={() => {
+                                setMobileMenuOpen(false);
+                                setTimeout(() => setMenuStep('main'), 300);
+                            }} className="p-2 text-foreground/50 hover:text-foreground">
+                                <X size={24} />
+                            </button>
                         </div>
 
-                        <nav className="flex flex-col gap-8">
-                           <Link
-                                href="/products"
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
-                            >
-                                Shop All
-                            </Link>
-                            {categories
-                                .filter(cat => cat.name.toLowerCase() !== 'sale')
-                                .map((cat) => (
+                        {/* Wizard Content */}
+                        <div className="flex-1 overflow-y-auto px-6 py-8">
+                            <div className="relative h-full">
+                                {/* Step 1: Main Menu */}
+                                <div className={`transition-all duration-500 flex flex-col gap-2 ${menuStep === 'main' ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
+                                    <div className="mb-4">
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4">Navigation</p>
+                                        <div className="grid gap-2">
+                                            <Link
+                                                href="/products"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all"
+                                            >
+                                                <span className="text-xl font-black uppercase tracking-tight text-foreground">Explore All</span>
+                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                            </Link>
+                                            
+                                            <button
+                                                onClick={() => setMenuStep('categories')}
+                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all text-left"
+                                            >
+                                                <span className="text-xl font-black uppercase tracking-tight text-foreground">Categories</span>
+                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                            </button>
+
+                                            <Link
+                                                href="/products?category=sale"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xl font-black uppercase tracking-tight text-foreground">Archive Sale</span>
+                                                    <span className="px-2 py-0.5 bg-brand-red text-[8px] font-black text-white rounded-full animate-pulse uppercase tracking-widest">Sale</span>
+                                                </div>
+                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                            </Link>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-8">
+                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4">Account</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Link
+                                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="flex flex-col gap-3 p-4 bg-foreground/[0.03] rounded-2xl hover:bg-foreground/[0.06] transition-all"
+                                            >
+                                                <User size={20} className="text-foreground/40" />
+                                                <span className="text-xs font-black uppercase tracking-widest text-foreground">
+                                                    {user ? (isAdmin ? "Admin" : "Profile") : "Login"}
+                                                </span>
+                                            </Link>
+                                            <Link
+                                                href="/profile?tab=orders"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="flex flex-col gap-3 p-4 bg-foreground/[0.03] rounded-2xl hover:bg-foreground/[0.06] transition-all"
+                                            >
+                                                <Package size={20} className="text-foreground/40" />
+                                                <span className="text-xs font-black uppercase tracking-widest text-foreground">Orders</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Step 2: Categories */}
+                                <div className={`transition-all duration-500 flex flex-col gap-2 ${menuStep === 'categories' ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
+                                    <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4 text-center">Select Category</p>
+                                    <div className="grid gap-2">
+                                        {categories
+                                            .filter(cat => cat.name.toLowerCase() !== 'sale')
+                                            .map((cat) => (
+                                                <Link
+                                                    key={cat.id}
+                                                    href={`/products?category=${cat.slug}`}
+                                                    onClick={() => {
+                                                        setMobileMenuOpen(false);
+                                                        setMenuStep('main');
+                                                    }}
+                                                    className="flex items-center justify-between p-4 border border-foreground/5 hover:border-foreground/20 rounded-2xl transition-all group"
+                                                >
+                                                    <span className="text-lg font-bold text-foreground/70 group-hover:text-foreground transition-colors uppercase tracking-tight">{cat.name}</span>
+                                                    <ChevronRight size={16} className="text-foreground/10 group-hover:text-foreground/40" />
+                                                </Link>
+                                            ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Products Footer */}
+                        <div className="mt-auto bg-foreground/[0.02] border-t border-foreground/5 p-6 pb-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
+                                <Link 
+                                    href="/products" 
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="text-[10px] font-bold text-brand-accent uppercase tracking-widest hover:underline"
+                                >
+                                    View All
+                                </Link>
+                            </div>
+                            
+                            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2 snap-x">
+                                {recentProducts.map((product) => (
                                     <Link
-                                        key={cat.id}
-                                        href={`/products?category=${cat.slug}`}
+                                        key={product.id}
+                                        href={`/product/${product.id}`}
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
+                                        className="flex-shrink-0 w-32 snap-start group"
                                     >
-                                        {cat.name}
+                                        <div className="aspect-[4/5] rounded-xl overflow-hidden bg-foreground/5 mb-2 relative border border-foreground/5 group-hover:border-foreground/20 transition-all">
+                                            {product.media_url ? (
+                                                <Image 
+                                                    src={product.media_url} 
+                                                    alt={product.name} 
+                                                    fill 
+                                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-foreground/10">NO IMAGE</div>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] font-bold text-foreground/80 truncate uppercase tracking-tight">{product.name}</p>
+                                        <p className="text-[9px] font-black text-brand-accent">₹{product.price}</p>
                                     </Link>
                                 ))}
-                            <Link
-                                href="/products?category=sale"
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="text-4xl font-black uppercase tracking-tighter text-brand-red hover:text-brand-red transition-colors"
-                            >
-                                Sale
-                            </Link>
-                            <Link
-                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="text-4xl font-black uppercase tracking-tighter text-foreground hover:text-brand-accent transition-colors"
-                            >
-                                {user ? (isAdmin ? "Admin" : "Profile") : "Account"}
-                            </Link>
-                        </nav>
+                                {recentProducts.length === 0 && (
+                                    <div className="flex gap-4">
+                                        {[1,2,3].map(i => (
+                                            <div key={i} className="w-32 h-40 bg-foreground/5 animate-pulse rounded-xl" />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
-                        <div className="mt-auto pb-12">
-                            <button
-                                onClick={() => {
-                                    cart.clear();
-                                    logout();
-                                }}
-                                className="w-full py-4 bg-foreground text-background font-black uppercase tracking-widest text-sm"
-                            >
-                                Logout
-                            </button>
+                            {user && (
+                                <button
+                                    onClick={async () => {
+                                        cart.clear();
+                                        await logout();
+                                        setMobileMenuOpen(false);
+                                        router.push('/');
+                                    }}
+                                    className="mt-6 w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] text-red-500 bg-red-500/5 hover:bg-red-500/10 rounded-2xl transition-all border border-red-500/10"
+                                >
+                                    Logout Account
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

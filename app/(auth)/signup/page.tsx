@@ -4,11 +4,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signup } from "../auth.actions";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Loader2, Sparkles, Smartphone, Mail } from "lucide-react";
+import PhoneAuth from "@/components/auth/PhoneAuth";
 
 export default function SignupPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
 
     async function handleSubmit(formData: FormData) {
         setLoading(true);
@@ -35,78 +37,99 @@ export default function SignupPage() {
                     </p>
                 </div>
 
-                <form action={handleSubmit} className="mt-8 space-y-6">
-                    {error && (
-                        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
-                            {error}
-                        </div>
-                    )}
-                    <div className="space-y-4">
-                        <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                                Full Name
-                            </label>
-                            <input
-                                id="fullName"
-                                name="fullName"
-                                type="text"
-                                required
-                                className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
-                                placeholder="John Doe"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email address
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
-                                placeholder="you@example.com"
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                                Password
-                            </label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
-                                placeholder="••••••••"
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition disabled:opacity-70"
+                <div className="flex p-1 bg-gray-100 rounded-2xl mb-8">
+                    <button 
+                        onClick={() => setAuthMethod("email")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'email' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        {loading ? (
-                            <Loader2 className="animate-spin h-5 w-5" />
-                        ) : (
-                            <>
-                                Create account
-                                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                            </>
-                        )}
+                        <Mail className="h-4 w-4" />
+                        Email
                     </button>
+                    <button 
+                        onClick={() => setAuthMethod("phone")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'phone' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Smartphone className="h-4 w-4" />
+                        Mobile
+                    </button>
+                </div>
 
-                    <div className="text-center text-sm">
-                        <span className="text-gray-500">Already have an account? </span>
-                        <Link href="/login" className="font-bold text-black hover:underline underline-offset-4">
-                            Log in
-                        </Link>
-                    </div>
-                </form>
+                {authMethod === "email" ? (
+                    <form action={handleSubmit} className="space-y-6">
+                        {error && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                                {error}
+                            </div>
+                        )}
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="fullName"
+                                    name="fullName"
+                                    type="text"
+                                    required
+                                    className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                    Email address
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                                    placeholder="you@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required
+                                    className="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent transition"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition disabled:opacity-70"
+                        >
+                            {loading ? (
+                                <Loader2 className="animate-spin h-5 w-5" />
+                            ) : (
+                                <>
+                                    Create account
+                                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+                ) : (
+                    <PhoneAuth mode="signup" />
+                )}
+
+                <div className="text-center text-sm mt-8">
+                    <span className="text-gray-500">Already have an account? </span>
+                    <Link href="/login" className="font-bold text-black hover:underline underline-offset-4">
+                        Log in
+                    </Link>
+                </div>
             </div>
         </div>
     );

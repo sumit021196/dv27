@@ -18,6 +18,7 @@ export interface Product {
     id: string | number;
     name: string;
     price: number;
+    original_price?: number;
     media_url?: string;
     created_at?: string;
     size?: string;
@@ -27,6 +28,7 @@ export interface Product {
     description?: string;
     variants?: ProductVariant[];
     images?: string[];
+    details?: Record<string, string>;
 }
 
 export interface IProductService {

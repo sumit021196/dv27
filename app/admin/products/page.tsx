@@ -11,7 +11,7 @@ export default function AdminProductsPage() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-    const pageSize = 5;
+    const pageSize = 10;
 
     useEffect(() => {
         async function loadProducts() {
@@ -53,120 +53,149 @@ export default function AdminProductsPage() {
     const hasMore = visibleProducts.length < products.length;
 
     return (
-        <div className="space-y-6 pb-12">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col h-full min-h-0">
+            {/* Page Header - Fixed */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 flex-shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl flex items-center gap-2">
-                        <Package className="text-blue-600" />
+                    <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl flex items-center gap-2">
+                        <Package className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Products
                     </h1>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Manage your store catalog and inventory. Total: {products.length}
+                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                        {products.length} items in catalog
                     </p>
                 </div>
 
                 <Link
                     href="/admin/products/add"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-md active:scale-95"
                 >
                     <Plus size={18} />
                     Add Product
                 </Link>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {loading ? (
-                    <div className="p-12 text-center flex flex-col justify-center items-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
-                        <span className="text-gray-500 font-medium">Fetching catalog...</span>
-                    </div>
-                ) : products.length === 0 ? (
-                    <div className="p-12 text-center text-gray-500">
-                        <Package size={48} className="mx-auto text-gray-300 mb-4" />
-                        <p className="text-lg font-medium text-gray-900">No products found</p>
-                        <p className="mt-1">Add your first product to get started.</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+            {/* Content Area - Scrollable */}
+            <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    {loading ? (
+                        <div className="h-full flex flex-col justify-center items-center p-12">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
+                            <span className="text-gray-500 font-medium">Fetching catalog...</span>
+                        </div>
+                    ) : products.length === 0 ? (
+                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-500">
+                            <Package size={48} className="mx-auto text-gray-300 mb-4" />
+                            <p className="text-lg font-medium text-gray-900">No products found</p>
+                            <p className="mt-1">Add your first product to get started.</p>
+                        </div>
+                    ) : (
+                        <div>
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50 sticky top-0 z-10">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {visibleProducts.map((product) => (
+                                            <ProductRow key={product.id} product={product} isDeleting={isDeleting === String(product.id)} onDelete={handleDelete} />
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden divide-y divide-gray-100">
                                 {visibleProducts.map((product) => (
-                                    <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${isDeleting === String(product.id) ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
-                                                    {product.media_url ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img className="h-full w-full object-cover" src={product.media_url} alt={product.name} />
-                                                    ) : (
-                                                        <div className="h-full w-full flex items-center justify-center text-gray-400">
-                                                            <Package size={20} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="ml-4 flex-1 overflow-hidden">
-                                                    <div className="text-sm font-medium text-gray-900 truncate max-w-[200px] sm:max-w-xs">{product.name}</div>
-                                                    <div className="text-xs text-gray-500 mt-0.5">ID: {product.id}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">₹{product.price}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="px-2.5 py-1 inline-flex text-[11px] leading-5 font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                                                {product.category_name || "Uncategorized"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-3">
-                                                <Link 
-                                                    href={`/admin/products/add?id=${product.id}`}
-                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                    title="Edit Product"
-                                                >
-                                                    <Pencil size={18} />
-                                                </Link>
-                                                <button 
-                                                    onClick={() => handleDelete(product.id)}
-                                                    disabled={isDeleting === String(product.id)}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-                                                    title="Delete Product"
-                                                >
-                                                    {isDeleting === String(product.id) ? (
-                                                        <Loader2 size={18} className="animate-spin text-red-500" />
-                                                    ) : (
-                                                        <Trash2 size={18} />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <ProductCard key={product.id} product={product} isDeleting={isDeleting === String(product.id)} onDelete={handleDelete} />
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                            </div>
+
+                            {hasMore && (
+                                <div className="p-4 flex justify-center sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                                    <button 
+                                        onClick={() => setPage(p => p + 1)}
+                                        className="px-6 py-2 bg-blue-50 text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-100 transition-colors"
+                                    >
+                                        Load More ({products.length - visibleProducts.length})
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
-            
-            {hasMore && (
-                <div className="flex justify-center pt-4">
-                    <button 
-                        onClick={() => setPage(p => p + 1)}
-                        className="px-6 py-2.5 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-xl transition-all shadow-sm"
-                    >
-                        Load More Products ({products.length - visibleProducts.length} left)
+        </div>
+    );
+}
+
+function ProductRow({ product, isDeleting, onDelete }: { product: Product, isDeleting: boolean, onDelete: (id: string | number) => void }) {
+    return (
+        <tr className={`hover:bg-gray-50 transition-colors ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
+            <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center">
+                    <div className="h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 relative">
+                        {product.media_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img className="h-full w-full object-cover" src={product.media_url} alt={product.name} />
+                        ) : (
+                            <div className="h-full w-full flex items-center justify-center text-gray-400">
+                                <Package size={20} />
+                            </div>
+                        )}
+                    </div>
+                    <div className="ml-4 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate max-w-xs">{product.name}</div>
+                        <div className="text-xs text-gray-500">ID: {product.id}</div>
+                    </div>
+                </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">₹{product.price}</td>
+            <td className="px-6 py-4 whitespace-nowrap">
+                <span className="px-2.5 py-1 inline-flex text-[11px] leading-5 font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                    {product.category_name || "Uncategorized"}
+                </span>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex items-center justify-end gap-3">
+                    <Link href={`/admin/products/add?id=${product.id}`} className="text-gray-400 hover:text-blue-600 transition-colors"><Pencil size={18} /></Link>
+                    <button onClick={() => onDelete(product.id)} className="text-gray-400 hover:text-red-600 transition-colors" disabled={isDeleting}>
+                        {isDeleting ? <Loader2 size={18} className="animate-spin text-red-500" /> : <Trash2 size={18} />}
                     </button>
                 </div>
-            )}
+            </td>
+        </tr>
+    );
+}
+
+function ProductCard({ product, isDeleting, onDelete }: { product: Product, isDeleting: boolean, onDelete: (id: string | number) => void }) {
+    return (
+        <div className={`p-4 flex items-center gap-4 transition-colors ${isDeleting ? 'opacity-50' : ''}`}>
+            <div className="h-16 w-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-100">
+                {product.media_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="h-full w-full object-cover" src={product.media_url} alt={product.name} />
+                ) : (
+                    <div className="h-full w-full flex items-center justify-center text-gray-400"><Package size={24} /></div>
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-gray-900 truncate">{product.name}</h3>
+                <p className="text-xs text-blue-600 font-semibold mt-0.5">₹{product.price}</p>
+                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">{product.category_name || "Uncategorized"}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+                <Link href={`/admin/products/add?id=${product.id}`} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-blue-600"><Pencil size={16} /></Link>
+                <button onClick={() => onDelete(product.id)} className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-red-600" disabled={isDeleting}>
+                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                </button>
+            </div>
         </div>
     );
 }

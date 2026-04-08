@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://thedv27.com/sitemap.xml

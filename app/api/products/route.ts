@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { name, slug, description, price, stock, category_id, media_url, is_active, is_trending } = body;
+        const { name, slug, description, price, original_price, stock, category_id, media_url, is_active, is_trending } = body;
 
         const { data, error } = await supabase
             .from('products')
@@ -22,6 +22,7 @@ export async function POST(req: Request) {
                 slug, 
                 description, 
                 price: parseFloat(price), 
+                original_price: original_price ? parseFloat(original_price) : null,
                 stock: parseInt(stock, 10), 
                 category_id: category_id || null, 
                 media_url, 

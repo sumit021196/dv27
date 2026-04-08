@@ -30,7 +30,14 @@ async function ProductGridContent({ productsPromise, limit }: ProductGridProps) 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-8">
             {finalProducts.map((p) => (
-                <ProductCard key={p.id} product={{ id: p.id, name: p.name, price: p.price, mediaUrl: p.media_url }} />
+                <ProductCard key={p.id} product={{ 
+                    id: p.id, 
+                    name: p.name, 
+                    price: p.price, 
+                    original_price: p.original_price, 
+                    rating: p.rating,
+                    mediaUrl: p.media_url 
+                }} />
             ))}
         </div>
     );

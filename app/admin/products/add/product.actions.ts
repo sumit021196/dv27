@@ -6,12 +6,14 @@ import { revalidatePath } from "next/cache";
 export async function createProductAction(formData: {
     name: string;
     price: number;
+    original_price?: number;
     description?: string | null;
     category?: string | null;
     category_id?: string | null;
     images?: File[];
     video?: File | null;
     variants?: string | null; // JSON string of { size, color, stock, sku }
+    details?: string | null; // JSON string of dynamic key-value pairs
 }) {
     try {
         console.log("--- createProductAction Start ---");
@@ -75,13 +77,15 @@ export async function createProductAction(formData: {
                 name: formData.name,
                 slug: formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '-' + Math.random().toString(36).substring(7),
                 price: formData.price,
+                original_price: formData.original_price || null,
                 description: formData.description || null,
                 category_id: formData.category_id || null,
                 media_url: mainMediaUrl,
                 video_url: finalVideoUrl,
                 stock: 10,
                 is_active: true,
-                rating: 4.5
+                rating: 4.5,
+                details: formData.details ? JSON.parse(formData.details) : {}
             }])
             .select()
             .single();

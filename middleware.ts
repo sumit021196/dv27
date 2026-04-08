@@ -1,8 +1,35 @@
 import { updateSession } from "@/utils/supabase/middleware";
+import { createClient } from "@/utils/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-    return await updateSession(request);
+    const { nextUrl } = request;
+    
+    // 1. Update session (refreshes auth cookie)
+    const response = await updateSession(request);
+    
+    // 2. Protect /admin routes
+    if (nextUrl.pathname.startsWith('/admin')) {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+        
+        // Check role
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', user.id)
+            .single();
+            
+        if (!profile?.is_admin) {
+            return NextResponse.redirect(new URL('/', request.url));
+        }
+    }
+
+    return response;
 }
 
 export const config = {

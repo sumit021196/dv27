@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getStaticClient } from "@/utils/supabase/static";
 import { Inter, Bodoni_Moda, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import SignupPrompt from "@/components/SignupPrompt";
+
 import { CartProvider } from "@/components/cart/CartContext";
 import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/ui/Navbar";
@@ -64,9 +64,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${bodoniModa.variable} ${jetbrainsMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <SettingsProvider>
           <WishlistProvider>
@@ -78,7 +79,7 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <AuthFeedback />
               </Suspense>
-              <SignupPrompt />
+
               <WhatsAppButton />
             </CartProvider>
           </WishlistProvider>

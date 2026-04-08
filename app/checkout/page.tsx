@@ -32,7 +32,7 @@ export default function CheckoutPage() {
   const isFormValid = name.length > 2 && phone.length >= 10 && pincode.length === 6 && address.length > 5 && shippingInfo?.serviceable;
 
   const total = useMemo(() => cart.items.reduce((s, i) => s + i.price * i.qty, 0), [cart.items]);
-  const finalTotal = useMemo(() => total + (shippingInfo?.shipping_cost || 0), [total, shippingInfo]);
+  const finalTotal = useMemo(() => Math.max(0, total - cart.discount) + (shippingInfo?.shipping_cost || 0), [total, cart.discount, shippingInfo]);
 
   useEffect(() => {
     if (cart.items.length === 0) {
@@ -75,7 +75,20 @@ export default function CheckoutPage() {
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: finalTotal })
+        body: JSON.stringify({ 
+          orderDetails: {
+            customerName: name,
+            customerPhone: phone,
+            coupon: cart.coupon,
+            shipping: { 
+              pincode, 
+              address, 
+              cost: shippingInfo?.shipping_cost || 0, 
+              estimated_delivery: shippingInfo?.estimated_delivery || null 
+            },
+            items: cart.items
+          }
+        })
       });
       
       const data = await res.json();
@@ -102,18 +115,7 @@ export default function CheckoutPage() {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
-                orderDetails: {
-                  customerName: name,
-                  customerPhone: phone,
-                  totalAmount: finalTotal,
-                  shipping: { 
-                    pincode, 
-                    address, 
-                    cost: shippingInfo?.shipping_cost || 0, 
-                    estimated_delivery: shippingInfo?.estimated_delivery || null 
-                  },
-                  items: cart.items
-                }
+                orderDbId: data.orderDbId // Pass the backend DB ID so verify knows which order to mark as paid
               })
             });
 
@@ -258,6 +260,12 @@ export default function CheckoutPage() {
                <span>Items ({cart.items.length})</span>
                <span className="text-zinc-900 font-bold">₹{total.toLocaleString()}</span>
              </div>
+             {cart.discount > 0 && (
+               <div className="flex justify-between items-center text-sm font-medium text-emerald-600">
+                 <span>Discount ({cart.coupon})</span>
+                 <span className="font-bold">-₹{cart.discount.toLocaleString()}</span>
+               </div>
+             )}
              <div className="flex justify-between items-center text-sm font-medium text-zinc-500">
                <span>Shipping</span>
                {shippingInfo?.serviceable ? (

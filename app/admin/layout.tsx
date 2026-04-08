@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/admin/Sidebar";
+import { AdminBottomNav } from "@/components/admin/BottomNav";
 import { ReactNode } from "react";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
@@ -26,13 +27,17 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans text-gray-900">
+        <div className="flex h-[100dvh] bg-white overflow-hidden font-sans text-gray-900 border-box select-none">
             <AdminSidebar />
 
-            <main className="flex-1 overflow-y-auto w-full transition-all duration-300 md:ml-64">
-                <div className="p-4 md:p-8 mt-0 max-w-7xl mx-auto">
+            <main className="flex-1 flex flex-col min-h-0 w-full transition-all duration-300 md:ml-64 relative bg-gray-50">
+                {/* Content Area - Locked Viewport */}
+                <div className="flex-1 flex flex-col min-h-0 p-4 md:p-8 max-w-7xl mx-auto w-full overflow-hidden">
                     {children}
                 </div>
+
+                {/* Global Mobile Bottom Navigation */}
+                <AdminBottomNav />
             </main>
         </div>
     );

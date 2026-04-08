@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { logout } from "@/app/(auth)/auth.actions";
 import {
     LayoutDashboard,
     Package,
     ShoppingCart,
     Users,
     LogOut,
-    Menu,
     X,
     List,
     Star,
@@ -35,23 +35,19 @@ const navItems = [
 
 export function AdminSidebar() {
     const pathname = usePathname();
-    const [isOpen, setIsOpen] = useState(false);
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await logout();
+        router.push("/");
+    };
 
     return (
         <>
-            {/* Mobile Menu Toggle */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md md:hidden"
-            >
-                {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r shadow-sm border-gray-200 transform transition-transform duration-300 ease-in-out md:translate-x-0",
-                    isOpen ? "translate-x-0" : "-translate-x-full"
+                    "fixed inset-y-0 left-0 z-40 w-64 bg-white border-r shadow-sm border-gray-200 transform transition-transform duration-300 ease-in-out md:translate-x-0 -translate-x-full"
                 )}
             >
                 <div className="flex flex-col h-full">
@@ -73,7 +69,6 @@ export function AdminSidebar() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    onClick={() => setIsOpen(false)}
                                     className={cn(
                                         "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
                                         active
@@ -97,21 +92,16 @@ export function AdminSidebar() {
                     </nav>
 
                     <div className="p-4 border-t border-gray-200">
-                        <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
+                        <button 
+                            onClick={handleLogout}
+                            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
+                        >
                             <LogOut size={20} className="text-gray-400 group-hover:text-red-500 transition-colors" />
                             <span className="font-medium">Logout</span>
                         </button>
                     </div>
                 </div>
             </aside>
-
-            {/* Overlay for mobile */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
-                    onClick={() => setIsOpen(false)}
-                />
-            )}
         </>
     );
 }

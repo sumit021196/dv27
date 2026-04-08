@@ -58,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Clear cart on logout
   useEffect(() => {
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_OUT') {
         setItems([]);
         setCoupon(null);
@@ -77,25 +77,51 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!isMounted) return;
     try {
       localStorage.setItem("cart", JSON.stringify(items));
+
+      // Auto coupon logic: 2 products -> 100rs off
+      const totalQty = items.reduce((acc, i) => acc + i.qty, 0);
+      if (totalQty >= 2 && !coupon) {
+        // We defer applying to avoid infinite loops, but we can do it directly:
+        const applyAutoCoupon = async () => {
+          const supabase = createClient();
+          const { data } = await supabase.from('coupons').select('discount_value').eq('code', 'FLAT100').eq('active', true).single();
+          if (data && !coupon) {
+             setCoupon('FLAT100');
+             setDiscount(data.discount_value);
+             setShowConfetti(true);
+             localStorage.setItem("applied_coupon", JSON.stringify({ code: 'FLAT100', discount: data.discount_value }));
+          }
+        };
+        applyAutoCoupon();
+      } else if (totalQty < 2 && coupon === 'FLAT100') {
+         setCoupon(null);
+         setDiscount(0);
+         localStorage.removeItem("applied_coupon");
+      }
+
     } catch {}
-  }, [items, isMounted]);
+  }, [items, isMounted, coupon]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
   const applyCoupon = useCallback(async (code: string) => {
-      // For now, hardcode BDAY500 logic, but scalable for backend
-      if (code.toUpperCase() === 'BDAY500') {
-          const used = localStorage.getItem('used_BDAY500');
-          if (used) return { success: false, message: "Coupon already used" };
-          
-          setCoupon('BDAY500');
-          setDiscount(500);
+      const supabase = createClient();
+      const { data, error } = await supabase
+          .from('coupons')
+          .select('*')
+          .eq('code', code.toUpperCase())
+          .eq('active', true)
+          .single();
+
+      if (data) {
+          setCoupon(data.code);
+          setDiscount(data.discount_value);
           setShowConfetti(true);
-          localStorage.setItem("applied_coupon", JSON.stringify({ code: 'BDAY500', discount: 500 }));
-          return { success: true, message: "₹500 Discount Applied!" };
+          localStorage.setItem("applied_coupon", JSON.stringify({ code: data.code, discount: data.discount_value }));
+          return { success: true, message: `₹${data.discount_value} Discount Applied!` };
       }
-      return { success: false, message: "Invalid coupon code" };
+      return { success: false, message: "Invalid or inactive coupon code" };
   }, []);
 
   const api = useMemo<CartCtx>(() => ({
@@ -120,16 +146,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       if (q > 0) {
           openCart();
-          // Auto-apply BDAY500 if first time and not already set
-          if (!coupon) {
-              const used = localStorage.getItem('used_BDAY500');
-              if (!used) {
-                  setCoupon('BDAY500');
-                  setDiscount(500);
-                  setShowConfetti(true);
-                  localStorage.setItem("applied_coupon", JSON.stringify({ code: 'BDAY500', discount: 500 }));
-              }
-          }
       }
     },
     remove: (uniqueId) => setItems((p) => p.filter((x) => `${x.id}-${x.variant_id || 'base'}-${x.size || 'none'}-${x.color || 'none'}` !== uniqueId)),

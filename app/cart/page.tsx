@@ -197,17 +197,23 @@ export default function CartPage() {
                   <span>Subtotal</span>
                   <span className="text-zinc-900 font-bold">₹{total.toLocaleString()}</span>
                 </div>
+                {cart.discount > 0 && (
+                  <div className="flex justify-between items-center text-sm font-medium text-emerald-600">
+                    <span>Discount ({cart.coupon})</span>
+                    <span className="font-bold">-₹{cart.discount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
                   <span>Shipping</span>
                   {shippingInfo?.serviceable ? (
                      <span className="text-emerald-600 font-bold">₹{shippingInfo.shipping_cost}</span>
                   ) : (
-                    <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">{pincode.length === 6 ? 'N/A' : 'Enter Pincode'}</span>
+                     <span className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">{pincode.length === 6 ? 'N/A' : 'Enter Pincode'}</span>
                   )}
                 </div>
                 <div className="flex justify-between items-center pt-2">
                   <span className="text-lg font-bold text-zinc-900">Total</span>
-                  <span className="text-xl font-black text-zinc-900 tracking-tight">₹{(total + (shippingInfo?.shipping_cost || 0)).toLocaleString()}</span>
+                  <span className="text-xl font-black text-zinc-900 tracking-tight">₹{Math.max(0, total - cart.discount + (shippingInfo?.shipping_cost || 0)).toLocaleString()}</span>
                 </div>
 
 
@@ -258,7 +264,7 @@ export default function CartPage() {
         <div className="max-w-md mx-auto flex items-center gap-4">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Total</span>
-            <span className="text-lg font-black text-zinc-900 leading-none tracking-tight">₹{(total + (shippingInfo?.shipping_cost || 0)).toLocaleString()}</span>
+            <span className="text-lg font-black text-zinc-900 leading-none tracking-tight">₹{Math.max(0, total - cart.discount + (shippingInfo?.shipping_cost || 0)).toLocaleString()}</span>
 
           </div>
           <Link

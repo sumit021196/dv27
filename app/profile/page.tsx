@@ -27,34 +27,92 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [orders, setOrders] = useState<any[]>([]);
+    const [wishlistCount, setWishlistCount] = useState(0);
+    const [couponCount, setCouponCount] = useState(0);
+    const [points, setPoints] = useState(0);
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
     useEffect(() => {
-        const getProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUser(user);
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .single();
-                setProfile(profile);
+        let isSynced = false;
 
-                // Fetch user specific orders
-                try {
-                    const res = await fetch('/api/my-orders');
-                    const data = await res.json();
-                    if(data.orders) setOrders(data.orders);
-                } catch(e) {
-                    console.error("Error fetching orders:", e);
-                }
+        const fetchData = async (currentUser: User) => {
+            if (isSynced) return;
+            isSynced = true;
+            
+            setUser(currentUser);
+            
+            // 1. Fetch profile with explicit columns to avoid 406 error
+            const { data: profileData, error: profileError } = await supabase
+                .from("profiles")
+                .select("id, full_name, phone_number, default_address, default_pincode, avatar_url, is_admin")
+                .eq("id", currentUser.id)
+                .maybeSingle();
+
+            if (profileError) {
+                console.error("Profile fetch error:", profileError);
             }
-            setLoading(false);
+            setProfile(profileData);
+
+            // 2. Fetch specific data in parallel for speed
+            try {
+                const [ordersRes, wishlistRes, couponsRes] = await Promise.all([
+                    fetch('/api/my-orders').then(res => res.json()).catch(() => ({ orders: [] })),
+                    supabase.from('wishlist').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id),
+                    supabase.from('coupons').select('*', { count: 'exact', head: true }).eq('active', true)
+                ]);
+
+                if (ordersRes.orders) {
+                    setOrders(ordersRes.orders);
+                    const totalSpent = ordersRes.orders
+                        .filter((o: any) => o.status === 'paid' || o.status === 'delivered')
+                        .reduce((acc: number, o: any) => acc + (o.total_amount || 0), 0);
+                    setPoints(Math.floor(totalSpent / 100));
+                }
+
+                if (!wishlistRes.error && wishlistRes.count !== null) {
+                    setWishlistCount(wishlistRes.count);
+                }
+
+                if (!couponsRes.error && couponsRes.count !== null) {
+                    setCouponCount(couponsRes.count);
+                }
+            } catch (e) {
+                console.error("Error fetching detail data:", e);
+            } finally {
+                setLoading(false);
+            }
         };
-        getProfile();
+
+        // Check current session immediately
+        supabase.auth.getUser().then(({ data: { user: currentUser } }: { data: { user: User | null } }) => {
+            if (currentUser) {
+                fetchData(currentUser as User);
+            } else {
+                setLoading(false);
+            }
+        });
+
+        // Listen for auth changes to handle "first load" session sync
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+            if (session?.user) {
+                fetchData(session.user as User);
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, [supabase]);
+
+    // Simple logic for membership level
+    const getMemberLevel = (orderCount: number) => {
+        if (orderCount >= 10) return "Executive Member";
+        if (orderCount >= 5) return "Privilege Member";
+        if (orderCount >= 1) return "Silver Member";
+        return "Member Level 01";
+    };
 
     if (loading) {
         return (
@@ -103,10 +161,10 @@ export default function ProfilePage() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-zinc-900 tracking-tight leading-none">
-                            {profile?.full_name?.split(' ')[0] || "Hi there!"}
+                            {profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || "Explorer"}
                         </h1>
                         <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                            Member Level 01
+                            {getMemberLevel(orders.length)}
                         </p>
                     </div>
                 </div>
@@ -120,15 +178,15 @@ export default function ProfilePage() {
                 {/* ── Quick Stats Grid ── */}
                 <div className="grid grid-cols-3 gap-3">
                     <div className="bg-muted rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-foreground">0</p>
+                        <p className="text-lg font-bold text-foreground">{orders.length}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase">Orders</p>
                     </div>
-                    <div className="bg-muted rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-foreground">12</p>
+                    <Link href="/wishlist" className="bg-muted rounded-2xl p-4 text-center hover:bg-zinc-200 transition-colors">
+                        <p className="text-lg font-bold text-foreground">{wishlistCount}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase">Wishlist</p>
-                    </div>
+                    </Link>
                     <div className="bg-muted rounded-2xl p-4 text-center">
-                        <p className="text-lg font-bold text-foreground">350</p>
+                        <p className="text-lg font-bold text-foreground">{points}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase">Points</p>
                     </div>
                 </div>
@@ -187,11 +245,34 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                     <h2 className="text-xs font-bold text-zinc-300 uppercase tracking-widest px-2 mb-4">Account Essentials</h2>
 
-                    <MenuLink icon={Heart} label="My Favorites" count="12" />
-                    <MenuLink icon={Ticket} label="Coupons & Offers" />
-                    <MenuLink icon={MapPin} label="Saved Addresses" />
-                    <MenuLink icon={CreditCard} label="Payment Methods" />
-                    <MenuLink icon={Settings} label="Personal Details" />
+                    <MenuLink 
+                        icon={Heart} 
+                        label="My Favorites" 
+                        count={wishlistCount > 0 ? wishlistCount.toString() : null} 
+                        href="/wishlist" 
+                    />
+                    <MenuLink 
+                        icon={Ticket} 
+                        label="Coupons & Offers" 
+                        count={couponCount > 0 ? couponCount.toString() : null} 
+                        href="/coupons"
+                    />
+                    <MenuLink 
+                        icon={MapPin} 
+                        label="Saved Addresses" 
+                        count={profile?.default_address ? "1" : "0"} 
+                        href="/profile/settings"
+                    />
+                    <MenuLink 
+                        icon={CreditCard} 
+                        label="Payment Methods" 
+                        href="/profile/settings"
+                    />
+                    <MenuLink 
+                        icon={Settings} 
+                        label="Personal Details" 
+                        href="/profile/settings"
+                    />
                 </div>
 
                 {/* ── Support & Security ── */}
@@ -214,12 +295,9 @@ export default function ProfilePage() {
     );
 }
 
-function MenuLink({ icon: Icon, label, count, onClick, variant = "default" }: any) {
-    return (
-        <button
-            onClick={onClick}
-            className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-50 active:bg-zinc-100 transition-all group"
-        >
+function MenuLink({ icon: Icon, label, count, onClick, href, variant = "default" }: any) {
+    const content = (
+        <div className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-zinc-50 active:bg-zinc-100 transition-all group">
             <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${variant === 'danger' ? 'bg-red-50 text-red-500' : 'bg-zinc-50 text-zinc-500 group-hover:bg-white'
                     }`}>
@@ -229,11 +307,21 @@ function MenuLink({ icon: Icon, label, count, onClick, variant = "default" }: an
                     }`}>{label}</span>
             </div>
             <div className="flex items-center gap-2">
-                {count && (
+                {count !== undefined && count !== null && (
                     <span className="text-[12px] font-bold text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-lg">{count}</span>
                 )}
                 <ChevronRight size={16} className="text-zinc-300 group-hover:translate-x-1 transition-transform" />
             </div>
+        </div>
+    );
+
+    if (href) {
+        return <Link href={href} className="block">{content}</Link>;
+    }
+
+    return (
+        <button onClick={onClick} className="w-full text-left">
+            {content}
         </button>
     );
 }

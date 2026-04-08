@@ -105,3 +105,55 @@ export async function logout() {
     revalidatePath("/", "layout");
     redirect("/login");
 }
+
+export async function signInWithPhone(phoneNumber: string, firebaseUid: string, fullName?: string) {
+    try {
+        // 1. Create/Get user in Supabase using Admin Client
+        const supabaseAdmin = await createClient(true);
+        const email = `${phoneNumber.replace("+", "")}@mobile.user`;
+        const password = `phone_${firebaseUid}_${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10)}`;
+
+        // Check if user exists
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        let existingUser = users.find(u => u.email === email);
+
+        if (!existingUser) {
+            // Create user
+            const { data: { user }, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email,
+                password,
+                email_confirm: true,
+                user_metadata: {
+                    phone_number: phoneNumber,
+                    full_name: fullName,
+                    auth_provider: "firebase_phone"
+                }
+            });
+
+            if (createError) {
+                console.error("Supabase Create Error:", createError);
+                return { error: "Failed to create account." };
+            }
+            existingUser = user as any;
+        }
+
+        // 2. Sign in with the "secret" password to get the session cookie
+        const supabase = await createClient();
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (loginError) {
+            console.error("Supabase Login Error:", loginError);
+            return { error: "Authentication failed." };
+        }
+
+    } catch (err: any) {
+        console.error("Auth Bridge Error:", err);
+        return { error: "An unexpected error occurred." };
+    }
+
+    revalidatePath("/", "layout");
+    redirect("/");
+}

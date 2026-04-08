@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import ProductCard from "@/components/ProductCard";
 import { Category } from "@/types/product";
 
 import { use } from "react";
@@ -17,11 +18,13 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
     const [slug, setSlug] = useState("");
     const [description, setDescription] = useState("");
     const [price, setPrice] = useState("");
+    const [originalPrice, setOriginalPrice] = useState("");
     const [stock, setStock] = useState("0");
     const [categoryId, setCategoryId] = useState("");
     const [mediaUrl, setMediaUrl] = useState("");
     const [isActive, setIsActive] = useState(true);
     const [isTrending, setIsTrending] = useState(false);
+    const [details, setDetails] = useState<{id: string, label: string, value: string}[]>([]);
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +47,10 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
             fetchProduct();
         } else {
             setIsFetching(false);
+            setDetails([
+                { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
+                { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
+            ]);
         }
     }, [isNew, resolvedParams.id]);
 
@@ -57,11 +64,20 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                 setSlug(p.slug);
                 setDescription(p.description || "");
                 setPrice(p.price.toString());
+                setOriginalPrice(p.original_price?.toString() || "");
                 setStock(p.stock.toString());
                 setCategoryId(p.category_id || "");
                 setMediaUrl(p.media_url || "");
                 setIsActive(p.is_active);
                 setIsTrending(p.is_trending);
+                if (p.details) {
+                    const detailArr = Object.entries(p.details).map(([label, value]) => ({
+                        id: Math.random().toString(36).substring(7),
+                        label,
+                        value: String(value)
+                    }));
+                    setDetails(detailArr);
+                }
             } else {
                 setError("Product not found");
             }
@@ -93,11 +109,16 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                     slug,
                     description,
                     price,
+                    original_price: originalPrice || null,
                     stock,
                     category_id: categoryId === "" ? null : categoryId,
                     media_url: mediaUrl,
                     is_active: isActive,
-                    is_trending: isTrending
+                    is_trending: isTrending,
+                    details: details.reduce((acc, curr) => {
+                        if (curr.label.trim()) acc[curr.label.trim()] = curr.value;
+                        return acc;
+                    }, {} as Record<string, string>)
                 }),
             });
 
@@ -110,6 +131,18 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
             setError(err.message);
             setIsLoading(false);
         }
+    };
+
+    const addDetail = () => {
+        setDetails(prev => [...prev, { id: Math.random().toString(36).substring(7), label: "", value: "" }]);
+    };
+
+    const updateDetail = (id: string, field: 'label' | 'value', val: string) => {
+        setDetails(prev => prev.map(d => d.id === id ? { ...d, [field]: val } : d));
+    };
+
+    const removeDetail = (id: string) => {
+        setDetails(prev => prev.filter(d => d.id !== id));
     };
 
     if (isFetching) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-gray-400" /></div>;
@@ -173,7 +206,7 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing & Inventory</h2>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price (₹) *</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -185,6 +218,17 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Original Price / MRP (₹)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={originalPrice}
+                                    onChange={(e) => setOriginalPrice(e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity *</label>
                                 <input
                                     type="number"
@@ -195,6 +239,32 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                                     className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Product Details Section */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                        <div className="flex justify-between items-center border-b pb-4">
+                            <h2 className="text-lg font-semibold text-gray-900">Product Details (Tabs)</h2>
+                            <button type="button" onClick={addDetail} className="flex items-center text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium transition hover:bg-blue-500">
+                                <Plus size={14} className="mr-1" /> Add Detail
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-gray-500">Add key-value pairs that will appear in the "Details" tab on the storefront.</p>
+                        <div className="space-y-3">
+                            {details.map((d) => (
+                                <div key={d.id} className="flex gap-3 items-center bg-gray-50 p-3 rounded-xl border border-gray-100 relative group">
+                                    <div className="flex-1">
+                                        <input type="text" value={d.label} onChange={(e) => updateDetail(d.id, "label", e.target.value)} placeholder="Label (e.g. Material)" className="w-full text-sm border-gray-300 rounded-lg p-2 border" />
+                                    </div>
+                                    <div className="flex-[2]">
+                                        <input type="text" value={d.value} onChange={(e) => updateDetail(d.id, "value", e.target.value)} placeholder="Value (e.g. 100% Cotton)" className="w-full text-sm border-gray-300 rounded-lg p-2 border" />
+                                    </div>
+                                    <button type="button" onClick={() => removeDetail(d.id)} className="text-red-500 p-1 hover:bg-red-50 rounded-full">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -264,6 +334,23 @@ export default function ProductFormPage({ params }: { params: Promise<{ id: stri
                     >
                         {isLoading ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Save Product</>}
                     </button>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Card Preview</h2>
+                        <div className="flex justify-center p-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                             <div className="w-full max-w-[240px]">
+                                <ProductCard 
+                                    product={{
+                                        id: resolvedParams.id || 'preview',
+                                        name: name || "Product Name",
+                                        price: Number(price) || 0,
+                                        original_price: originalPrice ? Number(originalPrice) : undefined,
+                                        mediaUrl: mediaUrl || undefined
+                                    }} 
+                                />
+                             </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

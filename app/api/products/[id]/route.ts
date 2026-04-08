@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { name, slug, description, price, stock, category_id, media_url, is_active, is_trending } = body;
+        const { name, slug, description, price, original_price, stock, category_id, media_url, is_active, is_trending, details } = body;
 
         const { data, error } = await supabase
             .from('products')
@@ -40,11 +40,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 slug, 
                 description, 
                 price: parseFloat(price), 
+                original_price: original_price ? parseFloat(original_price) : null,
                 stock: parseInt(stock, 10), 
                 category_id: category_id || null, 
                 media_url, 
                 is_active, 
-                is_trending 
+                is_trending,
+                details: details || {}
             })
             .eq('id', id)
             .select()

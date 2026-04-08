@@ -3,18 +3,44 @@ import Link from "next/link";
 import Image from "next/image";
 import { FALLBACK_IMG, getOptimizedImageUrl } from "@/utils/images";
 import { useWishlist } from "./wishlist/WishlistContext";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag, Star } from "lucide-react";
+import { cn } from "@/utils/cn";
 
 type Product = {
   id: string | number;
   name: string;
   price: number;
+  original_price?: number;
   mediaUrl?: string;
+  rating?: number;
+};
+
+// Simple Star Rating Component
+const RatingStars = ({ rating }: { rating: number }) => {
+  const fullStars = Math.floor(rating);
+  return (
+    <div className="flex items-center gap-0.5 mt-1">
+      {[...Array(5)].map((_, i) => (
+        <Star 
+          key={i} 
+          size={10} 
+          className={cn(
+            "transition-colors duration-300",
+            i < fullStars ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/10"
+          )} 
+        />
+      ))}
+      <span className="text-[10px] font-bold text-foreground/40 ml-1">{Number(rating).toFixed(1)}</span>
+    </div>
+  );
 };
 
 export default function ProductCard({ product }: { product: Product }) {
   const wishlist = useWishlist();
   const wished = wishlist.items.some((w) => w.id === product.id);
+
+  // Use original_price if it exists and is greater than current price
+  const showOriginalPrice = product.original_price && product.original_price > product.price;
 
   return (
     <div className="group flex flex-col bg-background overflow-hidden fade-in-up">
@@ -52,7 +78,7 @@ export default function ProductCard({ product }: { product: Product }) {
             });
           }}
           className={`absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 border ${wished
-              ? "bg-brand-accent border-brand-accent text-white scale-110 shadow-[0_0_15px_rgba(255,0,255,0.4)]"
+              ? "bg-white border-brand-red text-brand-red scale-110 shadow-[0_0_15px_rgba(255,45,85,0.4)]"
               : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background hover:scale-110"
             }`}
         >
@@ -80,14 +106,16 @@ export default function ProductCard({ product }: { product: Product }) {
           <h3 className="text-sm font-medium text-foreground/70 line-clamp-1 group-hover:text-foreground transition-colors duration-300">
             {product.name}
           </h3>
+          {product.rating !== undefined && <RatingStars rating={product.rating} />}
           <div className="flex items-center justify-center gap-2 mt-1">
               <span className="text-base md:text-xl font-bold text-foreground">
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
-              {/* Optional: Add a fake old price for the 'sale' look if desired */}
-              <span className="text-[10px] font-bold text-foreground/20 line-through">
-                ₹{(product.price * 1.2).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-              </span>
+              {showOriginalPrice && (
+                <span className="text-[10px] font-bold text-foreground/20 line-through">
+                  ₹{product.original_price?.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                </span>
+              )}
           </div>
         </Link>
         

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      orderDetails
+      orderDbId
     } = body;
 
     const secret = process.env.RAZORPAY_KEY_SECRET!;
@@ -31,100 +31,83 @@ export async function POST(req: Request) {
     }
 
     // Payment is verified
-    // Now, save the order to Supabase
     const supabase = await createClient(true); // USE ADMIN client to bypass RLS for system operations
 
-    const { data: { user } } = await supabase.auth.getUser(); // Get current user if logged in
+    // 1. Fetch genuine order from DB
+    const { data: orderData, error: fetchErr } = await supabase
+       .from('orders')
+       .select('*')
+       .eq('id', orderDbId)
+       .single();
 
-    // 1. Insert into orders table
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        user_id: user ? user.id : null,
-        customer_name: orderDetails.customerName,
-        customer_phone: orderDetails.customerPhone || null,
-        total_amount: orderDetails.totalAmount,
-        subtotal: orderDetails.totalAmount, // Assuming no shipping fee for now based on checkout
-        status: 'paid', // Update status to paid since payment is verified
-        razorpay_order_id: razorpay_order_id,
-        razorpay_payment_id: razorpay_payment_id,
-      })
-      .select()
-      .single();
+    if (fetchErr || !orderData) {
+        throw new Error("Linked order not found");
+    }
 
-    if (orderError) throw new Error(`Order Creation Failed: ${orderError.message}`);
+    // 2. Call Atomic RPC for order update and stock decrement
+    const { error: rpcError } = await supabase.rpc('handle_payment_success', {
+       p_order_id: orderDbId,
+       p_payment_id: razorpay_payment_id
+    });
+    
+    if (rpcError) {
+        console.error("CRITICAL: Failed to run handle_payment_success RPC", rpcError);
+        throw new Error("Failed to finalize order in database");
+    }
 
-    const newOrderId = orderData.id;
+    // 3. Fetch related data for Delhivery Tracking (now that it's paid)
+    const { data: shipping } = await supabase.from('shipping_details').select('*').eq('order_id', orderDbId).single();
+    const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderDbId);
 
-    // 2. Insert into order_items table
-    const itemsToInsert = orderDetails.items.map((item: any) => ({
-      order_id: newOrderId,
-      product_id: item.id,
-      product_name: item.name,
-      quantity: item.qty,
-      price: item.price,
-      image_url: item.image,
-    }));
+    if (shipping && items) {
+        // Create Shipment in Delhivery Dashboard
+        try {
+          const shipmentData = {
+            name: orderData.customer_name,
+            add: shipping.address,
+            pin: shipping.pincode,
+            phone: orderData.customer_phone ? orderData.customer_phone.replace(/\D/g, '').slice(-10) : '',
+            order: orderDbId,
+            payment_mode: 'Prepaid',
+            total_amount: orderData.total_amount,
+            products_desc: items.map((item: any) => `${item.product_name} (x${item.quantity})`).join(', ')
+          };
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(itemsToInsert);
-      
-    if (itemsError) throw new Error(`Order Items Creation Failed: ${itemsError.message}`);
+          console.log(`[Verify] Attempting Delhivery shipment for Order: ${orderDbId}`);
+          const delhiveryResponse = await delhiveryService.createShipment(shipmentData);
 
-    // 3. Insert into shipping_details table
-    const { error: shippingError } = await supabase
-      .from('shipping_details')
-      .insert({
-        order_id: newOrderId,
-        pincode: orderDetails.shipping.pincode,
-        address: orderDetails.shipping.address,
-        shipping_cost: orderDetails.shipping.cost,
-        estimated_delivery: orderDetails.shipping.estimated_delivery,
-        serviceability_status: 'serviceable',
-        tracking_id: razorpay_payment_id // Storing payment ID here for reference temporarily
-      });
-
-    if (shippingError) throw new Error(`Shipping Details Creation Failed: ${shippingError.message}`);
-
-    // 4. Create Shipment in Delhivery Dashboard
-    try {
-      const shipmentData = {
-        name: orderDetails.customerName,
-        add: orderDetails.shipping.address,
-        pin: orderDetails.shipping.pincode,
-        phone: orderDetails.customerPhone ? orderDetails.customerPhone.replace(/\D/g, '').slice(-10) : '',
-        order: newOrderId,
-        payment_mode: 'Prepaid',
-        total_amount: orderDetails.totalAmount,
-        products_desc: orderDetails.items.map((item: any) => `${item.name} (x${item.qty})`).join(', ')
-      };
-
-      const delhiveryResponse = await delhiveryService.createShipment(shipmentData);
-      console.log("Delhivery Shipment Created:", delhiveryResponse);
-
-      // If Delhivery returns a waybill, we can update the shipping_details
-      if (delhiveryResponse.packages && delhiveryResponse.packages.length > 0) {
-        const waybill = delhiveryResponse.packages[0].waybill;
-        await supabase
-          .from('shipping_details')
-          .update({ tracking_id: waybill })
-          .eq('order_id', newOrderId);
-      }
-    } catch (shipmentErr) {
-      console.error("Delhivery Shipment Creation Failed:", shipmentErr);
-      // We don't throw here to avoid failing the whole request if Delhivery is down, 
-      // since the order is already saved in Supabase and payment is verified.
+          // If Delhivery returns a waybill, update the shipping_details
+          if (delhiveryResponse.packages && delhiveryResponse.packages.length > 0) {
+            const waybill = delhiveryResponse.packages[0].waybill;
+            console.log(`[Verify] Delhivery Success. Waybill: ${waybill}`);
+            await supabase
+              .from('shipping_details')
+              .update({ 
+                tracking_id: waybill, 
+                shipping_partner: 'delhivery',
+                updated_at: new Date().toISOString()
+              })
+              .eq('order_id', orderDbId);
+          } else {
+            console.warn("[Verify] Delhivery responded but no waybill found", delhiveryResponse);
+          }
+        } catch (shipmentErr: any) {
+          console.error("[Verify] Delhivery shipment creation failed. Admin attention required.", {
+            error: shipmentErr.message,
+            orderId: orderDbId
+          });
+          // Not throwing here, as payment verification succeeded
+        }
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Payment verified and order created',
-      orderId: newOrderId
+      message: 'Payment verified and order finalized',
+      orderId: orderDbId
     });
 
   } catch (error: any) {
-    console.error("Payment verification/Order creation error:", error);
+    console.error("Payment verification error:", error);
     return NextResponse.json(
       { success: false, error: error.message || 'Verification Failed' },
       { status: 500 }

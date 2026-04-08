@@ -17,7 +17,8 @@ export class DeliveryOneService {
         // Use the actual DelhiveryService
         const response = await delhiveryService.checkServiceability(pincode);
         if (response.serviceable) {
-            response.shipping_cost = await delhiveryService.calculateShippingCost(pincode, weight);
+            // Free shipping logic for all orders
+            response.shipping_cost = 0;
         }
         return response;
     }

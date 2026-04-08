@@ -119,7 +119,7 @@ export default function InstagramReels() {
         <section className="py-20 bg-background overflow-hidden font-inter">
             <div className="max-w-[1440px] mx-auto px-6 lg:px-12 mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter text-foreground leading-none">
+                    <h2 className="text-2xl md:text-3xl lg:text-5xl font-black uppercase tracking-tighter text-foreground leading-none">
                         The {settings.site_name || "DV27"} <span className="text-brand-accent">Flex</span>
                     </h2>
                     <p className="mt-4 text-muted-foreground font-medium flex items-center gap-2">
