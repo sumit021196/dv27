@@ -330,160 +330,159 @@ export default function Navbar() {
 
             {/* Mobile Nav Overlay */}
             {mobileMenuOpen && (
-                <div className="fixed inset-0 z-[70] bg-background md:hidden animate-in slide-in-from-left duration-500">
+                <div className="fixed inset-0 z-[100] bg-background md:hidden animate-in slide-in-from-left duration-500">
                     <div className="flex flex-col h-full relative overflow-hidden">
                         
                         {/* Header */}
-                        <div className="p-6 flex items-center justify-between border-b border-foreground/5 bg-background/80 backdrop-blur-md sticky top-0 z-10">
-                            <div className="flex items-center gap-3">
+                        <div className="px-4 py-3 flex items-center justify-between border-b border-foreground/5 bg-background sticky top-0 z-10 shrink-0">
+                            <div className="flex items-center gap-2">
                                 {menuStep !== 'main' && (
                                     <button 
                                         onClick={() => setMenuStep('main')}
-                                        className="p-2 -ml-2 text-foreground/50 hover:text-foreground transition-colors"
+                                        className="p-1.5 -ml-1.5 text-foreground/50 hover:text-foreground transition-colors"
                                     >
-                                        <ArrowLeft size={20} />
+                                        <ArrowLeft size={18} />
                                     </button>
                                 )}
-                                <Image src="/logo.svg" alt="DV27" width={80} height={24} className="h-6 w-auto animate-logo-flip" />
+                                <Image src="/logo.svg" alt="DV27" width={70} height={20} className="h-5 w-auto" />
                             </div>
                             <button onClick={() => {
                                 setMobileMenuOpen(false);
                                 setTimeout(() => setMenuStep('main'), 300);
-                            }} className="p-2 text-foreground/50 hover:text-foreground">
-                                <X size={24} />
+                            }} className="p-1.5 text-foreground/50 hover:text-foreground">
+                                <X size={20} />
                             </button>
                         </div>
 
-                        {/* Wizard Content */}
-                        <div className="flex-1 overflow-y-auto px-6 py-8">
-                            <div className="relative h-full">
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-hidden flex flex-col px-4 py-4 min-h-0">
+                            <div className="relative flex-1 flex flex-col min-h-0">
                                 {/* Step 1: Main Menu */}
-                                <div className={`transition-all duration-500 flex flex-col gap-2 ${menuStep === 'main' ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
-                                    <div className="mb-4">
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4">Navigation</p>
-                                        <div className="grid gap-2">
+                                <div className={`transition-all duration-500 flex flex-col gap-1.5 ${menuStep === 'main' ? 'translate-x-0 opacity-100 flex-1' : '-translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
+                                    <div className="mb-2 shrink-0">
+                                        <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Navigation</p>
+                                        <div className="grid gap-1.5">
                                             <Link
                                                 href="/products"
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all"
+                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
                                             >
-                                                <span className="text-xl font-black uppercase tracking-tight text-foreground">Explore All</span>
-                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Explore All</span>
+                                                <ChevronRight size={16} className="text-foreground/20" />
                                             </Link>
                                             
                                             <button
                                                 onClick={() => setMenuStep('categories')}
-                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all text-left"
+                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02] text-left"
                                             >
-                                                <span className="text-xl font-black uppercase tracking-tight text-foreground">Categories</span>
-                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Categories</span>
+                                                <ChevronRight size={16} className="text-foreground/20" />
                                             </button>
-
                                             <Link
                                                 href="/products?category=sale"
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="group flex items-center justify-between p-4 bg-foreground/[0.03] hover:bg-foreground/[0.06] rounded-2xl transition-all"
+                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-xl font-black uppercase tracking-tight text-foreground">Archive Sale</span>
-                                                    <span className="px-2 py-0.5 bg-brand-red text-[8px] font-black text-white rounded-full animate-pulse uppercase tracking-widest">Sale</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-black uppercase tracking-tight text-foreground">Archive Sale</span>
+                                                    <span className="px-1.5 py-0.5 bg-brand-red text-[6.5px] font-black text-white rounded-full uppercase tracking-widest">Sale</span>
                                                 </div>
-                                                <ChevronRight size={20} className="text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                                                <ChevronRight size={16} className="text-foreground/20" />
                                             </Link>
                                         </div>
                                     </div>
 
-                                    <div className="mb-8">
-                                        <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4">Account</p>
-                                        <div className="grid grid-cols-2 gap-2">
+                                    <div className="flex-1 min-h-0 flex flex-col">
+                                        <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account</p>
+                                        <div className="grid grid-cols-2 gap-1.5 shrink-0">
                                             <Link
                                                 href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="flex flex-col gap-3 p-4 bg-foreground/[0.03] rounded-2xl hover:bg-foreground/[0.06] transition-all"
+                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
                                             >
-                                                <User size={20} className="text-foreground/40" />
-                                                <span className="text-xs font-black uppercase tracking-widest text-foreground">
+                                                <User size={16} className="text-foreground/40" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">
                                                     {user ? (isAdmin ? "Admin" : "Profile") : "Login"}
                                                 </span>
                                             </Link>
                                             <Link
                                                 href="/profile?tab=orders"
                                                 onClick={() => setMobileMenuOpen(false)}
-                                                className="flex flex-col gap-3 p-4 bg-foreground/[0.03] rounded-2xl hover:bg-foreground/[0.06] transition-all"
+                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
                                             >
-                                                <Package size={20} className="text-foreground/40" />
-                                                <span className="text-xs font-black uppercase tracking-widest text-foreground">Orders</span>
+                                                <Package size={16} className="text-foreground/40" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Orders</span>
                                             </Link>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Step 2: Categories */}
-                                <div className={`transition-all duration-500 flex flex-col gap-2 ${menuStep === 'categories' ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
-                                    <p className="text-[10px] font-bold text-foreground/30 uppercase tracking-[0.2em] mb-4 text-center">Select Category</p>
-                                    <div className="grid gap-2">
+                                <div className={`transition-all duration-500 flex flex-col gap-1.5 h-full ${menuStep === 'categories' ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
+                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2 text-center">Select Category</p>
+                                    <div className="grid gap-1.5 overflow-y-auto pr-1 no-scrollbar flex-1">
                                         {categories
                                             .filter(cat => cat.name.toLowerCase() !== 'sale')
                                             .map((cat) => (
-                                                <Link
+                                                <button
                                                     key={cat.id}
-                                                    href={`/products?category=${cat.slug}`}
                                                     onClick={() => {
+                                                        router.push(`/products?category=${cat.slug}`);
                                                         setMobileMenuOpen(false);
                                                         setMenuStep('main');
                                                     }}
-                                                    className="flex items-center justify-between p-4 border border-foreground/5 hover:border-foreground/20 rounded-2xl transition-all group"
+                                                    className="flex items-center justify-between p-3.5 border border-foreground/5 active:border-foreground/20 rounded-xl transition-all group text-left w-full"
                                                 >
-                                                    <span className="text-lg font-bold text-foreground/70 group-hover:text-foreground transition-colors uppercase tracking-tight">{cat.name}</span>
-                                                    <ChevronRight size={16} className="text-foreground/10 group-hover:text-foreground/40" />
-                                                </Link>
+                                                    <span className="text-xs font-bold text-foreground/70 uppercase tracking-tight">{cat.name}</span>
+                                                    <ChevronRight size={14} className="text-foreground/10" />
+                                                </button>
                                             ))}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Recent Products Footer */}
-                        <div className="mt-auto bg-foreground/[0.02] border-t border-foreground/5 p-6 pb-10">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
+                        {/* Footer (Recent + Logout) */}
+                        <div className="shrink-0 bg-foreground/[0.01] border-t border-foreground/5 p-4 py-3">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-[8.5px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
                                 <Link 
                                     href="/products" 
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="text-[10px] font-bold text-brand-accent uppercase tracking-widest hover:underline"
+                                    className="text-[8.5px] font-bold text-brand-accent uppercase tracking-widest hover:underline"
                                 >
                                     View All
                                 </Link>
                             </div>
                             
-                            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-2 px-2 snap-x">
-                                {recentProducts.map((product) => (
+                            <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 px-0.5 snap-x min-h-[100px]">
+                                {recentProducts.slice(0, 4).map((product) => (
                                     <Link
                                         key={product.id}
                                         href={`/product/${product.id}`}
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className="flex-shrink-0 w-32 snap-start group"
+                                        className="flex-shrink-0 w-24 snap-start group"
                                     >
-                                        <div className="aspect-[4/5] rounded-xl overflow-hidden bg-foreground/5 mb-2 relative border border-foreground/5 group-hover:border-foreground/20 transition-all">
+                                        <div className="aspect-[4/5] rounded-lg overflow-hidden bg-foreground/5 mb-1.5 relative border border-foreground/[0.02]">
                                             {product.media_url ? (
                                                 <Image 
                                                     src={product.media_url} 
                                                     alt={product.name} 
                                                     fill 
-                                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    className="object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-foreground/10">NO IMAGE</div>
+                                                <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-foreground/10">N/A</div>
                                             )}
                                         </div>
-                                        <p className="text-[10px] font-bold text-foreground/80 truncate uppercase tracking-tight">{product.name}</p>
-                                        <p className="text-[9px] font-black text-brand-accent">₹{product.price}</p>
+                                        <p className="text-[8px] font-bold text-foreground/70 truncate uppercase tracking-tight leading-none mb-0.5">{product.name}</p>
+                                        <p className="text-[7.5px] font-black text-brand-accent leading-none">₹{product.price}</p>
                                     </Link>
                                 ))}
                                 {recentProducts.length === 0 && (
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-2.5">
                                         {[1,2,3].map(i => (
-                                            <div key={i} className="w-32 h-40 bg-foreground/5 animate-pulse rounded-xl" />
+                                            <div key={i} className="w-24 h-28 bg-foreground/5 animate-pulse rounded-lg" />
                                         ))}
                                     </div>
                                 )}
@@ -497,7 +496,7 @@ export default function Navbar() {
                                         setMobileMenuOpen(false);
                                         router.push('/');
                                     }}
-                                    className="mt-6 w-full py-4 text-[10px] font-black uppercase tracking-[0.3em] text-red-500 bg-red-500/5 hover:bg-red-500/10 rounded-2xl transition-all border border-red-500/10"
+                                    className="mt-3 w-full py-3 text-[8.5px] font-black uppercase tracking-[0.3em] text-red-500 bg-red-500/5 active:bg-red-500/10 rounded-xl transition-all border border-red-500/10"
                                 >
                                     Logout Account
                                 </button>
