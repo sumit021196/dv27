@@ -25,7 +25,7 @@ export default async function ProductList({ searchParams }: PageProps) {
   const supabase = getStaticClient();
   
   // 1. Fetch categories for the bar
-  const categories = await productService.getCategories(supabase);
+  const categories = await productService.getCategories(false, supabase);
 
   // 2. Fetch filtered products (fetching up to current page size)
   const products = await productService.getFilteredProducts({

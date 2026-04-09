@@ -8,7 +8,8 @@ export default async function CategoryGrid() {
   // Fetch top-level categories (parent_id is null)
   const { data: categories, error } = await supabase
     .from('categories')
-    .select('id, name, slug, image_url');
+    .select('id, name, slug, image_url')
+    .eq('is_active', true);
 
   if (error || !categories || categories.length === 0) {
     return null;

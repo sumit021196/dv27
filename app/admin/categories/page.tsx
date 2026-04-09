@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { Plus, Pencil, ImageIcon, LayoutGrid } from "lucide-react";
 import AdminImageWithFallback from "@/components/admin/AdminImageWithFallback";
+import CategoryStatusToggle from "@/components/admin/CategoryStatusToggle";
 
 export default async function AdminCategoriesPage() {
     const supabase = await createClient();
@@ -51,10 +52,13 @@ export default async function AdminCategoriesPage() {
                                             <span className="text-[8px] font-black uppercase mt-1">No Image</span>
                                         </div>
                                     )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3 md:p-6 text-white">
-                                        <span className={`w-fit px-1.5 py-0.5 mb-1 md:mb-2 text-[8px] font-bold uppercase rounded-full ${category.is_active ? 'bg-green-500/80' : 'bg-red-500/80'}`}>
-                                            {category.is_active ? 'Active' : 'Private'}
-                                        </span>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3 md:p-6 text-white pointer-events-none">
+                                        <div className="pointer-events-auto flex items-center gap-2 mb-1 md:mb-2">
+                                            <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase rounded-full ${category.is_active ? 'bg-green-500/80' : 'bg-red-500/80'}`}>
+                                                {category.is_active ? 'Published' : 'Hidden'}
+                                            </span>
+                                            <CategoryStatusToggle categoryId={category.id} initialStatus={category.is_active} />
+                                        </div>
                                         <h3 className="text-sm md:text-xl font-bold uppercase truncate leading-tight">
                                             {category.name}
                                         </h3>

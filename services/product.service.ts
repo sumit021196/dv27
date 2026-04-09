@@ -8,13 +8,21 @@ export class ProductService implements IProductService {
         return createClient();
     }
 
-    async getProducts(supabase?: any): Promise<Product[]> {
+    async getProducts(includeInactive = false, supabase?: any): Promise<Product[]> {
         const client = this.getClient(supabase);
         try {
-            const { data, error } = await client
+            let query = client
                 .from("products")
-                .select("*, categories(name), product_variants(*), product_images(*)")
-                .limit(64);
+                .select("*, categories!inner(name, id, is_active), product_variants(*), product_images(*)");
+            
+            if (!includeInactive) {
+                query = query
+                    .eq("is_active", true)
+                    .eq("categories.is_active", true);
+            }
+            
+            const { data, error } = await query.limit(100);
+            
             if (error || !data || data.length === 0) {
                 return this.mapFallback(fallback);
             }
@@ -29,8 +37,10 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("*, categories(name), product_variants(*), product_images(*) ")
+                .select("*, categories!inner(name, is_active), product_variants(*), product_images(*) ")
                 .eq("id", id)
+                .eq("is_active", true)
+                .eq("categories.is_active", true)
                 .single();
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
@@ -45,8 +55,10 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .eq("is_active", true)
                 .eq("is_trending", true)
+                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -60,7 +72,9 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .eq("is_active", true)
+                .eq("categories.is_active", true)
                 .order("created_at", { ascending: false })
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
@@ -75,7 +89,9 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .eq("is_active", true)
+                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -98,19 +114,26 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getCategories(supabase?: any): Promise<Category[]> {
+    async getCategories(includeInactive = false, supabase?: any): Promise<Category[]> {
         const client = this.getClient(supabase);
         try {
-            const { data: catWithProds, error: joinError } = await client
+            let query = client
                 .from("categories")
-                .select("id, name, slug");
+                .select("id, name, slug, is_active");
+            
+            if (!includeInactive) {
+                query = query.eq("is_active", true);
+            }
+
+            const { data: catWithProds, error: joinError } = await query;
 
             if (joinError || !catWithProds) return [];
 
             return catWithProds.map((c: any) => ({
                 id: c.id,
                 name: c.name,
-                slug: c.slug
+                slug: c.slug,
+                is_active: c.is_active
             }));
         } catch {
             return [];
@@ -143,8 +166,9 @@ export class ProductService implements IProductService {
         try {
             let query = client
                 .from("products")
-                .select("*, categories!inner(name, slug), product_variants(*), product_images(*)")
-                .eq("is_active", true);
+                .select("*, categories!inner(name, slug, is_active), product_variants(*), product_images(*)")
+                .eq("is_active", true)
+                .eq("categories.is_active", true);
 
             if (options.category && options.category !== 'all') {
                 query = query.eq("categories.slug", options.category);
@@ -220,14 +244,19 @@ export class ProductService implements IProductService {
             price: d.price,
             original_price: d.original_price,
             media_url: d.media_url || d.image_url || undefined,
+            video_url: d.video_url || undefined,
             created_at: d.created_at || undefined,
             size: d.size || undefined,
             rating: d.rating || 4,
+            slug: d.slug || d.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `p-${d.id}`,
+            is_active: d.is_active ?? true,
+            is_trending: d.is_trending ?? false,
             category_id: d.category_id || undefined,
             category_name: d.categories?.name || d.category || undefined,
             description: d.description || undefined,
             details: d.details || undefined,
             variants: d.product_variants || [],
+            product_variants: d.product_variants || [],
             images: d.product_images
                 ? d.product_images
                     .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
@@ -244,8 +273,11 @@ export class ProductService implements IProductService {
             media_url: d.media_url,
             created_at: d.created_at,
             size: d.size,
+            slug: d.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            is_active: true,
+            is_trending: false,
             rating: d.rating,
-            category: d.category,
+            category_name: d.category,
             description: d.description,
             variants: d.variants || []
         }));

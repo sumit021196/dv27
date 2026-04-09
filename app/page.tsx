@@ -5,7 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import HeroSection from "@/components/ui/HeroSection";
 import { getStaticClient } from "@/utils/supabase/static";
 import Ticker from "@/components/ui/Ticker";
-import InstagramReels from "@/components/ui/InstagramReels";
+// import InstagramReels from "@/components/ui/InstagramReels";
 import ProductGrid from "@/components/ProductGrid";
 import CategoryGrid from "@/components/CategoryGrid";
 
@@ -20,7 +20,7 @@ export default async function Page() {
   
   // Critical data for initial render (Banner, Settings) - still await these
   const [res, { data: settingsData }] = await Promise.all([
-    supabase.from('banners').select('id, image_url, title, subtitle, position, is_active, style_type, link_url, cta_text'),
+    supabase.from('banners').select('id, image_url, title, subtitle, position, is_active, style_type, link_url, cta_text').eq('is_active', true),
     supabase.from('settings').select('key, value')
   ]);
   
@@ -44,7 +44,7 @@ export default async function Page() {
         <ProductGrid productsPromise={newArrivalsPromise} limit={4} />
       </Section>
 
-      <InstagramReels />
+      {/* <InstagramReels /> */}
 
       <Section
         title={settings.section_trending_title || "Trending"}
