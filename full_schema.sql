@@ -121,9 +121,18 @@ CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    guest_name TEXT,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
     status TEXT DEFAULT 'pending', -- pending, approved, rejected
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS review_media (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    review_id UUID REFERENCES reviews(id) ON DELETE CASCADE,
+    media_url TEXT NOT NULL,
+    media_type TEXT NOT NULL, -- 'image' or 'video'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

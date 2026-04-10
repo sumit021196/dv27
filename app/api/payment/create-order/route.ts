@@ -72,11 +72,25 @@ export async function POST(req: Request) {
          .single();
          
        if (dbCoupon) {
-           dbCouponData = dbCoupon;
-           if (dbCoupon.code === 'FLAT100' && totalQty < 2) {
-               computedDiscount = 0;
-               dbCouponData = null; // Don't track if not applied
-           } else {
+           let isValid = true;
+
+           // 1. Check Expiry
+           if (dbCoupon.expiry_date && new Date(dbCoupon.expiry_date) < new Date()) {
+               isValid = false;
+           }
+
+           // 2. Check Min Order Value
+           if (computedSubtotal < (dbCoupon.min_order_value || 0)) {
+               isValid = false;
+           }
+
+           // 3. Check Min Quantity
+           if (totalQty < (dbCoupon.min_quantity || 0)) {
+               isValid = false;
+           }
+
+           if (isValid) {
+               dbCouponData = dbCoupon;
                computedDiscount = dbCoupon.discount_value || 0;
                
                // Check coupon usage limit
@@ -92,6 +106,9 @@ export async function POST(req: Request) {
                       dbCouponData = null;
                   }
                }
+           } else {
+               computedDiscount = 0;
+               dbCouponData = null;
            }
        }
     }

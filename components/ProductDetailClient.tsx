@@ -390,18 +390,32 @@ export default function ProductDetailClient({ id }: { id: string }) {
                                         </div>
                                         <p className="text-foreground/80 normal-case italic leading-relaxed text-[10px]">&quot;{review.comment}&quot;</p>
                                         
-                                        {/* Review Images */}
-                                        {review.review_images && review.review_images.length > 0 && (
+                                        {/* Review Media */}
+                                        {review.review_media && review.review_media.length > 0 && (
                                           <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-1">
-                                            {review.review_images.map((img: any, imgIdx: number) => (
-                                              <div key={imgIdx} className="w-16 h-16 rounded-lg overflow-hidden flex-none bg-muted border border-foreground/5">
-                                                <img src={img.image_url} alt="Review" className="w-full h-full object-cover" />
+                                            {review.review_media.map((media: any, mediaIdx: number) => (
+                                              <div key={mediaIdx} className="w-20 h-20 rounded-xl overflow-hidden flex-none bg-muted border border-foreground/5 relative">
+                                                {media.media_type === 'image' ? (
+                                                  <img src={media.media_url} alt="Review" className="w-full h-full object-cover" />
+                                                ) : (
+                                                  <video 
+                                                    src={media.media_url} 
+                                                    className="w-full h-full object-cover" 
+                                                    onClick={(e) => {
+                                                        const el = e.currentTarget;
+                                                        if (el.paused) el.play(); else el.pause();
+                                                    }}
+                                                  />
+                                                )}
                                               </div>
                                             ))}
                                           </div>
                                         )}
 
-                                        <p className="mt-4 text-[7px] font-black tracking-[0.2em] text-brand-accent uppercase">— VERIFIED BUYER</p>
+                                        <p className="mt-4 text-[7px] font-black tracking-[0.2em] text-brand-accent uppercase">
+                                            — {review.profiles?.full_name || review.guest_name || "Anonymous User"}
+                                            <span className="opacity-40 ml-2">VERIFIED BUYER</span>
+                                        </p>
                                      </div>
                                   ))
                                ) : (

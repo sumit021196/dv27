@@ -10,7 +10,13 @@ import {
     AlertCircle,
     X,
     TrendingDown,
-    ShoppingBag
+    ShoppingBag,
+    Zap,
+    Calendar,
+    Users,
+    CheckCircle2,
+    XCircle,
+    Edit3
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -19,12 +25,18 @@ export default function CouponsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         code: "",
         discount_value: "",
         discount_type: "fixed",
         min_order_value: "0",
-        active: true
+        min_quantity: "0",
+        active: true,
+        is_auto_apply: false,
+        expiry_date: "",
+        max_uses_per_user: "1"
     });
 
     useEffect(() => {
@@ -42,36 +54,87 @@ export default function CouponsPage() {
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
-            await couponService.createCoupon({
+            const payload = {
                 ...formData,
                 discount_value: Number(formData.discount_value),
-                min_order_value: Number(formData.min_order_value)
-            });
+                min_order_value: Number(formData.min_order_value),
+                min_quantity: Number(formData.min_quantity || 0),
+                max_uses_per_user: Number(formData.max_uses_per_user || 1),
+                expiry_date: formData.expiry_date || null
+            };
+
+            if (editingId) {
+                await couponService.updateCoupon(editingId, payload);
+            } else {
+                await couponService.createCoupon(payload);
+            }
+
             setShowModal(false);
+            setEditingId(null);
             fetchCoupons();
-            // Reset form
-            setFormData({
-                code: "",
-                discount_value: "",
-                discount_type: "fixed",
-                min_order_value: "0",
-                active: true
-            });
+            resetForm();
+        } catch (err: any) {
+            console.error("Coupon error:", err);
+            alert(`Error: ${err.message || 'Something went wrong'}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            code: "",
+            discount_value: "",
+            discount_type: "fixed",
+            min_order_value: "0",
+            min_quantity: "0",
+            active: true,
+            is_auto_apply: false,
+            expiry_date: "",
+            max_uses_per_user: "1"
+        });
+    };
+
+    const handleToggleActive = async (id: string, currentStatus: boolean) => {
+        try {
+            await couponService.updateCoupon(id, { active: !currentStatus });
+            fetchCoupons();
         } catch (err: any) {
             alert(err.message);
         }
     };
 
+    const handleEdit = (coupon: any) => {
+        setEditingId(coupon.id);
+        setFormData({
+            code: coupon.code,
+            discount_value: coupon.discount_value.toString(),
+            discount_type: coupon.discount_type,
+            min_order_value: coupon.min_order_value.toString(),
+            min_quantity: (coupon.min_quantity || 0).toString(),
+            active: coupon.active,
+            is_auto_apply: coupon.is_auto_apply || false,
+            expiry_date: coupon.expiry_date ? new Date(coupon.expiry_date).toISOString().split('T')[0] : "",
+            max_uses_per_user: (coupon.max_uses_per_user || 1).toString()
+        });
+        setShowModal(true);
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this coupon?")) return;
+        setLoading(true);
         try {
             await couponService.deleteCoupon(id);
             fetchCoupons();
         } catch (err: any) {
-            alert(err.message);
+            console.error("Delete error:", err);
+            alert(`Delete failed: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -89,8 +152,12 @@ export default function CouponsPage() {
                     </p>
                 </div>
                 <button 
-                    onClick={() => setShowModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-md active:scale-95 whitespace-nowrap"
+                    onClick={() => {
+                        setEditingId(null);
+                        resetForm();
+                        setShowModal(true);
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-95 whitespace-nowrap"
                 >
                     <Plus size={18} />
                     New Coupon
@@ -109,7 +176,7 @@ export default function CouponsPage() {
                 {loading ? (
                     <div className="h-full flex flex-col items-center justify-center p-12">
                         <Loader2 className="animate-spin text-blue-600 h-8 w-8 mb-4" />
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading coupons...</span>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading...</span>
                     </div>
                 ) : coupons.length === 0 ? (
                     <div className="h-full bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
@@ -121,10 +188,16 @@ export default function CouponsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {coupons.map((c) => (
                             <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-                                <div className="absolute top-2 right-2">
+                                <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+                                    <button 
+                                        onClick={() => handleEdit(c)}
+                                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                                    >
+                                        <Edit3 size={16} />
+                                    </button>
                                     <button 
                                         onClick={() => handleDelete(c.id)}
-                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -134,14 +207,25 @@ export default function CouponsPage() {
                                     <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100">
                                         <Ticket size={20} />
                                     </div>
-                                    <div className="min-w-0">
-                                        <h3 className="text-lg font-bold text-gray-900 tracking-tight uppercase truncate">{c.code}</h3>
-                                        <span className={cn(
-                                            "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border",
-                                            c.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-50 text-gray-400 border-gray-100'
-                                        )}>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold text-gray-900 tracking-tight uppercase truncate">{c.code}</h3>
+                                            {c.is_auto_apply && (
+                                                <span className="flex items-center gap-0.5 bg-amber-50 text-amber-600 text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase border border-amber-100">
+                                                    <Zap size={8} /> Auto
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button 
+                                            onClick={() => handleToggleActive(c.id, c.active)}
+                                            className={cn(
+                                                "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border transition-all mt-1 flex items-center gap-1",
+                                                c.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-50 text-gray-400 border-gray-100'
+                                            )}
+                                        >
+                                            {c.active ? <CheckCircle2 size={8} /> : <XCircle size={8} />}
                                             {c.active ? 'Active' : 'Disabled'}
-                                        </span>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -158,11 +242,33 @@ export default function CouponsPage() {
                                     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100/50">
                                         <div className="flex items-center gap-1.5 mb-1">
                                             <ShoppingBag size={10} className="text-gray-400" />
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Min Order</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Conditions</p>
                                         </div>
-                                        <p className="text-base font-black text-gray-900">₹{c.min_order_value}</p>
+                                        <div className="flex flex-col">
+                                            <p className="text-xs font-bold text-gray-900">₹{c.min_order_value}+</p>
+                                            {c.min_quantity > 0 && <p className="text-[9px] font-bold text-gray-500">{c.min_quantity} Items+</p>}
+                                        </div>
                                     </div>
                                 </div>
+
+                                {(c.expiry_date || c.max_uses_per_user > 1) && (
+                                    <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-2 gap-2">
+                                        {c.expiry_date && (
+                                            <div className="flex items-center gap-1.5 overflow-hidden">
+                                                <Calendar size={12} className="text-gray-400 shrink-0" />
+                                                <p className="text-[10px] font-bold text-gray-500 truncate">
+                                                    {new Date(c.expiry_date).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {c.max_uses_per_user > 0 && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Users size={12} className="text-gray-400 shrink-0" />
+                                                <p className="text-[10px] font-bold text-gray-500">Limit: {c.max_uses_per_user}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -174,9 +280,14 @@ export default function CouponsPage() {
                 <div className="fixed inset-0 z-[100] bg-gray-900/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-lg rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                            <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">New Coupon</h2>
+                            <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">
+                                {editingId ? 'Edit Coupon' : 'New Coupon'}
+                            </h2>
                             <button 
-                                onClick={() => setShowModal(false)}
+                                onClick={() => {
+                                    setShowModal(false);
+                                    setEditingId(null);
+                                }}
                                 className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-all"
                             >
                                 <X size={20} />
@@ -184,7 +295,7 @@ export default function CouponsPage() {
                         </div>
 
                         <div className="p-6 overflow-y-auto custom-scrollbar">
-                            <form onSubmit={handleCreate} className="space-y-5">
+                            <form onSubmit={handleSubmit} className="space-y-5">
                                 <div>
                                     <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Coupon Code</label>
                                     <input 
@@ -222,19 +333,82 @@ export default function CouponsPage() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Min Order Value (₹)</label>
-                                    <input 
-                                        type="number"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
-                                        placeholder="1000"
-                                        value={formData.min_order_value}
-                                        onChange={(e) => setFormData({...formData, min_order_value: e.target.value})}
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Min Order Value (₹)</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            placeholder="1000"
+                                            value={formData.min_order_value}
+                                            onChange={(e) => setFormData({...formData, min_order_value: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Min Item Quantity</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            placeholder="2"
+                                            value={formData.min_quantity}
+                                            onChange={(e) => setFormData({...formData, min_quantity: e.target.value})}
+                                        />
+                                    </div>
                                 </div>
 
-                                <button className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] mt-6">
-                                    Create Promo Code
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Expiry Date</label>
+                                        <input 
+                                            type="date"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            value={formData.expiry_date}
+                                            onChange={(e) => setFormData({...formData, expiry_date: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Max Uses Per User</label>
+                                        <input 
+                                            type="number"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            placeholder="1"
+                                            value={formData.max_uses_per_user}
+                                            onChange={(e) => setFormData({...formData, max_uses_per_user: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+                                    <div className="flex gap-3 items-center">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                                            <Zap size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-900 leading-none mb-1">Auto Apply</p>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Apply automatically if conditions met</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setFormData({...formData, is_auto_apply: !formData.is_auto_apply})}
+                                        className={cn(
+                                            "w-12 h-6 rounded-full transition-all relative",
+                                            formData.is_auto_apply ? 'bg-blue-600' : 'bg-gray-200'
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm",
+                                            formData.is_auto_apply ? 'right-1' : 'left-1'
+                                        )} />
+                                    </button>
+                                </div>
+
+                                <button 
+                                    disabled={isSaving}
+                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg active:scale-[0.98] mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSaving && <Loader2 className="animate-spin" size={18} />}
+                                    {isSaving ? 'Saving...' : (editingId ? 'Update Coupon' : 'Create Promo Code')}
                                 </button>
                             </form>
                         </div>

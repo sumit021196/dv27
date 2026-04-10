@@ -65,14 +65,25 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
                     <div className="absolute inset-0 z-10 bg-gradient-to-t from-background via-transparent to-transparent opacity-80" />
                     
                     <div className="relative h-full w-full overflow-hidden">
-                        <Image 
-                            src={getOptimizedImageUrl(b.image_url)} 
-                            alt={b.title || 'Hero'} 
-                            fill
-                            priority={idx === 0}
-                            className={`object-cover transition-transform duration-[10000ms] ease-out ${idx === currentIndex ? 'scale-110' : 'scale-100'}`}
-                            sizes="100vw"
-                        />
+                        {b.style_type === 'video' || b.image_url?.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/res\.cloudinary\.com\/.*\/video\/upload\//) ? (
+                            <video 
+                                src={b.image_url} 
+                                autoPlay 
+                                muted 
+                                loop 
+                                playsInline
+                                className={`object-cover w-full h-full transition-transform duration-[10000ms] ease-out ${idx === currentIndex ? 'scale-110' : 'scale-100'}`}
+                            />
+                        ) : (
+                            <Image 
+                                src={getOptimizedImageUrl(b.image_url)} 
+                                alt={b.title || 'Hero'} 
+                                fill
+                                priority={idx === 0}
+                                className={`object-cover transition-transform duration-[10000ms] ease-out ${idx === currentIndex ? 'scale-110' : 'scale-100'}`}
+                                sizes="100vw"
+                            />
+                        )}
                     </div>
 
                     {/* Content Overlay */}

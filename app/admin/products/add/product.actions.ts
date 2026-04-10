@@ -10,62 +10,21 @@ export async function createProductAction(formData: {
     description?: string | null;
     category?: string | null;
     category_id?: string | null;
-    images?: File[];
-    video?: File | null;
+    imageUrls?: string[];
+    videoUrl?: string | null;
     variants?: string | null; // JSON string of { size, color, stock, sku }
     details?: string | null; // JSON string of dynamic key-value pairs
 }) {
     try {
         console.log("--- createProductAction Start ---");
         console.log("FormData Name:", formData.name);
-        console.log("Images count:", formData.images?.length || 0);
-        console.log("Video present:", !!formData.video);
+        console.log("Images count:", formData.imageUrls?.length || 0);
+        console.log("Video present:", !!formData.videoUrl);
 
         const supabase = await createClient(true); // Create admin client
 
-        let finalVideoUrl = null;
-        let finalImageUrls: string[] = [];
-
-        // 1. Upload Video if provided
-        if (formData.video && formData.video.size > 0) {
-            console.log("Uploading video...");
-            const file = formData.video;
-            const fileExt = file.name.split('.').pop() || 'mp4';
-            const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            const { error: uploadError } = await supabase.storage
-                .from('products')
-                .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
-            if (uploadError) {
-                console.error("Video Upload Error:", uploadError);
-                throw uploadError;
-            }
-            const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
-            finalVideoUrl = urlData.publicUrl;
-            console.log("Video URL:", finalVideoUrl);
-        }
-
-        // 2. Upload Images if provided
-        if (formData.images && formData.images.length > 0) {
-            console.log("Uploading images...");
-            for (const file of formData.images) {
-                if (file.size > 0) {
-                    const fileExt = file.name.split('.').pop() || 'jpg';
-                    const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                    const { error: uploadError } = await supabase.storage
-                        .from('products')
-                        .upload(fileName, file, { cacheControl: '3600', upsert: false });
-                    
-                    if (uploadError) {
-                        console.error("Image Upload Error:", uploadError);
-                        throw uploadError;
-                    }
-                    const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
-                    finalImageUrls.push(urlData.publicUrl);
-                }
-            }
-            console.log("Images count uploaded:", finalImageUrls.length);
-        }
+        const finalImageUrls = formData.imageUrls || [];
+        const finalVideoUrl = formData.videoUrl || null;
 
         // 3. Insert into Database
         const mainMediaUrl = finalImageUrls.length > 0 ? finalImageUrls[0] : null;

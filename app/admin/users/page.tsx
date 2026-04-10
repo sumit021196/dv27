@@ -66,10 +66,10 @@ export default function AdminUsersPage() {
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold text-sm shadow-sm">
-                                                            {(u.first_name?.[0] || u.email?.[0] || '?').toUpperCase()}
+                                                            {(u.full_name?.[0] || u.email?.[0] || '?').toUpperCase()}
                                                         </div>
                                                         <div className="text-sm font-semibold text-gray-900">
-                                                            {u.first_name} {u.last_name}
+                                                            {u.full_name || "Unknown Name"}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -109,11 +109,11 @@ export default function AdminUsersPage() {
                                 {users.map((u) => (
                                     <div key={u.id} className="p-4 flex items-center gap-4 active:bg-gray-50 transition-colors">
                                         <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-black text-lg shadow-sm">
-                                            {(u.first_name?.[0] || u.email?.[0] || '?').toUpperCase()}
+                                            {(u.full_name?.[0] || u.email?.[0] || '?').toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start">
-                                                <h3 className="text-sm font-bold text-gray-900 truncate">{u.first_name} {u.last_name}</h3>
+                                                <h3 className="text-sm font-bold text-gray-900 truncate">{u.full_name || "Unknown Name"}</h3>
                                                 {u.is_admin && (
                                                     <span className="bg-purple-50 text-purple-700 border border-purple-100 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
                                                         <Shield size={8} /> Admin

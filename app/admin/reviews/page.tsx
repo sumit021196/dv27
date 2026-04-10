@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageSquare, Trash2, Loader2, Star, Clock, User } from "lucide-react";
+import { MessageSquare, Trash2, Loader2, Star, Clock, User, Play } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/utils/cn";
 
@@ -25,6 +25,23 @@ export default function AdminReviewsPage() {
         }
     };
 
+    const handleApprove = async (id: string) => {
+        try {
+            const res = await fetch(`/api/reviews/${id}`, { 
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'approved' })
+            });
+            if (res.ok) {
+                setReviews(reviews.map(r => r.id === id ? { ...r, status: 'approved' } : r));
+            } else {
+                alert('Failed to approve review');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
         try {
@@ -41,8 +58,22 @@ export default function AdminReviewsPage() {
 
     const renderStars = (rating: number) => {
         return Array.from({ length: 5 }).map((_, i) => (
-            <Star key={i} size={12} className={cn(i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200")} />
+            <Star key={i} size={10} className={cn(i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200")} />
         ));
+    };
+
+    const getStatusBadge = (status: string) => {
+        const styles = {
+            'approved': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+            'pending': 'bg-amber-50 text-amber-600 border-amber-100',
+            'rejected': 'bg-red-50 text-red-600 border-red-100'
+        }[status] || 'bg-gray-50 text-gray-600 border-gray-100';
+
+        return (
+            <span className={cn("px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border", styles)}>
+                {status}
+            </span>
+        );
     };
 
     return (
@@ -95,15 +126,34 @@ export default function AdminReviewsPage() {
                                                     </div>
                                                     <div className="text-xs text-gray-500 flex items-center gap-1">
                                                         By <span className="font-semibold text-gray-700">
-                                                            {review.profiles?.first_name ? `${review.profiles.first_name} ${review.profiles.last_name || ''}` : "Anonymous User"}
+                                                            {review.profiles?.full_name || review.guest_name || "Anonymous User"}
                                                         </span>
+                                                    </div>
+                                                    <div className="mt-2 flex gap-1 items-center">
+                                                        {getStatusBadge(review.status)}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="text-xs text-gray-800 line-clamp-2 italic italic-font">
+                                                    <div className="text-xs text-gray-800 line-clamp-2 italic italic-font mb-2">
                                                         &ldquo;{review.comment || "No comment provided"}&rdquo;
                                                     </div>
-                                                    <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
+                                                    {/* Media Preview */}
+                                                    {review.review_media && review.review_media.length > 0 && (
+                                                        <div className="flex gap-1.5 mb-2">
+                                                            {review.review_media.map((m: any, idx: number) => (
+                                                                <div key={idx} className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 relative">
+                                                                    {m.media_type === 'image' ? (
+                                                                        <img src={m.media_url} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                                                                            <Play className="text-white w-4 h-4 fill-white" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-[10px] text-gray-400 flex items-center gap-1">
                                                         <Clock size={10} />
                                                         {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                                                     </div>
@@ -114,13 +164,23 @@ export default function AdminReviewsPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button 
-                                                        onClick={() => handleDelete(review.id)} 
-                                                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all"
-                                                        title="Delete Review"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {review.status === 'pending' && (
+                                                            <button 
+                                                                onClick={() => handleApprove(review.id)} 
+                                                                className="text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm shadow-emerald-200"
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => handleDelete(review.id)} 
+                                                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all"
+                                                            title="Delete Review"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -136,8 +196,9 @@ export default function AdminReviewsPage() {
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-sm font-bold text-gray-900 truncate">{review.products?.name || "Unknown Product"}</h3>
                                                 <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-                                                    <User size={10} /> {review.profiles?.first_name || "Anonymous"}
+                                                    <User size={10} /> {review.profiles?.full_name || review.guest_name || "Anonymous"}
                                                 </p>
+                                                <div className="mt-1">{getStatusBadge(review.status)}</div>
                                             </div>
                                             <div className="flex items-center gap-0.5 bg-gray-50 px-2 py-1 rounded-full border border-gray-100">
                                                 {renderStars(review.rating)}
@@ -145,17 +206,44 @@ export default function AdminReviewsPage() {
                                         </div>
                                         <div className="bg-gray-50/50 p-3 rounded-xl border border-gray-100/50 italic text-[11px] text-gray-700 leading-relaxed">
                                             &ldquo;{review.comment || "No comment provided"}&rdquo;
+
+                                            {/* Mobile Media Preview */}
+                                            {review.review_media && review.review_media.length > 0 && (
+                                                <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
+                                                    {review.review_media.map((m: any, idx: number) => (
+                                                        <div key={idx} className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">
+                                                            {m.media_type === 'image' ? (
+                                                                <img src={m.media_url} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                                                                    <Play className="text-white w-3 h-3 fill-white" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <p className="text-[9px] text-gray-400 flex items-center gap-1 uppercase tracking-widest">
                                                 <Clock size={10} /> {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                                             </p>
-                                            <button 
-                                                onClick={() => handleDelete(review.id)}
-                                                className="p-2 text-red-400 hover:bg-red-50 rounded-lg active:scale-95 transition-all"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {review.status === 'pending' && (
+                                                    <button 
+                                                        onClick={() => handleApprove(review.id)}
+                                                        className="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={() => handleDelete(review.id)}
+                                                    className="p-2 text-red-400 hover:bg-red-50 rounded-lg active:scale-95 transition-all"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

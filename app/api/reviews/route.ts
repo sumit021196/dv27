@@ -17,8 +17,8 @@ export async function GET() {
             .select(`
                 *,
                 products ( name ),
-                profiles ( first_name, last_name ),
-                review_images ( image_url )
+                profiles ( full_name ),
+                review_media ( media_url, media_type )
             `)
             .order('created_at', { ascending: false });
 
@@ -35,7 +35,9 @@ export async function POST(req: Request) {
         const productId = formData.get('product_id');
         const rating = formData.get('rating');
         const comment = formData.get('comment');
+        const guestName = formData.get('guest_name');
         const images = formData.getAll('images') as File[];
+        const videos = formData.getAll('videos') as File[];
 
         if (!productId || !rating ) {
             return NextResponse.json({ error: "Product ID and Rating are required" }, { status: 400 });
@@ -43,14 +45,14 @@ export async function POST(req: Request) {
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // 1. Insert Review
         const { data: review, error: reviewError } = await supabase
             .from('reviews')
             .insert([{
                 product_id: productId,
-                user_id: user.id,
+                user_id: user?.id || null,
+                guest_name: user ? null : (guestName || "Anonymous"),
                 rating: parseInt(rating as string),
                 comment: comment as string,
                 status: 'pending' // Admin approval required
@@ -60,37 +62,41 @@ export async function POST(req: Request) {
 
         if (reviewError) throw reviewError;
 
-        // 2. Upload Images
-        const uploadedImages: string[] = [];
-        if (images && images.length > 0) {
-            for (const file of images) {
+        // 2. Upload Media (Images & Videos)
+        const mediaInserts: any[] = [];
+        
+        const processFiles = async (files: File[], type: 'image' | 'video') => {
+            for (const file of files) {
                 if (file.size > 0) {
-                    const fileExt = file.name.split('.').pop() || 'jpg';
-                    const fileName = `${review.id}/img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                    const fileExt = file.name.split('.').pop() || (type === 'image' ? 'jpg' : 'mp4');
+                    const fileName = `${review.id}/${type}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                     
                     const { error: uploadError } = await supabase.storage
                         .from('reviews')
                         .upload(fileName, file);
 
                     if (uploadError) {
-                        console.error("Review Image Upload Error:", uploadError);
-                        continue; // Skip failed upload
+                        console.error(`Review ${type} Upload Error:`, uploadError);
+                        continue;
                     }
 
                     const { data: urlData } = supabase.storage.from('reviews').getPublicUrl(fileName);
-                    uploadedImages.push(urlData.publicUrl);
+                    mediaInserts.push({
+                        review_id: review.id,
+                        media_url: urlData.publicUrl,
+                        media_type: type
+                    });
                 }
             }
-        }
+        };
 
-        // 3. Insert Review Images into DB
-        if (uploadedImages.length > 0) {
-            const imageInserts = uploadedImages.map(url => ({
-                review_id: review.id,
-                image_url: url
-            }));
-            const { error: imgInsertError } = await supabase.from('review_images').insert(imageInserts);
-            if (imgInsertError) console.error("Database Image Insert Error:", imgInsertError);
+        if (images?.length > 0) await processFiles(images, 'image');
+        if (videos?.length > 0) await processFiles(videos, 'video');
+
+        // 3. Insert Review Media into DB
+        if (mediaInserts.length > 0) {
+            const { error: mediaInsertError } = await supabase.from('review_media').insert(mediaInserts);
+            if (mediaInsertError) console.error("Database Media Insert Error:", mediaInsertError);
         }
 
         return NextResponse.json({ success: true, review_id: review.id });

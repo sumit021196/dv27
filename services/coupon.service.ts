@@ -44,7 +44,7 @@ export const couponService = {
     return true;
   },
 
-  async validateCoupon(code: string, userId?: string, cartTotal: number = 0) {
+  async validateCoupon(code: string, userId?: string, cartTotal: number = 0, totalItems: number = 0) {
     const supabase = await createClient();
     
     // 1. Fetch coupon
@@ -57,15 +57,25 @@ export const couponService = {
 
     if (error || !coupon) throw new Error("Invalid or inactive coupon");
 
-    // 2. Check min order value
+    // 2. Check Expiry
+    if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {
+      throw new Error("This coupon has expired");
+    }
+
+    // 3. Check min order value
     if (cartTotal < coupon.min_order_value) {
       throw new Error(`Minimum order of ₹${coupon.min_order_value} required`);
     }
 
-    // 3. Check user usage if logged in
+    // 4. Check min quantity
+    if (totalItems < (coupon.min_quantity || 0)) {
+      throw new Error(`Minimum ${coupon.min_quantity} items required for this coupon`);
+    }
+
+    // 5. Check user usage if logged in
     if (userId) {
       const { data: usage, error: usageError } = await supabase
-        .from('user_coupons')
+        .from('coupon_usages')
         .select('*')
         .eq('user_id', userId)
         .eq('coupon_id', coupon.id)

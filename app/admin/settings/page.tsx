@@ -64,6 +64,8 @@ export default function AdminSettingsPage() {
         { id: "social", label: "Social", icon: <Share2 size={18} /> },
         { id: "store", label: "Store", icon: <ShieldCheck size={18} /> },
         { id: "seo", label: "SEO", icon: <Globe size={18} /> },
+        { id: "trust", label: "Trust Signals", icon: <Truck size={18} /> },
+        { id: "sections", label: "Page Content", icon: <Megaphone size={18} /> },
     ];
 
     if (loading) {
@@ -365,6 +367,7 @@ export default function AdminSettingsPage() {
 
                     {/* SEO Section */}
                     {(!activeSection || activeSection === "seo" || window.innerWidth >= 768) && (
+                        /* ... existing SEO section ... */
                         <SettingCard 
                             title="SEO & Search" 
                             icon={<Globe className="h-5 w-5 text-cyan-500" />}
@@ -400,6 +403,144 @@ export default function AdminSettingsPage() {
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all font-bold text-sm"
                                         placeholder="gifts, shopping, jewelry..."
                                     />
+                                </div>
+                            </div>
+                        </SettingCard>
+                    )}
+
+                    {/* Trust Signals Section */}
+                    {(!activeSection || activeSection === "trust" || window.innerWidth >= 768) && (
+                        <SettingCard 
+                            title="Trust Signals" 
+                            icon={<Truck className="h-5 w-5 text-orange-500" />}
+                            description="Highlight your store's reliability."
+                            onSave={() => handleSave('trust_signals', settings.trust_signals, 'json')}
+                            isSaving={saving === 'trust_signals'}
+                            isSuccess={success === 'trust_signals'}
+                        >
+                            <div className="space-y-4">
+                                {(settings.trust_signals || [
+                                    { icon: "truck", title: "Free Shipping", description: "Orders over ₹999" },
+                                    { icon: "refresh", title: "7-Day Return", description: "No questions asked" },
+                                    { icon: "shield", title: "Secure Pay", description: "100% encrypted" },
+                                    { icon: "card", title: "COD Available", description: "Pay at your door" }
+                                ]).map((signal: any, idx: number) => (
+                                    <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Icon Type</label>
+                                                <select 
+                                                    value={signal.icon}
+                                                    onChange={(e) => {
+                                                        const newSignals = [...(settings.trust_signals || [])];
+                                                        newSignals[idx] = { ...signal, icon: e.target.value };
+                                                        setSettings({...settings, trust_signals: newSignals});
+                                                    }}
+                                                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl outline-none font-bold text-[10px] appearance-none"
+                                                >
+                                                    <option value="truck">Truck (Shipping)</option>
+                                                    <option value="refresh">Refresh (Returns)</option>
+                                                    <option value="shield">Shield (Quality/Secure)</option>
+                                                    <option value="card">Card (Payments)</option>
+                                                    <option value="box">Box (Package)</option>
+                                                    <option value="star">Star (Rating)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Title</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={signal.title} 
+                                                    onChange={(e) => {
+                                                        const newSignals = [...(settings.trust_signals || [])];
+                                                        newSignals[idx] = { ...signal, title: e.target.value };
+                                                        setSettings({...settings, trust_signals: newSignals});
+                                                    }}
+                                                    className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-bold text-xs"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Description</label>
+                                            <input 
+                                                type="text" 
+                                                value={signal.description} 
+                                                onChange={(e) => {
+                                                    const newSignals = [...(settings.trust_signals || [])];
+                                                    newSignals[idx] = { ...signal, description: e.target.value };
+                                                    setSettings({...settings, trust_signals: newSignals});
+                                                }}
+                                                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-[10px] text-gray-500"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </SettingCard>
+                    )}
+
+                    {/* Home Page Sections */}
+                    {(!activeSection || activeSection === "sections" || window.innerWidth >= 768) && (
+                        <SettingCard 
+                            title="Home Page Sections" 
+                            icon={<Megaphone className="h-5 w-5 text-pink-500" />}
+                            description="Customize titles and subtitles for home sections."
+                            onSave={() => {
+                                handleSave('section_new_drops_title', settings.section_new_drops_title, 'text');
+                                handleSave('section_new_drops_subtitle', settings.section_new_drops_subtitle, 'text');
+                                handleSave('section_trending_title', settings.section_trending_title, 'text');
+                                handleSave('section_trending_subtitle', settings.section_trending_subtitle, 'text');
+                            }}
+                            isSaving={saving === 'section_new_drops_title' || saving === 'section_trending_title'}
+                            isSuccess={success === 'section_new_drops_title' || success === 'section_trending_title'}
+                        >
+                            <div className="space-y-6">
+                                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
+                                    <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">New Arrivals Section</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Title</label>
+                                            <input 
+                                                type="text" 
+                                                value={settings.section_new_drops_title || ""} 
+                                                onChange={(e) => setSettings({...settings, section_new_drops_title: e.target.value})}
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
+                                            <input 
+                                                type="text" 
+                                                value={settings.section_new_drops_subtitle || ""} 
+                                                onChange={(e) => setSettings({...settings, section_new_drops_subtitle: e.target.value})}
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-4">
+                                    <h4 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Trending Section</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Title</label>
+                                            <input 
+                                                type="text" 
+                                                value={settings.section_trending_title || ""} 
+                                                onChange={(e) => setSettings({...settings, section_trending_title: e.target.value})}
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-bold text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
+                                            <input 
+                                                type="text" 
+                                                value={settings.section_trending_subtitle || ""} 
+                                                onChange={(e) => setSettings({...settings, section_trending_subtitle: e.target.value})}
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-500"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </SettingCard>

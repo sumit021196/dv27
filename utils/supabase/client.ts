@@ -14,6 +14,16 @@ export const createClient = () => {
   client = createBrowserClient(
     supabaseUrl!,
     supabaseKey!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        // Disable the browser lock to prevent timeout issues in development
+        // @ts-ignore
+        lock: false
+      }
+    }
   );
 
   return client;

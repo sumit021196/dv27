@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Star, Camera, Plus, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { productService } from "@/services/product.service";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect } from "react";
+import { Video } from "lucide-react";
 
 interface ReviewFormProps {
   productId: string | number;
@@ -18,29 +21,78 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [name, setName] = useState("");
+  const [user, setUser] = useState<any>(null);
   const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<{url: string, type: 'image' | 'video'}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + images.length > 4) {
-      setError("Maximum 4 images allowed");
+    if (files.length + images.length + videos.length > 4) {
+      setError("Maximum 4 media items allowed");
       return;
     }
     
     setImages(prev => [...prev, ...files]);
-    
-    const newPreviews = files.map(file => URL.createObjectURL(file));
+    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'image' as const }));
     setPreviews(prev => [...prev, ...newPreviews]);
     setError(null);
   };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + images.length + videos.length > 4) {
+      setError("Maximum 4 media items allowed");
+      return;
+    }
+    
+    // Check video size (e.g., 20MB)
+    const tooLarge = files.some(f => f.size > 20 * 1024 * 1024);
+    if (tooLarge) {
+        setError("Videos must be under 20MB");
+        return;
+    }
+
+    setVideos(prev => [...prev, ...files]);
+    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'video' as const }));
+    setPreviews(prev => [...prev, ...newPreviews]);
+    setError(null);
+  };
+
+  const removeMedia = (index: number) => {
+    const item = previews[index];
+    if (item.type === 'image') {
+        // Find match in images array and remove one instance
+        setImages(prev => {
+            const next = [...prev];
+            // Since we don't have IDs, we just remove by index relative to other images
+            const imgIndex = previews.slice(0, index).filter(p => p.type === 'image').length;
+            next.splice(imgIndex, 1);
+            return next;
+        });
+    } else {
+        setVideos(prev => {
+            const next = [...prev];
+            const vidIndex = previews.slice(0, index).filter(p => p.type === 'video').length;
+            next.splice(vidIndex, 1);
+            return next;
+        });
+    }
     setPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -55,6 +107,11 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
       return;
     }
 
+    if (!user && !name.trim()) {
+      setError("Please provide your name");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -62,7 +119,10 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     formData.append("product_id", productId.toString());
     formData.append("rating", rating.toString());
     formData.append("comment", comment);
+    if (!user) formData.append("guest_name", name);
+    
     images.forEach(img => formData.append("images", img));
+    videos.forEach(vid => formData.append("videos", vid));
 
     const result = await productService.submitReview(formData);
     
@@ -74,7 +134,9 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
         // Reset form
         setRating(0);
         setComment("");
+        setName("");
         setImages([]);
+        setVideos([]);
         setPreviews([]);
         setIsSuccess(false);
       }, 2000);
@@ -135,6 +197,20 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Guest Name Section */}
+                  {!user && (
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground px-1">Your Name</label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Ex: Rahul Sharma"
+                        className="w-full bg-muted/30 border border-foreground/5 rounded-2xl p-4 text-xs font-medium placeholder:opacity-30 focus:outline-none focus:border-brand-accent/50 transition-all"
+                      />
+                    </div>
+                  )}
+
                   {/* Rating Section */}
                   <div className="flex flex-col items-center space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Select Rating</label>
@@ -176,7 +252,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                   {/* Media Section */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center px-1">
-                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Add Photos ({images.length}/4)</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Add Media ({previews.length}/4)</label>
                     </div>
                     
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
@@ -185,9 +261,19 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                         onClick={() => fileInputRef.current?.click()}
                         className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
                       >
-                        <Plus size={20} />
-                        <span className="text-[8px] font-black uppercase tracking-widest">Attach</span>
+                        <Camera size={20} />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Photo</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => videoInputRef.current?.click()}
+                        className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
+                      >
+                        <Video size={20} />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Video</span>
+                      </button>
+
                       <input 
                         type="file" 
                         ref={fileInputRef} 
@@ -196,20 +282,33 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                         accept="image/*" 
                         className="hidden" 
                       />
+                      <input 
+                        type="file" 
+                        ref={videoInputRef} 
+                        onChange={handleVideoChange} 
+                        multiple 
+                        accept="video/*" 
+                        className="hidden" 
+                      />
 
                       {previews.map((preview, index) => (
-                        <div key={index} className="flex-none w-24 h-24 rounded-2xl relative group bg-muted overflow-hidden">
-                          <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                        <div key={index} className="flex-none w-24 h-24 rounded-2xl relative group bg-muted overflow-hidden border border-foreground/5">
+                          {preview.type === 'image' ? (
+                            <img src={preview.url} alt="preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <video src={preview.url} className="w-full h-full object-cover" />
+                          )}
                           <button
                             type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeMedia(index)}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
                           >
-                            <X size={12} />
+                            <X size={14} />
                           </button>
                         </div>
                       ))}
                     </div>
+                    <p className="text-[8px] text-muted-foreground uppercase tracking-widest px-1">Images (max 5MB) • Videos (max 20MB)</p>
                   </div>
 
                   {/* Submit Button */}

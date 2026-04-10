@@ -8,6 +8,48 @@ import { createProductAction } from "./product.actions";
 import { productService } from "@/services/product.service";
 import { Category } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
+import { createClient } from "@/utils/supabase/client";
+
+// Image compression utility
+async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(compressedFile);
+                    } else {
+                        reject(new Error('Canvas to blob failed'));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
 
 export default function AddProductPage() {
     const router = useRouter();
@@ -136,6 +178,41 @@ export default function AddProductPage() {
 
         setLoading(true);
         try {
+            const supabase = createClient();
+            const finalImageUrls: string[] = [];
+            let finalVideoUrl: string | null = null;
+
+            // 1. Upload Video if exists
+            if (video?.file) {
+                const file = video.file;
+                const fileExt = file.name.split('.').pop() || 'mp4';
+                const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, file);
+                
+                if (uploadError) throw new Error(`Video upload failed: ${uploadError.message}`);
+                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                finalVideoUrl = publicUrl;
+            }
+
+            // 2. Compress and Upload Images
+            for (const img of images) {
+                console.log(`Compressing and uploading ${img.file.name}...`);
+                const compressedFile = await compressImage(img.file);
+                const fileExt = 'jpg'; // We compress to jpeg
+                const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, compressedFile);
+                
+                if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                finalImageUrls.push(publicUrl);
+            }
+
+            // 3. Call Server Action with URLs
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -143,8 +220,8 @@ export default function AddProductPage() {
                 description: formData.description,
                 category: formData.category,
                 category_id: formData.category_id || null,
-                images: images.map(img => img.file),
-                video: video?.file || null,
+                imageUrls: finalImageUrls,
+                videoUrl: finalVideoUrl,
                 variants: JSON.stringify(variants.map(v => ({ size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku }))),
                 details: JSON.stringify(details.reduce((acc, curr) => {
                     if (curr.label.trim()) acc[curr.label.trim()] = curr.value;

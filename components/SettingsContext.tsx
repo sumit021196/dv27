@@ -32,6 +32,11 @@ interface Settings {
   instagram_reels?: string[];
   tagline?: string;
   copyright_text?: string;
+  trust_signals?: {
+    icon: string;
+    title: string;
+    description: string;
+  }[];
 }
 
 interface SettingsContextType {

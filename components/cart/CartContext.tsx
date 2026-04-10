@@ -13,6 +13,19 @@ type CartItem = {
   color?: string;
 };
 
+type Coupon = {
+  id: string | number;
+  code: string;
+  discount_value: number;
+  min_order_value?: number;
+  min_quantity?: number;
+  expiry_date?: string;
+  active: boolean;
+  is_auto_apply: boolean;
+  discount_type?: 'percentage' | 'fixed';
+};
+
+
 type CartCtx = {
   items: CartItem[];
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
@@ -78,28 +91,70 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem("cart", JSON.stringify(items));
 
-      // Auto coupon logic: 2 products -> 100rs off
+      // Dynamic Auto-apply Logic
       const totalQty = items.reduce((acc, i) => acc + i.qty, 0);
-      if (totalQty >= 2 && !coupon) {
-        // We defer applying to avoid infinite loops, but we can do it directly:
-        const applyAutoCoupon = async () => {
-          const supabase = createClient();
-          const { data } = await supabase.from('coupons').select('discount_value').eq('code', 'FLAT100').eq('active', true).single();
-          if (data && !coupon) {
-             setCoupon('FLAT100');
-             setDiscount(data.discount_value);
-             setShowConfetti(true);
-             localStorage.setItem("applied_coupon", JSON.stringify({ code: 'FLAT100', discount: data.discount_value }));
-          }
-        };
-        applyAutoCoupon();
-      } else if (totalQty < 2 && coupon === 'FLAT100') {
-         setCoupon(null);
-         setDiscount(0);
-         localStorage.removeItem("applied_coupon");
-      }
+      const totalSubtotal = items.reduce((acc, i) => acc + (i.price * i.qty), 0);
+      
+      const checkCoupons = async () => {
+        const supabase = createClient();
+        
+        // 1. If we have a coupon applied, validate it
+        if (coupon) {
+            const { data: currentCoupon } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('code', coupon)
+                .eq('active', true)
+                .single();
+            
+            if (!currentCoupon || 
+                totalSubtotal < (currentCoupon.min_order_value || 0) || 
+                totalQty < (currentCoupon.min_quantity || 0) ||
+                (currentCoupon.expiry_date && new Date(currentCoupon.expiry_date) < new Date())) {
+                
+                // Conditions no longer met, clear it
+                setCoupon(null);
+                setDiscount(0);
+                localStorage.removeItem("applied_coupon");
+            }
+        }
 
-    } catch {}
+        // 2. If no coupon is applied, look for an auto-apply one
+        if (!coupon) {
+            const { data: autoCoupons } = await supabase
+                .from('coupons')
+                .select('*')
+                .eq('active', true)
+                .eq('is_auto_apply', true)
+                .order('discount_value', { ascending: false }); // Prioritize higher discount
+
+            if (autoCoupons && (autoCoupons as Coupon[]).length > 0) {
+                // Find the first one whose conditions are met
+                const validAuto = (autoCoupons as Coupon[]).find(c => 
+                    totalSubtotal >= (c.min_order_value || 0) && 
+                    totalQty >= (c.min_quantity || 0) &&
+                    (!c.expiry_date || new Date(c.expiry_date) > new Date())
+                );
+
+
+                if (validAuto) {
+                    setCoupon(validAuto.code);
+                    setDiscount(validAuto.discount_value);
+                    setShowConfetti(true);
+                    localStorage.setItem("applied_coupon", JSON.stringify({ 
+                        code: validAuto.code, 
+                        discount: validAuto.discount_value,
+                        isAuto: true 
+                    }));
+                }
+            }
+        }
+      };
+
+      checkCoupons();
+    } catch (err) {
+      console.error("Auto coupon error", err);
+    }
   }, [items, isMounted, coupon]);
 
   const openCart = useCallback(() => setIsOpen(true), []);

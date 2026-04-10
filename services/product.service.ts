@@ -13,7 +13,7 @@ export class ProductService implements IProductService {
         try {
             let query = client
                 .from("products")
-                .select("*, categories!inner(name, id, is_active), product_variants(*), product_images(*)");
+                .select("*, categories(name, id, is_active), product_variants(*), product_images(*)");
             
             if (!includeInactive) {
                 query = query
@@ -32,20 +32,29 @@ export class ProductService implements IProductService {
         }
     }
 
-    async getProductById(id: string | number, supabase?: any): Promise<Product | null> {
+    async getProductById(idOrSlug: string | number, supabase?: any): Promise<Product | null> {
         const client = this.getClient(supabase);
         try {
-            const { data, error } = await client
+            const isNumeric = !isNaN(Number(idOrSlug)) && typeof idOrSlug !== 'string' || (typeof idOrSlug === 'string' && /^\d+$/.test(idOrSlug));
+            
+            let query = client
                 .from("products")
-                .select("*, categories!inner(name, is_active), product_variants(*), product_images(*) ")
-                .eq("id", id)
+                .select("*, categories(name, is_active), product_variants(*), product_images(*) ");
+            
+            if (isNumeric) {
+                query = query.eq("id", idOrSlug);
+            } else {
+                query = query.eq("slug", idOrSlug);
+            }
+
+            const { data, error } = await query
                 .eq("is_active", true)
-                .eq("categories.is_active", true)
                 .single();
+
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
         } catch {
-            const fallbackItem = fallback.find((i) => String(i.id) === String(id));
+            const fallbackItem = fallback.find((i) => String(i.id) === String(idOrSlug) || String(i.slug) === String(idOrSlug));
             return fallbackItem ? this.mapFallback([fallbackItem])[0] : null;
         }
     }
@@ -145,13 +154,37 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("reviews")
-                .select("*, review_images(image_url)")
+                .select("*, review_media(media_url, media_type)")
                 .eq("product_id", productId)
+                .eq("status", "approved")
                 .order("created_at", { ascending: false });
             if (error) throw error;
             return data || [];
         } catch (error) {
             console.error("Error fetching reviews:", error);
+            return [];
+        }
+    }
+
+    async getVideoReviews(limit: number = 6, supabase?: any): Promise<any[]> {
+        const client = this.getClient(supabase);
+        try {
+            const { data, error } = await client
+                .from("reviews")
+                .select(`
+                    *,
+                    products ( name, id ),
+                    profiles ( full_name ),
+                    review_media!inner ( media_url, media_type )
+                `)
+                .eq("status", "approved")
+                .eq("review_media.media_type", "video")
+                .order("created_at", { ascending: false })
+                .limit(limit);
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error("Error fetching video reviews:", error);
             return [];
         }
     }

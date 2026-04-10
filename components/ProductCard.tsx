@@ -13,6 +13,7 @@ type Product = {
   original_price?: number;
   mediaUrl?: string;
   rating?: number;
+  slug?: string;
 };
 
 // Simple Star Rating Component
@@ -46,7 +47,7 @@ export default function ProductCard({ product }: { product: Product }) {
     <div className="group flex flex-col bg-background overflow-hidden fade-in-up">
       {/* Image Container */}
       <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
-        <Link href={`/product/${product.id}`} className="block h-full w-full">
+        <Link href={`/product/${product.slug || product.id}`} className="block h-full w-full">
           <Image
             src={getOptimizedImageUrl(product.mediaUrl)}
             alt={product.name}
@@ -91,7 +92,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Hover Action Bar (Desktop) */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 hidden md:block">
              <Link 
-                href={`/product/${product.id}`}
+                href={`/product/${product.slug || product.id}`}
                 className="flex items-center justify-center gap-3 w-full py-4 bg-foreground text-background font-black uppercase tracking-widest text-xs hover:bg-brand-accent hover:text-white transition-all"
              >
                 <ShoppingBag size={16} />
@@ -102,7 +103,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       {/* Info Section */}
       <div className="py-4 md:py-6 flex flex-col items-center text-center gap-1.5 px-2">
-        <Link href={`/product/${product.id}`} className="block w-full">
+        <Link href={`/product/${product.slug || product.id}`} className="block w-full">
           <h3 className="text-sm font-medium text-foreground/70 line-clamp-1 group-hover:text-foreground transition-colors duration-300">
             {product.name}
           </h3>
@@ -122,7 +123,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Mobile Action (Visible only on mobile) */}
         <div className="w-full mt-2 md:hidden">
              <Link 
-                href={`/product/${product.id}`}
+                href={`/product/${product.slug || product.id}`}
                 className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground active:bg-foreground active:text-background transition-all"
              >
                 View
