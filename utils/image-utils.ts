@@ -3,7 +3,29 @@
  * Robust image compression utility designed for multi-platform compatibility,
  * specifically addressing Safari/iPhone hangs during image processing.
  */
+import heic2any from 'heic2any';
+
 export async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
+    // Convert HEIC/HEIF to JPEG first
+    if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+        try {
+            const convertedBlob = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: quality
+            });
+            const blobToProcess = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+            file = new File([blobToProcess], newName, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+        } catch (error) {
+            console.error("HEIC conversion failed:", error);
+            throw new Error("Failed to process HEIC image format.");
+        }
+    }
+
     // Standard sanity check
     if (!file.type.startsWith('image/')) {
         return file;
