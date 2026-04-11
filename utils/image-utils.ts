@@ -31,11 +31,19 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
         return file;
     }
 
-    return new Promise((resolve, reject) => {
-        // 30s Safety Timeout to prevent UI from hanging on "Saving..." forever
+    // Bypass compression for formats that are already highly optimized
+    // or frequently cause issues with Canvas API on mobile browsers.
+    if (file.type === 'image/webp' || file.type === 'image/avif' || file.type === 'image/gif' || file.name.toLowerCase().endsWith('.webp') || file.name.toLowerCase().endsWith('.avif')) {
+        return file;
+    }
+
+    return new Promise((resolve) => {
+        // 10s Safety Timeout to prevent UI from hanging on "Saving..." forever.
+        // If it times out, we return the original file to guarantee progress.
         const timeout = setTimeout(() => {
-            reject(new Error("Image processing timed out. The file might be too large or corrupted."));
-        }, 30000);
+            console.warn(`Image compression timed out for ${file.name}. Returning original file.`);
+            resolve(file);
+        }, 10000);
 
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
@@ -91,21 +99,24 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                         });
                         resolve(compressedFile);
                     } else {
-                        reject(new Error("Image compression failed (Canvas to Blob)."));
+                        console.warn(`Canvas.toBlob failed for ${file.name}. Returning original file.`);
+                        resolve(file);
                     }
                 }, 'image/jpeg', quality);
 
             } catch (err: any) {
                 clearTimeout(timeout);
                 URL.revokeObjectURL(objectUrl);
-                reject(new Error(`Compression error: ${err.message}`));
+                console.warn(`Compression error for ${file.name}:`, err.message);
+                resolve(file); // Fallback to original file
             }
         };
 
         img.onerror = () => {
             clearTimeout(timeout);
             URL.revokeObjectURL(objectUrl);
-            reject(new Error("Failed to load image for processing. Ensure it's a valid image format (JPG, PNG, WebP, AVIF, HEIC)."));
+            console.warn(`Failed to load image ${file.name} for compression processing. Returning original.`);
+            resolve(file); // Fallback to original file
         };
 
         // Trigger loading
