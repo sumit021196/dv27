@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, Trash2, Video } from "lucide-react";
+import { UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, Trash2, Video, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "./product.actions";
@@ -9,51 +9,13 @@ import { productService } from "@/services/product.service";
 import { Category } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
 import { createClient } from "@/utils/supabase/client";
+import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
-// Image compression utility
-async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height = (maxWidth / width) * height;
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now(),
-                        });
-                        resolve(compressedFile);
-                    } else {
-                        reject(new Error('Canvas to blob failed'));
-                    }
-                }, 'image/jpeg', quality);
-            };
-            img.onerror = (err) => reject(err);
-        };
-        reader.onerror = (err) => reject(err);
-    });
-}
 
 export default function AddProductPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
 
@@ -184,33 +146,22 @@ export default function AddProductPage() {
 
             // 1. Upload Video if exists
             if (video?.file) {
-                const file = video.file;
-                const fileExt = file.name.split('.').pop() || 'mp4';
-                const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage
-                    .from('products')
-                    .upload(fileName, file);
-                
-                if (uploadError) throw new Error(`Video upload failed: ${uploadError.message}`);
-                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
-                finalVideoUrl = publicUrl;
+                setStatusMessage("Uploading video...");
+                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
             }
 
             // 2. Compress and Upload Images
-            for (const img of images) {
-                console.log(`Compressing and uploading ${img.file.name}...`);
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                 const compressedFile = await compressImage(img.file);
-                const fileExt = 'jpg'; // We compress to jpeg
-                const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 
-                const { error: uploadError } = await supabase.storage
-                    .from('products')
-                    .upload(fileName, compressedFile);
-                
-                if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
-                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
+                const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
                 finalImageUrls.push(publicUrl);
             }
+
+            setStatusMessage("Saving product data...");
 
             // 3. Call Server Action with URLs
             const result = await createProductAction({
@@ -239,6 +190,7 @@ export default function AddProductPage() {
             setErrorParam(err?.message || "An unexpected error occurred.");
         } finally {
             setLoading(false);
+            setStatusMessage("");
         }
     };
 

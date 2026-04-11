@@ -9,6 +9,22 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useSettings } from "@/components/SettingsContext";
 import { Truck } from "lucide-react";
+import TapScale from "../ui/TapScale";
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { x: 20, opacity: 0 },
+    show: { x: 0, opacity: 1 }
+};
 
 export default function CartDrawer() {
     const { settings } = useSettings();
@@ -141,7 +157,12 @@ export default function CartDrawer() {
                         </div>
 
                         {/* Cart Items */}
-                        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                        <motion.div 
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="show"
+                            className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+                        >
                             {items.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-center">
                                     <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
@@ -149,16 +170,22 @@ export default function CartDrawer() {
                                     </div>
                                     <p className="text-foreground font-black uppercase tracking-tighter">Your bag is empty</p>
                                     <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-2">Add some pieces to your bag to get started!</p>
-                                    <button
-                                        onClick={closeCart}
-                                        className="mt-8 rounded-xl bg-foreground text-background px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-brand-accent hover:text-white transition"
-                                    >
-                                        Continue Shopping
-                                    </button>
+                                    <TapScale>
+                                        <button
+                                            onClick={closeCart}
+                                            className="mt-8 rounded-xl bg-foreground text-background px-8 py-3 font-black text-[10px] uppercase tracking-widest hover:bg-brand-accent hover:text-white transition"
+                                        >
+                                            Continue Shopping
+                                        </button>
+                                    </TapScale>
                                 </div>
                             ) : (
                                 items.map((item) => (
-                                    <div key={`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`} className="flex gap-4 border-b border-foreground/5 pb-4 last:border-0 last:pb-0">
+                                    <motion.div 
+                                        key={`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`} 
+                                        variants={itemVariants}
+                                        className="flex gap-4 border-b border-foreground/5 pb-4 last:border-0 last:pb-0"
+                                    >
                                         <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                                             <img
                                                 src={item.image || FALLBACK_IMG}
@@ -181,33 +208,49 @@ export default function CartDrawer() {
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
                                                 <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-foreground/5">
-                                                    <button
-                                                        onClick={() => cart.add({ id: item.id, name: item.name, price: item.price, image: item.image, variant_id: item.variant_id, size: item.size, color: item.color }, -1)}
-                                                        disabled={item.qty <= 1}
-                                                        className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-background disabled:opacity-30 transition"
-                                                    >
-                                                        <Minus size={10} strokeWidth={4} />
-                                                    </button>
-                                                    <span className="w-6 text-center text-xs font-black">{item.qty}</span>
-                                                    <button
-                                                        onClick={() => cart.add({ id: item.id, name: item.name, price: item.price, image: item.image, variant_id: item.variant_id, size: item.size, color: item.color }, 1)}
-                                                        className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-background transition"
-                                                    >
-                                                        <Plus size={10} strokeWidth={4} />
-                                                    </button>
+                                                    <TapScale>
+                                                        <button
+                                                            onClick={() => cart.add({ id: item.id, name: item.name, price: item.price, image: item.image, variant_id: item.variant_id, size: item.size, color: item.color }, -1)}
+                                                            disabled={item.qty <= 1}
+                                                            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-background disabled:opacity-30 transition"
+                                                        >
+                                                            <Minus size={10} strokeWidth={4} />
+                                                        </button>
+                                                    </TapScale>
+                                                    <AnimatePresence mode="wait">
+                                                        <motion.span 
+                                                            key={item.qty}
+                                                            initial={{ y: 5, opacity: 0 }}
+                                                            animate={{ y: 0, opacity: 1 }}
+                                                            exit={{ y: -5, opacity: 0 }}
+                                                            className="w-6 text-center text-xs font-black inline-block"
+                                                        >
+                                                            {item.qty}
+                                                        </motion.span>
+                                                    </AnimatePresence>
+                                                    <TapScale>
+                                                        <button
+                                                            onClick={() => cart.add({ id: item.id, name: item.name, price: item.price, image: item.image, variant_id: item.variant_id, size: item.size, color: item.color }, 1)}
+                                                            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-background transition"
+                                                        >
+                                                            <Plus size={10} strokeWidth={4} />
+                                                        </button>
+                                                    </TapScale>
                                                 </div>
-                                                <button
-                                                    onClick={() => cart.remove(`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`)}
-                                                    className="text-foreground/20 hover:text-brand-red transition-colors"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                <TapScale>
+                                                    <button
+                                                        onClick={() => cart.remove(`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`)}
+                                                        className="text-foreground/20 hover:text-brand-red transition-colors p-2"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </TapScale>
                                             </div>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 ))
                             )}
-                        </div>
+                        </motion.div>
 
                         {/* Footer */}
                         {items.length > 0 && (
@@ -227,13 +270,15 @@ export default function CartDrawer() {
                                         <span className="text-xs font-black text-brand-accent">-₹{discount}</span>
                                     </div>
                                 ) : (
-                                    <div className="group flex items-center justify-between border border-dashed border-foreground/10 rounded-xl p-3 hover:border-brand-accent/50 transition-colors">
-                                        <div className="flex items-center gap-2">
-                                            <Ticket size={14} className="text-muted-foreground" />
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Add a coupon code?</p>
+                                    <TapScale className="w-full">
+                                        <div className="group flex items-center justify-between border border-dashed border-foreground/10 rounded-xl p-3 hover:border-brand-accent/50 transition-colors">
+                                            <div className="flex items-center gap-2">
+                                                <Ticket size={14} className="text-muted-foreground" />
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Add a coupon code?</p>
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase text-brand-accent cursor-pointer">Apply</p>
                                         </div>
-                                        <p className="text-[10px] font-black uppercase text-brand-accent cursor-pointer">Apply</p>
-                                    </div>
+                                    </TapScale>
                                 )}
 
                                 <div className="space-y-2">
@@ -249,25 +294,38 @@ export default function CartDrawer() {
                                     )}
                                     <div className="flex items-center justify-between text-xl font-black uppercase tracking-tighter text-foreground pt-1 border-t border-foreground/5">
                                         <span>Total</span>
-                                        <span>₹{total.toLocaleString()}</span>
+                                        <AnimatePresence mode="wait">
+                                            <motion.span 
+                                                key={total}
+                                                initial={{ y: 10, opacity: 0 }}
+                                                animate={{ y: 0, opacity: 1 }}
+                                                className="inline-block"
+                                            >
+                                                ₹{total.toLocaleString()}
+                                            </motion.span>
+                                        </AnimatePresence>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 pt-2">
-                                    <Link
-                                        href="/cart"
-                                        onClick={closeCart}
-                                        className="flex h-14 items-center justify-center rounded-2xl border border-foreground/10 bg-background font-black text-[10px] uppercase tracking-widest text-foreground hover:bg-muted transition shadow-sm"
-                                    >
-                                        View Bag
-                                    </Link>
-                                    <Link
-                                        href="/cart"
-                                        onClick={closeCart}
-                                        className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-foreground font-black text-[10px] uppercase tracking-widest text-background hover:bg-brand-accent hover:text-white transition shadow-lg"
-                                    >
-                                        Checkout
-                                    </Link>
+                                    <TapScale>
+                                        <Link
+                                            href="/cart"
+                                            onClick={closeCart}
+                                            className="flex h-14 w-full items-center justify-center rounded-2xl border border-foreground/10 bg-background font-black text-[10px] uppercase tracking-widest text-foreground hover:bg-muted transition shadow-sm"
+                                        >
+                                            View Bag
+                                        </Link>
+                                    </TapScale>
+                                    <TapScale>
+                                        <Link
+                                            href="/cart"
+                                            onClick={closeCart}
+                                            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-foreground font-black text-[10px] uppercase tracking-widest text-background hover:bg-brand-accent hover:text-white transition shadow-lg"
+                                        >
+                                            Checkout
+                                        </Link>
+                                    </TapScale>
                                 </div>
                             </div>
                         )}

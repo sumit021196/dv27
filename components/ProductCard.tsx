@@ -1,4 +1,6 @@
 "use client";
+import { motion, AnimatePresence } from "framer-motion";
+import TapScale from "./ui/TapScale";
 import Link from "next/link";
 import Image from "next/image";
 import { FALLBACK_IMG, getOptimizedImageUrl } from "@/utils/images";
@@ -44,7 +46,13 @@ export default function ProductCard({ product }: { product: Product }) {
   const showOriginalPrice = product.original_price && product.original_price > product.price;
 
   return (
-    <div className="group flex flex-col bg-background overflow-hidden fade-in-up">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="group flex flex-col bg-background overflow-hidden"
+    >
       {/* Image Container */}
       <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
         <Link href={`/product/${product.slug || product.id}`} className="block h-full w-full">
@@ -67,27 +75,39 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
 
         {/* Wishlist button */}
-        <button
-          aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
-          onClick={(e) => {
-            e.preventDefault();
-            wishlist.toggle({
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              image: product.mediaUrl,
-            });
-          }}
-          className={`absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 z-10 border ${wished
-              ? "bg-white border-brand-red text-brand-red scale-110 shadow-[0_0_15px_rgba(255,45,85,0.4)]"
-              : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background hover:scale-110"
-            }`}
-        >
-          <Heart
-            size={18}
-            className={wished ? "fill-current" : ""}
-          />
-        </button>
+        <TapScale className="absolute top-4 right-4 z-10">
+          <button
+            aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+            onClick={(e) => {
+              e.preventDefault();
+              wishlist.toggle({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.mediaUrl,
+              });
+            }}
+            className={`flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 border ${wished
+                ? "bg-white border-brand-red text-brand-red shadow-[0_0_15px_rgba(255,45,85,0.4)]"
+                : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background"
+              }`}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={wished ? "wished" : "not-wished"}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+              >
+                <Heart
+                  size={18}
+                  className={wished ? "fill-current" : ""}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </button>
+        </TapScale>
 
         {/* Hover Action Bar (Desktop) */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 z-20 hidden md:block">
@@ -122,14 +142,17 @@ export default function ProductCard({ product }: { product: Product }) {
         
         {/* Mobile Action (Visible only on mobile) */}
         <div className="w-full mt-2 md:hidden">
+            <TapScale>
              <Link 
                 href={`/product/${product.slug || product.id}`}
-                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground active:bg-foreground active:text-background transition-all"
+                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground transition-all"
              >
                 View
              </Link>
+            </TapScale>
         </div>
       </div>
-    </div>
+    </motion.div>
+
   );
 }

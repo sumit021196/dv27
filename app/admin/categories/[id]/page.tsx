@@ -2,8 +2,10 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Save, Type, Link as LinkIcon, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Type, Link as LinkIcon, Image as ImageIcon, CheckCircle2, UploadCloud, X as XIcon } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
 export default function CategoryFormPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -16,6 +18,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
     const [isActive, setIsActive] = useState(true);
 
     const [isLoading, setIsLoading] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
     const [isFetching, setIsFetching] = useState(!isNew);
     const [error, setError] = useState("");
 
@@ -53,23 +56,37 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setStatusMessage("Finalizing...");
         setError("");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second safety timeout
 
         try {
             const res = await fetch(isNew ? `/api/categories` : `/api/categories/${resolvedParams.id}`, {
                 method: isNew ? 'POST' : 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, slug, image_url: imageUrl, is_active: isActive }),
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Failed to save category");
 
+            setStatusMessage("Success! Redirecting...");
             router.push("/admin/categories");
             router.refresh();
         } catch (err: any) {
-            setError(err.message);
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                setError("Request timed out. It took too long to save the category. Please check your internet and try again.");
+            } else {
+                setError(err.message || "An unexpected error occurred.");
+            }
             setIsLoading(false);
+            setStatusMessage("");
         }
     };
 
@@ -142,15 +159,56 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
 
                             <div>
                                 <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                                    <ImageIcon size={14} /> Hero Image URL
+                                    <ImageIcon size={14} /> Hero Image
                                 </label>
-                                <input
-                                    type="url"
-                                    value={imageUrl}
-                                    onChange={(e) => setImageUrl(e.target.value)}
-                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
-                                    placeholder="https://supabase.co/..."
-                                />
+                                
+                                <div className="space-y-4">
+                                    {/* Native Upload Option */}
+                                    <div className="relative group overflow-hidden bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 transition-all p-8 text-center cursor-pointer">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    try {
+                                                        setIsLoading(true);
+                                                        const supabase = createClient();
+                                                        setStatusMessage("Compressing...");
+                                                        const compressed = await compressImage(file);
+                                                        setStatusMessage("Uploading...");
+                                                        const url = await uploadToSupabase(supabase, 'categories', compressed);
+                                                        setImageUrl(url);
+                                                    } catch (err: any) {
+                                                        setError("Upload failed: " + err.message);
+                                                    } finally {
+                                                        setIsLoading(false);
+                                                        setStatusMessage("");
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <div className="flex flex-col items-center gap-2">
+                                            <UploadCloud className="text-gray-400 group-hover:text-blue-600 transition-colors" size={32} />
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Click or drag image to upload</p>
+                                        </div>
+                                    </div>
+
+                                    {/* URL Input (Optional fallback) */}
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                            <LinkIcon size={14} />
+                                        </div>
+                                        <input
+                                            type="url"
+                                            value={imageUrl}
+                                            onChange={(e) => setImageUrl(e.target.value)}
+                                            className="w-full bg-gray-50 rounded-2xl border-none pl-12 pr-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300 text-xs"
+                                            placeholder="...or paste a direct image URL"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -180,7 +238,14 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                 disabled={isLoading}
                                 className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-blue-600 px-8 py-4 text-sm font-black text-white shadow-lg hover:bg-blue-700 hover:shadow-blue-200 focus-visible:outline-none disabled:opacity-50 transition-all uppercase tracking-[0.2em]"
                             >
-                                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <><Save size={20} /> Update Category</>}
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 size={20} className="animate-spin" />
+                                        <span>{statusMessage || "Saving..."}</span>
+                                    </>
+                                ) : (
+                                    <><Save size={20} /> {isNew ? "Create" : "Update"} Category</>
+                                )}
                             </button>
                         </div>
                     </form>

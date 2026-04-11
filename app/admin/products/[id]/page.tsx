@@ -2,54 +2,15 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Plus, Trash2, UploadCloud, Video, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2, UploadCloud, Video, CheckCircle2, Save } from "lucide-react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { Category } from "@/types/product";
 import { createClient } from "@/utils/supabase/client";
 import { updateProductAction } from "./product.actions";
 import { productService } from "@/services/product.service";
+import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
-// Image compression utility
-async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height = (maxWidth / width) * height;
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now(),
-                        });
-                        resolve(compressedFile);
-                    } else {
-                        reject(new Error('Canvas to blob failed'));
-                    }
-                }, 'image/jpeg', quality);
-            };
-            img.onerror = (err) => reject(err);
-        };
-        reader.onerror = (err) => reject(err);
-    });
-}
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
@@ -59,6 +20,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     // Loading states
     const [isFetching, setIsFetching] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState("");
 
@@ -228,34 +190,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
             // 1. Upload Video if it's a new file
             if (video?.file) {
-                const file = video.file;
-                const fileExt = file.name.split('.').pop() || 'mp4';
-                const fileName = `vid_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const { error: uploadError } = await supabase.storage.from('products').upload(fileName, file);
-                
-                if (uploadError) throw new Error(`Video upload failed: ${uploadError.message}`);
-                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
-                finalVideoUrl = publicUrl;
+                setStatusMessage("Uploading video...");
+                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
             }
 
             // 2. Handle Images (existing vs new)
-            for (const img of images) {
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
                 if (img.file) {
                     // New upload
+                    setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                     const compressedFile = await compressImage(img.file);
-                    const fileExt = 'jpg';
-                    const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                     
-                    const { error: uploadError } = await supabase.storage.from('products').upload(fileName, compressedFile);
-                    if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
-                    
-                    const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                    setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
+                    const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
                     finalImageUrls.push(publicUrl);
                 } else {
                     // Existing URL
                     finalImageUrls.push(img.url);
                 }
             }
+            
+            setStatusMessage("Saving product changes...");
 
             // 3. Call Server Action
             const result = await updateProductAction(productId, {
@@ -484,8 +440,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                                     <span className="font-medium text-sm">Update Saved!</span>
                                 </div>
                             ) : (
-                                <button type="submit" disabled={isLoading} className="w-full flex justify-center items-center py-4 rounded-2xl text-sm font-bold text-white bg-black hover:bg-gray-900 disabled:opacity-70 transition-all">
-                                    {isLoading ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : 'Update Product'}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-4 text-sm font-bold text-white shadow-lg hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={18} />
+                                            <span className="flex flex-col items-center">
+                                                <span>Saving...</span>
+                                                {statusMessage && <span className="text-[10px] opacity-70 font-medium">{statusMessage}</span>}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save size={18} />
+                                            Save Changes
+                                        </>
+                                    )}
                                 </button>
                             )}
                         </div>

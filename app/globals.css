@@ -38,6 +38,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 h1,
@@ -133,4 +136,19 @@ h6 {
 .animate-logo-flip {
   animation: logo-flip 6s linear infinite;
   transform-style: preserve-3d;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(to right, var(--muted) 8%, var(--border) 18%, var(--muted) 33%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s linear infinite forwards;
 }

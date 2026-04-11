@@ -159,11 +159,11 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
   return (
     <div className="bg-background min-h-screen pb-24 md:pb-0">
-      <div className="mx-auto max-w-[1440px] px-6 lg:px-12 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-16">
+      <div className="mx-auto max-w-[1440px] md:px-6 lg:px-12 py-0 md:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 xl:gap-16">
           
           <div className="lg:col-span-7 space-y-6">
-             <div className="relative aspect-[3/4] rounded-[32px] overflow-hidden bg-muted/30 border border-foreground/5 shadow-2xl">
+             <div className="relative aspect-[3/4] rounded-none md:rounded-[32px] overflow-hidden bg-muted/30 md:border border-foreground/5 md:shadow-2xl">
                 <AnimatePresence mode="wait">
                   <motion.img 
                     key={currentImageIndex}
@@ -206,13 +206,13 @@ export default function ProductDetailClient({ id }: { id: string }) {
              </div>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col pt-2 lg:pt-0">
-            <div className="space-y-2 text-center lg:text-left">
+          <div className="lg:col-span-5 flex flex-col pt-4 lg:pt-0 px-6 md:px-0">
+            <div className="space-y-1.5 text-left">
               <h1 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter leading-none">
                 {product.name}
               </h1>
               
-              <div className="flex items-center justify-center lg:justify-start gap-3 flex-wrap">
+              <div className="flex items-center justify-start gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-black text-foreground">₹{product.price.toLocaleString()}</span>
                   <span className="text-sm text-muted-foreground line-through decoration-brand-red/30">₹{oldPrice.toLocaleString()}</span>
@@ -230,9 +230,9 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
             {/* Available Offers */}
             {coupons.length > 0 && (
-              <div className="mt-6 border-t border-foreground/5 pt-4">
-                 <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2 px-2">Available Offers</h3>
-                 <div className="flex gap-3 overflow-x-auto no-scrollbar pb-3 px-2">
+              <div className="mt-4 border-t border-foreground/5 pt-3">
+                 <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2">Available Offers</h3>
+                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                     {coupons.map((offer, i) => (
                       <div key={i} className="flex-none w-[170px] p-2.5 rounded-xl border border-foreground/10 bg-white shadow-sm">
                          <span className="text-sm font-black uppercase tracking-tighter block mb-0.5">₹{offer.discount_value} OFF</span>
@@ -249,16 +249,16 @@ export default function ProductDetailClient({ id }: { id: string }) {
               </div>
             )}
 
-            <div className="mt-4 space-y-2.5">
+            <div className="mt-3 space-y-2">
                 <button 
                   onClick={() => setIsSizingModalOpen(true)}
-                  className="w-full flex items-center gap-3 py-3 px-2 border-y border-foreground/5 group hover:bg-muted/30 transition-all text-left"
+                  className="w-full flex items-center gap-3 py-2.5 border-y border-foreground/5 group hover:bg-muted/30 transition-all text-left"
                 >
                   <Ruler size={16} className="text-foreground transition-transform" />
                   <span className="text-[9px] font-black uppercase tracking-[0.2em]">Sizing chart</span>
                 </button>
                 {product.details?.["Model Info"] && (
-                  <div className="px-2">
+                  <div>
                     <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-[0.1em] leading-none">
                       {product.details["Model Info"]}
                     </p>
@@ -267,7 +267,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
             </div>
 
             {availableColors.length > 0 && (
-              <div className="mt-6 space-y-3 px-2">
+              <div className="mt-4 space-y-2.5">
                 <h3 className="text-[9px] font-black uppercase tracking-[0.2em]">Select Color — <span className="text-brand-accent">{selectedColor}</span></h3>
                 <div className="flex flex-wrap gap-2">
                     {availableColors.map(color => (
@@ -286,7 +286,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
               </div>
             )}
 
-            <div className="mt-6 space-y-3 px-2">
+            <div className="mt-4 space-y-2.5">
                <h3 className="text-[9px] font-black uppercase tracking-[0.2em]">Select Size — <span className="text-brand-accent">{selectedSize}</span></h3>
                <div className="flex flex-wrap gap-2">
                   {virtualSizes.map(size => (
@@ -304,7 +304,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                </div>
             </div>
 
-            <div className="mt-6 px-2" ref={mainCtaRef}>
+            <div className="mt-4" ref={mainCtaRef}>
                <button
                   onClick={handleAddToCart}
                   disabled={isAdded}
@@ -318,7 +318,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                </button>
             </div>
 
-            <div className="mt-8 border-t border-foreground/5">
+            <div className="mt-6 border-t border-foreground/5">
                 <div className="flex border-b border-foreground/5">
                    {["description", "details", "reviews", "return policy"].map((tab) => (
                       <button

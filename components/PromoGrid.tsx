@@ -1,16 +1,30 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { getOptimizedImageUrl } from "@/utils/images";
 
 export default function PromoGrid({ banners = [] }: { banners: any[] }) {
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  useEffect(() => {
+    videoRefs.current.forEach(video => {
+      if (video) {
+        video.muted = true;
+        video.play().catch(err => console.log("Promo video play error:", err));
+      }
+    });
+  }, [banners]);
+
   // Filter for promo banners
   const promoBanners = banners.filter(b => b.position?.startsWith('promo')).sort((a,b) => a.position.localeCompare(b.position));
 
   if (promoBanners.length === 0) return null;
 
   return (
-    <section className="py-12 bg-background">
+    <section className="py-4 md:py-12 bg-background">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {promoBanners.map((banner, idx) => (
@@ -21,11 +35,13 @@ export default function PromoGrid({ banners = [] }: { banners: any[] }) {
             >
               {banner.style_type === 'video' || banner.image_url?.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/res\.cloudinary\.com\/.*\/video\/upload\//) ? (
                 <video 
+                  ref={el => { videoRefs.current[idx] = el; }}
                   src={banner.image_url} 
                   autoPlay 
                   muted 
                   loop 
                   playsInline
+                  preload="auto"
                   className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110"
                 />
               ) : (

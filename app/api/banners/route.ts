@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
     try {
@@ -36,6 +37,10 @@ export async function POST(req: Request) {
             .single();
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/admin/banners');
+
         return NextResponse.json({ banner: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

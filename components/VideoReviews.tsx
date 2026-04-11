@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import Link from "next/link";
 import { Play, User, ShoppingBag, ArrowRight } from "lucide-react";
 import { cn } from "@/utils/cn";
@@ -13,13 +13,13 @@ export default function VideoReviews({ reviews }: VideoReviewsProps) {
     if (!reviews || reviews.length === 0) return null;
 
     return (
-        <section className="py-16 overflow-hidden bg-background">
-            <div className="px-6 mb-8 flex items-end justify-between">
-                <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter leading-none">Shared by You</h2>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] mt-2">Our community in action</p>
+        <section className="py-8 md:py-16 overflow-hidden bg-background">
+            <div className="px-6 mb-8 md:mb-12 flex flex-col md:flex-row items-center md:items-end justify-center md:justify-between text-center md:text-left gap-4">
+                <div className="flex flex-col items-center md:items-start">
+                    <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter leading-none">Shared by You</h2>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] mt-3">Our community in action</p>
                 </div>
-                <Link href="/products" className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group text-brand-accent">
+                <Link href="/products" className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group text-brand-accent border-b border-brand-accent/30 pb-1 hover:border-brand-accent transition-all md:mb-1">
                     Shop Now <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
             </div>
@@ -37,6 +37,13 @@ function VideoCard({ review }: { review: any }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const videoData = review.review_media.find((m: any) => m.media_type === 'video');
 
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(err => console.log("Review video play error:", err));
+        }
+    }, []);
+
     if (!videoData) return null;
 
     return (
@@ -49,6 +56,7 @@ function VideoCard({ review }: { review: any }) {
                 muted
                 playsInline
                 autoPlay
+                preload="auto"
                 onClick={(e) => {
                     const video = e.currentTarget;
                     if (video.paused) video.play(); else video.pause();

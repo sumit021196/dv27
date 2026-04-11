@@ -76,6 +76,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             .maybeSingle();
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/products');
+        revalidatePath('/admin/categories');
+
         return NextResponse.json({ category: data, success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getStaticClient } from "@/utils/supabase/static";
 import { Inter, Bodoni_Moda, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -8,6 +8,7 @@ import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import { SettingsProvider } from "@/components/SettingsContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,6 +26,17 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 export async function generateMetadata() {
   try {
@@ -52,7 +64,6 @@ export async function generateMetadata() {
   }
 }
 
-import { SettingsProvider } from "@/components/SettingsContext";
 
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import AuthFeedback from "@/components/ui/AuthFeedback";

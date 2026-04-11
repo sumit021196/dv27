@@ -32,11 +32,11 @@ export default function AdminOrdersPage() {
     };
 
     return (
-        <div className="flex flex-col h-full min-h-0">
-            {/* Page Header - Fixed */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 flex-shrink-0">
+        <div className="flex flex-col gap-6">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl flex items-center gap-2">
+                    <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl flex items-center gap-3">
                         <ShoppingCart className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Orders Management
                     </h1>
@@ -46,9 +46,9 @@ export default function AdminOrdersPage() {
                 </div>
             </div>
 
-            {/* Content Area - Scrollable */}
-            <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {/* Content Area */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div>
                     {loading ? (
                         <div className="h-full flex flex-col justify-center items-center p-12">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />

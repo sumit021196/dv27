@@ -64,7 +64,7 @@ export default async function Page() {
         </div>
       </Section>
 
-      <Ticker className="my-12" />
+      <Ticker className="my-4 md:my-12" />
 
     </main>
   );

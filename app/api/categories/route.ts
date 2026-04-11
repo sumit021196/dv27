@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export async function GET() {
     try {
@@ -37,6 +38,11 @@ export async function POST(req: Request) {
             .single();
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/products');
+        revalidatePath('/admin/categories');
+
         return NextResponse.json({ category: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

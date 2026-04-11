@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -40,6 +41,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             .single();
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/admin/banners');
+
         return NextResponse.json({ banner: data, success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -63,6 +68,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
             .eq('id', id);
 
         if (error) throw error;
+
+        revalidatePath('/');
+        revalidatePath('/admin/banners');
+
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -27,9 +27,8 @@ import Ticker from "./Ticker";
 import { productService } from "@/services/product.service";
 import { Category, Product } from "@/types/product";
 import { ChevronRight, ArrowLeft } from "lucide-react";
-
-
-
+import { motion, AnimatePresence } from "framer-motion";
+import TapScale from "./TapScale";
 import { useSettings } from "@/components/SettingsContext";
 
 // Cache navigation data to prevent redundant fetches across session
@@ -145,14 +144,16 @@ export default function Navbar() {
 
                         {/* Left: Mobile Menu + Search */}
                         <div className="flex items-center gap-4 flex-1">
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                type="button"
-                                className="inline-flex items-center justify-center p-2 text-foreground hover:bg-foreground/5 rounded-full md:hidden"
-                                aria-label="Open menu"
-                            >
-                                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                            </button>
+                            <TapScale>
+                                <button
+                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    type="button"
+                                    className="inline-flex items-center justify-center p-2 text-foreground hover:bg-foreground/5 rounded-full md:hidden"
+                                    aria-label="Open menu"
+                                >
+                                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                                </button>
+                            </TapScale>
 
                             <nav className="hidden md:flex items-center gap-6">
                                 <Link 
@@ -180,12 +181,14 @@ export default function Navbar() {
                                 </Link>
                             </nav>
 
-                            <button
-                                onClick={() => setSearchOpen(true)}
-                                className="p-2 text-foreground/70 hover:text-foreground transition-colors"
-                            >
-                                <Search size={20} />
-                            </button>
+                            <TapScale>
+                                <button
+                                    onClick={() => setSearchOpen(true)}
+                                    className="p-2 text-foreground/70 hover:text-foreground transition-colors"
+                                >
+                                    <Search size={20} />
+                                </button>
+                            </TapScale>
                         </div>
 
                         {/* Center: Logo */}
@@ -274,18 +277,29 @@ export default function Navbar() {
                                 )}
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() => cart.openCart()}
-                                className="relative p-2 text-foreground/70 hover:text-foreground transition-colors"
-                            >
-                                <ShoppingBag size={22} />
-                                {totalItems > 0 && (
-                                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[9px] font-black text-white">
-                                        {totalItems}
-                                    </span>
-                                )}
-                            </button>
+                            <TapScale>
+                                <button
+                                    type="button"
+                                    onClick={() => cart.openCart()}
+                                    className="relative p-2 text-foreground/70 hover:text-foreground transition-colors"
+                                >
+                                    <ShoppingBag size={22} />
+                                    <AnimatePresence>
+                                        {totalItems > 0 && (
+                                            <motion.span 
+                                                key="cart-badge"
+                                                initial={{ scale: 0, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                exit={{ scale: 0, opacity: 0 }}
+                                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                                className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[9px] font-black text-white"
+                                            >
+                                                {totalItems}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                </button>
+                            </TapScale>
                         </div>
                     </div>
                 </header>
@@ -329,182 +343,229 @@ export default function Navbar() {
             <CartDrawer />
 
             {/* Mobile Nav Overlay */}
-            {mobileMenuOpen && (
-                <div className="fixed inset-0 z-[100] bg-background md:hidden animate-in slide-in-from-left duration-500">
-                    <div className="flex flex-col h-full relative overflow-hidden">
-                        
-                        {/* Header */}
-                        <div className="px-4 py-3 flex items-center justify-between border-b border-foreground/5 bg-background sticky top-0 z-10 shrink-0">
-                            <div className="flex items-center gap-2">
-                                {menuStep !== 'main' && (
-                                    <button 
-                                        onClick={() => setMenuStep('main')}
-                                        className="p-1.5 -ml-1.5 text-foreground/50 hover:text-foreground transition-colors"
-                                    >
-                                        <ArrowLeft size={18} />
-                                    </button>
-                                )}
-                                <Image src="/logo.svg" alt="DV27" width={70} height={20} className="h-5 w-auto" />
-                            </div>
-                            <button onClick={() => {
-                                setMobileMenuOpen(false);
-                                setTimeout(() => setMenuStep('main'), 300);
-                            }} className="p-1.5 text-foreground/50 hover:text-foreground">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        {/* Content Area */}
-                        <div className="flex-1 overflow-hidden flex flex-col px-4 py-4 min-h-0">
-                            <div className="relative flex-1 flex flex-col min-h-0">
-                                {/* Step 1: Main Menu */}
-                                <div className={`transition-all duration-500 flex flex-col gap-1.5 ${menuStep === 'main' ? 'translate-x-0 opacity-100 flex-1' : '-translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
-                                    <div className="mb-2 shrink-0">
-                                        <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Navigation</p>
-                                        <div className="grid gap-1.5">
-                                            <Link
-                                                href="/products"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
-                                            >
-                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Explore All</span>
-                                                <ChevronRight size={16} className="text-foreground/20" />
-                                            </Link>
-                                            
-                                            <button
-                                                onClick={() => setMenuStep('categories')}
-                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02] text-left"
-                                            >
-                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Categories</span>
-                                                <ChevronRight size={16} className="text-foreground/20" />
-                                            </button>
-                                            <Link
-                                                href="/products?category=sale"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-black uppercase tracking-tight text-foreground">Archive Sale</span>
-                                                    <span className="px-1.5 py-0.5 bg-brand-red text-[6.5px] font-black text-white rounded-full uppercase tracking-widest">Sale</span>
-                                                </div>
-                                                <ChevronRight size={16} className="text-foreground/20" />
-                                            </Link>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex-1 min-h-0 flex flex-col">
-                                        <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account</p>
-                                        <div className="grid grid-cols-2 gap-1.5 shrink-0">
-                                            <Link
-                                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
-                                            >
-                                                <User size={16} className="text-foreground/40" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">
-                                                    {user ? (isAdmin ? "Admin" : "Profile") : "Login"}
-                                                </span>
-                                            </Link>
-                                            <Link
-                                                href="/profile?tab=orders"
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
-                                            >
-                                                <Package size={16} className="text-foreground/40" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Orders</span>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Step 2: Categories */}
-                                <div className={`transition-all duration-500 flex flex-col gap-1.5 h-full ${menuStep === 'categories' ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 absolute inset-0 pointer-events-none'}`}>
-                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2 text-center">Select Category</p>
-                                    <div className="grid gap-1.5 overflow-y-auto pr-1 no-scrollbar flex-1">
-                                        {categories
-                                            .filter(cat => cat.name.toLowerCase() !== 'sale')
-                                            .map((cat) => (
-                                                <button
-                                                    key={cat.id}
-                                                    onClick={() => {
-                                                        router.push(`/products?category=${cat.slug}`);
-                                                        setMobileMenuOpen(false);
-                                                        setMenuStep('main');
-                                                    }}
-                                                    className="flex items-center justify-between p-3.5 border border-foreground/5 active:border-foreground/20 rounded-xl transition-all group text-left w-full"
-                                                >
-                                                    <span className="text-xs font-bold text-foreground/70 uppercase tracking-tight">{cat.name}</span>
-                                                    <ChevronRight size={14} className="text-foreground/10" />
-                                                </button>
-                                            ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer (Recent + Logout) */}
-                        <div className="shrink-0 bg-foreground/[0.01] border-t border-foreground/5 p-4 py-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-[8.5px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
-                                <Link 
-                                    href="/products" 
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="text-[8.5px] font-bold text-brand-accent uppercase tracking-widest hover:underline"
-                                >
-                                    View All
-                                </Link>
-                            </div>
+            <AnimatePresence>
+                {mobileMenuOpen && (
+                    <motion.div 
+                        initial={{ x: "-100%" }}
+                        animate={{ x: 0 }}
+                        exit={{ x: "-100%" }}
+                        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                        className="fixed inset-0 z-[100] bg-background md:hidden"
+                    >
+                        <div className="flex flex-col h-full relative overflow-hidden">
                             
-                            <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 px-0.5 snap-x min-h-[100px]">
-                                {recentProducts.slice(0, 4).map((product) => (
-                                    <Link
-                                        key={product.id}
-                                        href={`/product/${product.id}`}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="flex-shrink-0 w-24 snap-start group"
-                                    >
-                                        <div className="aspect-[4/5] rounded-lg overflow-hidden bg-foreground/5 mb-1.5 relative border border-foreground/[0.02]">
-                                            {product.media_url ? (
-                                                <Image 
-                                                    src={product.media_url} 
-                                                    alt={product.name} 
-                                                    fill 
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-foreground/10">N/A</div>
-                                            )}
-                                        </div>
-                                        <p className="text-[8px] font-bold text-foreground/70 truncate uppercase tracking-tight leading-none mb-0.5">{product.name}</p>
-                                        <p className="text-[7.5px] font-black text-brand-accent leading-none">₹{product.price}</p>
-                                    </Link>
-                                ))}
-                                {recentProducts.length === 0 && (
-                                    <div className="flex gap-2.5">
-                                        {[1,2,3].map(i => (
-                                            <div key={i} className="w-24 h-28 bg-foreground/5 animate-pulse rounded-lg" />
-                                        ))}
-                                    </div>
-                                )}
+                            {/* Header */}
+                            <div className="px-4 py-3 flex items-center justify-between border-b border-foreground/5 bg-background sticky top-0 z-10 shrink-0">
+                                <div className="flex items-center gap-2">
+                                    <AnimatePresence mode="wait">
+                                        {menuStep !== 'main' && (
+                                            <motion.button 
+                                                key="back-button"
+                                                initial={{ opacity: 0, scale: 0.5 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.5 }}
+                                                onClick={() => setMenuStep('main')}
+                                                className="p-1.5 -ml-1.5 text-foreground/50 hover:text-foreground transition-colors"
+                                            >
+                                                <ArrowLeft size={18} />
+                                            </motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                    <Image src="/logo.svg" alt="DV27" width={70} height={20} className="h-5 w-auto" />
+                                </div>
+                                <button onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    setTimeout(() => setMenuStep('main'), 300);
+                                }} className="p-1.5 text-foreground/50 hover:text-foreground">
+                                    <X size={20} />
+                                </button>
                             </div>
 
-                            {user && (
-                                <button
-                                    onClick={async () => {
-                                        cart.clear();
-                                        await logout();
-                                        setMobileMenuOpen(false);
-                                        router.push('/');
-                                    }}
-                                    className="mt-3 w-full py-3 text-[8.5px] font-black uppercase tracking-[0.3em] text-red-500 bg-red-500/5 active:bg-red-500/10 rounded-xl transition-all border border-red-500/10"
-                                >
-                                    Logout Account
-                                </button>
-                            )}
+                            {/* Content Area */}
+                            <div className="flex-1 overflow-hidden flex flex-col px-4 py-4 min-h-0">
+                                <div className="relative flex-1 flex flex-col min-h-0">
+                                    <AnimatePresence mode="wait">
+                                        {/* Step 1: Main Menu */}
+                                        {menuStep === 'main' && (
+                                            <motion.div 
+                                                key="main-menu"
+                                                initial={{ x: -20, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 1 }}
+                                                exit={{ x: -20, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="flex flex-col gap-1.5 flex-1"
+                                            >
+                                                <div className="mb-2 shrink-0">
+                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Navigation</p>
+                                                    <div className="grid gap-1.5">
+                                                        <TapScale>
+                                                            <Link
+                                                                href="/products"
+                                                                onClick={() => setMobileMenuOpen(false)}
+                                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
+                                                            >
+                                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Explore All</span>
+                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                            </Link>
+                                                        </TapScale>
+                                                        
+                                                        <TapScale>
+                                                            <button
+                                                                onClick={() => setMenuStep('categories')}
+                                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02] text-left w-full"
+                                                            >
+                                                                <span className="text-sm font-black uppercase tracking-tight text-foreground">Categories</span>
+                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                            </button>
+                                                        </TapScale>
+                                                        <TapScale>
+                                                            <Link
+                                                                href="/products?category=sale"
+                                                                onClick={() => setMobileMenuOpen(false)}
+                                                                className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-black uppercase tracking-tight text-foreground">Archive Sale</span>
+                                                                    <span className="px-1.5 py-0.5 bg-brand-red text-[6.5px] font-black text-white rounded-full uppercase tracking-widest">Sale</span>
+                                                                </div>
+                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                            </Link>
+                                                        </TapScale>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1 min-h-0 flex flex-col">
+                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account</p>
+                                                    <div className="grid grid-cols-2 gap-1.5 shrink-0">
+                                                        <TapScale>
+                                                            <Link
+                                                                href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
+                                                                onClick={() => setMobileMenuOpen(false)}
+                                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
+                                                            >
+                                                                <User size={16} className="text-foreground/40" />
+                                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">
+                                                                    {user ? (isAdmin ? "Admin" : "Profile") : "Login"}
+                                                                </span>
+                                                            </Link>
+                                                        </TapScale>
+                                                        <TapScale>
+                                                            <Link
+                                                                href="/profile?tab=orders"
+                                                                onClick={() => setMobileMenuOpen(false)}
+                                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
+                                                            >
+                                                                <Package size={16} className="text-foreground/40" />
+                                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Orders</span>
+                                                            </Link>
+                                                        </TapScale>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Step 2: Categories */}
+                                        {menuStep === 'categories' && (
+                                            <motion.div 
+                                                key="categories-menu"
+                                                initial={{ x: 20, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 1 }}
+                                                exit={{ x: 20, opacity: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="flex flex-col gap-1.5 h-full"
+                                            >
+                                                <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2 text-center">Select Category</p>
+                                                <div className="grid gap-1.5 overflow-y-auto pr-1 no-scrollbar flex-1">
+                                                    {categories
+                                                        .filter(cat => cat.name.toLowerCase() !== 'sale')
+                                                        .map((cat) => (
+                                                            <TapScale key={cat.id}>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        router.push(`/products?category=${cat.slug}`);
+                                                                        setMobileMenuOpen(false);
+                                                                        setMenuStep('main');
+                                                                    }}
+                                                                    className="flex items-center justify-between p-3.5 border border-foreground/5 active:border-foreground/20 rounded-xl transition-all group text-left w-full"
+                                                                >
+                                                                    <span className="text-xs font-bold text-foreground/70 uppercase tracking-tight">{cat.name}</span>
+                                                                    <ChevronRight size={14} className="text-foreground/10" />
+                                                                </button>
+                                                            </TapScale>
+                                                        ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+
+                            {/* Footer (Recent + Logout) */}
+                            <div className="shrink-0 bg-foreground/[0.01] border-t border-foreground/5 p-4 py-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-[8.5px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
+                                    <Link 
+                                        href="/products" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="text-[8.5px] font-bold text-brand-accent uppercase tracking-widest hover:underline"
+                                    >
+                                        View All
+                                    </Link>
+                                </div>
+                                
+                                <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 px-0.5 snap-x min-h-[100px]">
+                                    {recentProducts.slice(0, 4).map((product) => (
+                                        <Link
+                                            key={product.id}
+                                            href={`/product/${product.id}`}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="flex-shrink-0 w-24 snap-start group"
+                                        >
+                                            <div className="aspect-[4/5] rounded-lg overflow-hidden bg-foreground/5 mb-1.5 relative border border-foreground/[0.02]">
+                                                {product.media_url ? (
+                                                    <Image 
+                                                        src={product.media_url} 
+                                                        alt={product.name} 
+                                                        fill 
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-foreground/10">N/A</div>
+                                                )}
+                                            </div>
+                                            <p className="text-[8px] font-bold text-foreground/70 truncate uppercase tracking-tight leading-none mb-0.5">{product.name}</p>
+                                            <p className="text-[7.5px] font-black text-brand-accent leading-none">₹{product.price}</p>
+                                        </Link>
+                                    ))}
+                                    {recentProducts.length === 0 && (
+                                        <div className="flex gap-2.5">
+                                            {[1,2,3].map(i => (
+                                                <div key={i} className="w-24 h-28 bg-foreground/5 animate-pulse rounded-lg" />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {user && (
+                                    <TapScale>
+                                        <button
+                                            onClick={async () => {
+                                                cart.clear();
+                                                await logout();
+                                                setMobileMenuOpen(false);
+                                                router.push('/');
+                                            }}
+                                            className="mt-3 w-full py-3 text-[8.5px] font-black uppercase tracking-[0.3em] text-red-500 bg-red-500/5 active:bg-red-500/10 rounded-xl transition-all border border-red-500/10"
+                                        >
+                                            Logout Account
+                                        </button>
+                                    </TapScale>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Spacer for fixed header (Ticker + Navbar) */}
             <div className={`transition-all duration-300 ${isScrolled ? "h-24" : "h-28"}`} />

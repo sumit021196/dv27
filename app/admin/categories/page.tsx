@@ -12,11 +12,11 @@ export default async function AdminCategoriesPage() {
         .order('created_at', { ascending: false });
 
     return (
-        <div className="flex flex-col h-full min-h-0">
-            {/* Page Header - Fixed */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 flex-shrink-0">
+        <div className="flex flex-col gap-6">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl flex items-center gap-2">
+                    <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl flex items-center gap-3">
                         <LayoutGrid className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Categories
                     </h1>
@@ -26,15 +26,15 @@ export default async function AdminCategoriesPage() {
                 </div>
                 <Link
                     href="/admin/categories/new"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-all shadow-md active:scale-95"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95"
                 >
                     <Plus size={18} />
                     New Category
                 </Link>
             </div>
 
-            {/* Content Area - Scrollable Grid */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar pb-8">
+            {/* Content Area */}
+            <div>
                 {categories && categories.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                         {categories.map((category) => (
