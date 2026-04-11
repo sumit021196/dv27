@@ -38,14 +38,33 @@ export default function AddProductPage() {
         { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
     ]);
 
+    const [catsLoading, setCatsLoading] = useState(true);
+
     useEffect(() => {
+        let isMounted = true;
         const loadCats = async () => {
             try {
-                const data = await productService.getCategories();
-                setCategories(data);
-            } catch (err) { }
+                setCatsLoading(true);
+                // Call API directly to bypass any potential Supabase client issues during hydration
+                const res = await fetch('/api/categories');
+                if (!res.ok) throw new Error("Failed to fetch categories");
+                const data = await res.json();
+                if (isMounted) {
+                    setCategories(data.categories || []);
+                    setErrorParam(null);
+                }
+            } catch (err: any) {
+                console.error("Error loading categories:", err);
+                if (isMounted) {
+                    setErrorParam("Failed to load categories. Please check your network or refresh the page.");
+                }
+            } finally {
+                if (isMounted) setCatsLoading(false);
+            }
         };
         loadCats();
+
+        return () => { isMounted = false; };
     }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -126,6 +145,16 @@ export default function AddProductPage() {
 
         if (!formData.name || !formData.price) {
             setErrorParam("Name and Price are required.");
+            return;
+        }
+
+        if (categories.length > 0 && !formData.category_id) {
+            setErrorParam("Please select a category.");
+            return;
+        }
+
+        if (catsLoading) {
+            setErrorParam("Please wait for categories to finish loading before saving.");
             return;
         }
 
@@ -245,9 +274,9 @@ export default function AddProductPage() {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select name="category_id" value={formData.category_id} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border">
-                                <option value="">Select Category</option>
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                            <select name="category_id" disabled={catsLoading} value={formData.category_id} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border disabled:bg-gray-50">
+                                <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
                                 {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                             </select>
                         </div>
