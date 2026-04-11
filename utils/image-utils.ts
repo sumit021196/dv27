@@ -43,9 +43,17 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
         img.onload = async () => {
             try {
                 // iPhone/Safari fix: Ensure image is internally decoded before drawing to canvas.
-                // This prevents silent hangs in Safari 14+ when handling high-res images or WebP/AVIF.
+                // However, Safari often silently hangs indefinitely on `img.decode()` for WebP/AVIF images.
+                // We race `img.decode()` against a 2-second timeout so it doesn't freeze the whole upload process.
                 if ('decode' in img) {
-                    await img.decode();
+                    try {
+                        await Promise.race([
+                            img.decode(),
+                            new Promise((_, r) => setTimeout(() => r(new Error("decode timeout")), 2000))
+                        ]);
+                    } catch (decodeErr) {
+                        console.warn("img.decode() timed out or failed, proceeding with fallback drawing", decodeErr);
+                    }
                 }
 
                 const canvas = document.createElement('canvas');
