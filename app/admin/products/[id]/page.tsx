@@ -220,24 +220,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             }
 
             // 2. Handle Images (existing vs new)
-            setStatusMessage(`Processing ${images.length} images...`);
-            const uploadPromises = images.map(async (img, index) => {
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
                 if (img.file) {
                     // New upload
+                    setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                     const compressedFile = await compressImage(img.file);
+
+                    setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
                     const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
-                    return { index, url: publicUrl };
+                    finalImageUrls.push(publicUrl);
                 } else {
                     // Existing URL
-                    return { index, url: img.url };
+                    finalImageUrls.push(img.url);
                 }
-            });
-
-            const uploadedResults = await Promise.all(uploadPromises);
-
-            // Sort by original index to maintain order
-            uploadedResults.sort((a, b) => a.index - b.index);
-            uploadedResults.forEach(result => finalImageUrls.push(result.url));
+            }
             
             setStatusMessage("Saving product changes...");
 

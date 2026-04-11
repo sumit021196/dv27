@@ -179,19 +179,16 @@ export default function AddProductPage() {
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
             }
 
-            // 2. Compress and Upload Images (Concurrent)
-            setStatusMessage(`Processing ${images.length} images...`);
-            const uploadPromises = images.map(async (img, index) => {
+            // 2. Compress and Upload Images
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                 const compressedFile = await compressImage(img.file);
+
+                setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
                 const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
-                return { index, publicUrl };
-            });
-
-            const uploadedResults = await Promise.all(uploadPromises);
-
-            // Sort by original index to maintain order
-            uploadedResults.sort((a, b) => a.index - b.index);
-            uploadedResults.forEach(result => finalImageUrls.push(result.publicUrl));
+                finalImageUrls.push(publicUrl);
+            }
 
             setStatusMessage("Saving product data...");
 
