@@ -60,13 +60,14 @@ export async function updateProductAction(productId: string | number, formData: 
             urlsToDelete.push(oldVideoUrl);
         }
 
-        // Delete from storage
-        for (const url of urlsToDelete) {
-            const path = getPathFromUrl(url);
-            if (path) {
-                console.log(`Deleting file from storage: ${path}`);
-                await supabase.storage.from('products').remove([path]);
-            }
+        // Delete from storage concurrently
+        const pathsToDelete = urlsToDelete
+            .map(url => getPathFromUrl(url))
+            .filter((path): path is string => path !== null);
+
+        if (pathsToDelete.length > 0) {
+            console.log(`Deleting files from storage: ${pathsToDelete.join(', ')}`);
+            await supabase.storage.from('products').remove(pathsToDelete);
         }
 
         // 3. Update products table

@@ -48,7 +48,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [catsLoading, setCatsLoading] = useState(true);
 
     useEffect(() => {
-        let isMounted = true;
+        const isMounted = true;
         const loadInitialData = async () => {
             try {
                 // 1. Load categories
@@ -220,21 +220,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             }
 
             // 2. Handle Images (existing vs new)
-            for (let i = 0; i < images.length; i++) {
-                const img = images[i];
+            setStatusMessage(`Processing ${images.length} images...`);
+            const uploadPromises = images.map(async (img, index) => {
                 if (img.file) {
                     // New upload
-                    setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                     const compressedFile = await compressImage(img.file);
-                    
-                    setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
                     const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
-                    finalImageUrls.push(publicUrl);
+                    return { index, url: publicUrl };
                 } else {
                     // Existing URL
-                    finalImageUrls.push(img.url);
+                    return { index, url: img.url };
                 }
-            }
+            });
+
+            const uploadedResults = await Promise.all(uploadPromises);
+
+            // Sort by original index to maintain order
+            uploadedResults.sort((a, b) => a.index - b.index);
+            uploadedResults.forEach(result => finalImageUrls.push(result.url));
             
             setStatusMessage("Saving product changes...");
 
