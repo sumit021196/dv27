@@ -210,7 +210,7 @@ export default function AddProductPage() {
             </div>
 
             {/* Scrollable Form Content */}
-            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pb-20 md:pb-12">
+            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pb-32 md:pb-12">
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                 {/* Left Column: Form Details & Variants */}
                 <div className="col-span-1 lg:col-span-2 space-y-4 md:space-y-6">
