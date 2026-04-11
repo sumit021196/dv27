@@ -12,10 +12,14 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
 
-    async function handleSubmit(formData: FormData) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
         setLoading(true);
         setError(null);
+
+        const formData = new FormData(e.currentTarget);
         const result = await signup(formData);
+
         if (result?.error) {
             setError(result.error);
             setLoading(false);
@@ -55,7 +59,7 @@ export default function SignupPage() {
                 </div>
 
                 {authMethod === "email" ? (
-                    <form action={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
                             <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
                                 {error}

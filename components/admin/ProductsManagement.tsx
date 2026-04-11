@@ -11,7 +11,7 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(1);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-    const pageSize = 12;
+    const pageSize = 5;
 
     const handleDelete = async (id: string | number) => {
         if (!confirm("Are you sure you want to permanently delete this product?")) return;
