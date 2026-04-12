@@ -147,9 +147,16 @@ export async function updateProductAction(productId: string | number, formData: 
         return { success: true };
     } catch (error: any) {
         console.error("--- updateProductAction Error ---", error);
+        const errorData = {
+            message: error?.message || "An unexpected error occurred while updating the product.",
+            details: error?.details || "",
+            hint: error?.hint || "",
+            code: error?.code || ""
+        };
+
         return {
             success: false,
-            error: error.message || "An unexpected error occurred while updating the product."
+            error: errorData
         };
     }
 }

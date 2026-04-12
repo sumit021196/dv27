@@ -258,7 +258,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 }, {} as Record<string, string>))
             });
 
-            if (!result.success) throw new Error(result.error);
+            if (!result.success) {
+                if (typeof result.error === 'object' && result.error !== null) {
+                    const errMsg = [
+                        result.error.message,
+                        result.error.details,
+                        result.error.hint
+                    ].filter(Boolean).join(" | ");
+                    throw new Error(errMsg || "Unknown backend error");
+                }
+                throw new Error(String(result.error));
+            }
 
             setSuccess(true);
             setTimeout(() => {

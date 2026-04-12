@@ -211,7 +211,18 @@ export default function AddProductPage() {
 
             console.log("Client: Action Result", result);
 
-            if (!result.success) throw new Error(result.error);
+            if (!result.success) {
+                // Check if it's an object with detailed fields or just a string
+                if (typeof result.error === 'object' && result.error !== null) {
+                    const errMsg = [
+                        result.error.message,
+                        result.error.details,
+                        result.error.hint
+                    ].filter(Boolean).join(" | ");
+                    throw new Error(errMsg || "Unknown backend error");
+                }
+                throw new Error(String(result.error));
+            }
             setSuccess(true);
             setTimeout(() => router.push("/admin/products"), 1500);
         } catch (err: any) {

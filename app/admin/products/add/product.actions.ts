@@ -95,9 +95,17 @@ export async function createProductAction(formData: {
         return { success: true };
     } catch (error: any) {
         console.error("--- createProductAction Error ---", error);
+        // Extract detailed Postgres/Supabase error details if available
+        const errorData = {
+            message: error?.message || "An unexpected error occurred while creating the product.",
+            details: error?.details || "",
+            hint: error?.hint || "",
+            code: error?.code || ""
+        };
+
         return {
             success: false,
-            error: error.message || "An unexpected error occurred while creating the product."
+            error: errorData
         };
     }
 }
