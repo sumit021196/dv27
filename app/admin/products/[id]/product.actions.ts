@@ -61,12 +61,15 @@ export async function updateProductAction(productId: string | number, formData: 
         }
 
         // Delete from storage
-        for (const url of urlsToDelete) {
-            const path = getPathFromUrl(url);
-            if (path) {
-                console.log(`Deleting file from storage: ${path}`);
-                await supabase.storage.from('products').remove([path]);
+        // Wrapping this in try-catch and Promise.all to prevent slow deletions from hanging the update process.
+        try {
+            const pathsToDelete = urlsToDelete.map(url => getPathFromUrl(url)).filter(Boolean) as string[];
+            if (pathsToDelete.length > 0) {
+                console.log(`Deleting files from storage: ${pathsToDelete.join(', ')}`);
+                await supabase.storage.from('products').remove(pathsToDelete);
             }
+        } catch (storageErr) {
+            console.error("Non-fatal error deleting old media from storage:", storageErr);
         }
 
         // 3. Update products table
