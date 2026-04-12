@@ -81,6 +81,10 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                     clearTimeout(timeout);
                     URL.revokeObjectURL(objectUrl);
 
+                    // Deallocate canvas memory to prevent silent Out-Of-Memory crashes on iOS Safari
+                    canvas.width = 0;
+                    canvas.height = 0;
+
                     if (blob) {
                         // Create a new File object from the blob
                         // We replace the original extension with .jpg for storage consistency
