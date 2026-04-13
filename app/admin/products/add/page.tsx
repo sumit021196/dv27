@@ -228,11 +228,11 @@ export default function AddProductPage() {
 
             if (!result.success) throw new Error(result.error);
             setSuccess(true);
-            setTimeout(() => router.push("/admin/products"), 1500);
+            const timer = setTimeout(() => router.push("/admin/products"), 1500);
+            timersRef.current.push(timer);
         } catch (err: any) {
             console.error("Client: Submission Error", err);
             setErrorParam(err?.message || "An unexpected error occurred.");
-        } finally {
             setLoading(false);
             setStatusMessage("");
         }
@@ -441,7 +441,7 @@ export default function AddProductPage() {
                             </div>
                         ) : (
                             <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> Saving...</> : 'Save Product Data'}
+                                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> {statusMessage || "Saving..."}</> : 'Save Product Data'}
                             </button>
                         )}
                     </div>

@@ -285,7 +285,6 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         } catch (err: any) {
             console.error("Save error:", err);
             setError(err.message || "Failed to save product");
-        } finally {
             setIsLoading(false);
             setStatusMessage("");
         }
