@@ -1,65 +1,38 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { revalidatePath } from 'next/cache';
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET() {
     try {
-        const { id } = await params;
         const supabase = await createClient();
-        
-        // Ensure admin
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-        const { data: order, error } = await supabase
-            .from('orders')
-            .select(`
-                *,
-                order_items (*),
-                shipping_details (*)
-            `)
-            .eq('id', id)
-            .single();
+        const supabaseAdmin = await createClient(true);
+        const { data, error } = await supabaseAdmin.from('coupons').select('*').order('created_at', { ascending: false });
 
         if (error) throw error;
-        return NextResponse.json({ order });
+        return NextResponse.json({ coupons: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request) {
     try {
-        const { id } = await params;
         const supabase = await createClient();
-        
-        // Ensure admin
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
         const body = await req.json();
-        const { status } = body;
-
-        const { data, error } = await supabase
-            .from('orders')
-            .update({ status })
-            .eq('id', id)
-            .select()
-            .single();
+        const supabaseAdmin = await createClient(true);
+        const { data, error } = await supabaseAdmin.from('coupons').insert(body).select().single();
 
         if (error) throw error;
-
-        revalidatePath(`/admin/orders/${id}`);
-        revalidatePath('/admin/orders');
-        if (data.user_id) {
-             revalidatePath(`/profile/orders/${id}`);
-        }
-
-        return NextResponse.json({ order: data, success: true });
+        return NextResponse.json({ coupon: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

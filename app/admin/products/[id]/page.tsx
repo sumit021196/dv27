@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import React, { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Plus, Trash2, UploadCloud, Video, CheckCircle2, Save } from "lucide-react";
 import Link from "next/link";
@@ -39,6 +39,18 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     // We store images as an array of objects that can either have a URL (existing) or a File (new)
     const [images, setImages] = useState<{ url: string; file?: File }[]>([]);
     const [video, setVideo] = useState<{ url: string; file?: File } | null>(null);
+
+    // Refs for Safari memory leak tracking
+    const previewUrlsRef = useRef<string[]>([]);
+    const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+            timersRef.current.forEach(clearTimeout);
+        };
+    }, []);
 
     // Dynamic Parts
     const [variants, setVariants] = useState<{ id: string; size: string; color: string; stock: string; sku: string }[]>([]);
@@ -135,10 +147,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            const newImages = files.map(file => ({
-                file,
-                url: URL.createObjectURL(file)
-            }));
+            const newImages = files.map(file => {
+                const url = URL.createObjectURL(file);
+                previewUrlsRef.current.push(url);
+                return { file, url };
+            });
             setImages(prev => [...prev, ...newImages]);
         }
     };
@@ -158,7 +171,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         const file = e.target.files?.[0];
         if (file) {
             if (video?.file) URL.revokeObjectURL(video.url);
-            setVideo({ file, url: URL.createObjectURL(file) });
+            const url = URL.createObjectURL(file);
+            previewUrlsRef.current.push(url);
+            setVideo({ file, url });
         }
     };
 
@@ -261,10 +276,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             if (!result.success) throw new Error(result.error);
 
             setSuccess(true);
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 router.push("/admin/products");
                 router.refresh();
             }, 1000);
+            timersRef.current.push(timer);
 
         } catch (err: any) {
             console.error("Save error:", err);

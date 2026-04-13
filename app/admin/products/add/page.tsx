@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, Trash2, Video, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,18 @@ export default function AddProductPage() {
     // Advanced Media & Variants State
     const [images, setImages] = useState<{file: File, url: string}[]>([]);
     const [video, setVideo] = useState<{file: File, url: string} | null>(null);
+
+    // Refs for Safari memory leak tracking
+    const previewUrlsRef = useRef<string[]>([]);
+    const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+            timersRef.current.forEach(clearTimeout);
+        };
+    }, []);
     const [variants, setVariants] = useState<{id: string, size: string, color: string, stock: string, sku: string}[]>([]);
     const [details, setDetails] = useState<{id: string, label: string, value: string}[]>([
         { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
@@ -84,10 +96,11 @@ export default function AddProductPage() {
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            const newImages = files.map(file => ({
-                file,
-                url: URL.createObjectURL(file)
-            }));
+            const newImages = files.map(file => {
+                const url = URL.createObjectURL(file);
+                previewUrlsRef.current.push(url);
+                return { file, url };
+            });
             setImages(prev => [...prev, ...newImages]);
         }
     };
@@ -105,7 +118,9 @@ export default function AddProductPage() {
         const file = e.target.files?.[0];
         if (file) {
             if (video) URL.revokeObjectURL(video.url);
-            setVideo({ file, url: URL.createObjectURL(file) });
+            const url = URL.createObjectURL(file);
+            previewUrlsRef.current.push(url);
+            setVideo({ file, url });
         }
     };
 

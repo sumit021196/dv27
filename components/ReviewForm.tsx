@@ -31,6 +31,15 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlsRef = useRef<string[]>([]);
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+  useEffect(() => {
+    return () => {
+        previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+        timersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -49,7 +58,11 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     }
     
     setImages(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'image' as const }));
+    const newPreviews = files.map(file => {
+      const url = URL.createObjectURL(file);
+      previewUrlsRef.current.push(url);
+      return { url, type: 'image' as const };
+    });
     setPreviews(prev => [...prev, ...newPreviews]);
     setError(null);
   };
@@ -69,7 +82,11 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     }
 
     setVideos(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'video' as const }));
+    const newPreviews = files.map(file => {
+      const url = URL.createObjectURL(file);
+      previewUrlsRef.current.push(url);
+      return { url, type: 'video' as const };
+    });
     setPreviews(prev => [...prev, ...newPreviews]);
     setError(null);
   };
@@ -128,7 +145,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     
     if (result.success) {
       setIsSuccess(true);
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         onSuccess();
         onClose();
         // Reset form
@@ -140,6 +157,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
         setPreviews([]);
         setIsSuccess(false);
       }, 2000);
+      timersRef.current.push(timer);
     } else {
       setError(result.error || "Something went wrong");
     }

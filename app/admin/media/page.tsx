@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Image as ImageIcon, Trash2, Copy, Loader2, Filter, ExternalLink, X, Check, Clock, HardDrive } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/utils/cn";
@@ -11,6 +11,13 @@ export default function AdminMediaPage() {
     const [deleting, setDeleting] = useState<string | null>(null);
     const [copied, setCopied] = useState<string | null>(null);
     const [filter, setFilter] = useState("all");
+    const timersRef = useRef<NodeJS.Timeout[]>([]);
+
+    useEffect(() => {
+        return () => {
+            timersRef.current.forEach(clearTimeout);
+        };
+    }, []);
 
     useEffect(() => {
         fetchMedia();
@@ -49,7 +56,8 @@ export default function AdminMediaPage() {
     const copyToClipboard = (url: string) => {
         navigator.clipboard.writeText(url);
         setCopied(url);
-        setTimeout(() => setCopied(null), 2000);
+        const timer = setTimeout(() => setCopied(null), 2000);
+        timersRef.current.push(timer);
     };
 
     const filteredFiles = filter === "all" ? files : files.filter(f => f.bucket === filter);
