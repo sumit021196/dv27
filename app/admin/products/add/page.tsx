@@ -1,7 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, Trash2, Video, Save } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { 
+    UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, 
+    Trash2, Video, Save, ChevronRight, ChevronLeft, Layout, 
+    Zap, Image as ImageIcon, Box, List as ListIcon, ShieldCheck
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createProductAction } from "./product.actions";
@@ -10,26 +14,36 @@ import { Category } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
 import { createClient } from "@/utils/supabase/client";
 import { compressImage, uploadToSupabase } from "@/utils/image-utils";
+import { cn } from "@/utils/cn";
 
+// Wizard Steps Configuration
+const STEPS = [
+    { label: "Essentials", icon: Box },
+    { label: "Pricing", icon: Zap },
+    { label: "Media", icon: ImageIcon },
+    { label: "Variants", icon: ListIcon },
+    { label: "Review", icon: ShieldCheck }
+];
 
 export default function AddProductPage() {
     const router = useRouter();
+    const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
 
+    // Form Data States
     const [categories, setCategories] = useState<Category[]>([]);
     const [formData, setFormData] = useState({
         name: "",
         price: "",
         original_price: "",
         description: "",
-        category: "",
         category_id: "",
+        category: ""
     });
 
-    // Advanced Media & Variants State
     const [images, setImages] = useState<{file: File, url: string}[]>([]);
     const [video, setVideo] = useState<{file: File, url: string} | null>(null);
     const [variants, setVariants] = useState<{id: string, size: string, color: string, stock: string, sku: string}[]>([]);
@@ -37,6 +51,9 @@ export default function AddProductPage() {
         { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
         { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
     ]);
+
+    // Refs for safe cleanup
+    const processedUrlsRef = useRef<string[]>([]);
 
     useEffect(() => {
         const loadCats = async () => {
@@ -48,15 +65,20 @@ export default function AddProductPage() {
         loadCats();
     }, []);
 
+    // Cleanup object URLs on unmount
+    useEffect(() => {
+        return () => {
+            images.forEach(img => URL.revokeObjectURL(img.url));
+            if (video) URL.revokeObjectURL(video.url);
+        };
+    }, []);
+
+    // Handlers
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === "category_id") {
             const selectedCat = categories.find(c => c.id === value);
-            setFormData(prev => ({
-                ...prev,
-                category_id: value,
-                category: selectedCat ? selectedCat.name : ""
-            }));
+            setFormData(prev => ({ ...prev, category_id: value, category: selectedCat ? selectedCat.name : "" }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -64,106 +86,59 @@ export default function AddProductPage() {
 
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        if (files.length > 0) {
-            const newImages = files.map(file => ({
-                file,
-                url: URL.createObjectURL(file)
-            }));
-            setImages(prev => [...prev, ...newImages]);
+        const newImages = files.map(file => ({ file, url: URL.createObjectURL(file) }));
+        setImages(prev => [...prev, ...newImages]);
+    };
+
+    const removeImage = (idx: number) => {
+        URL.revokeObjectURL(images[idx].url);
+        setImages(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const nextStep = () => {
+        if (currentStep === 0 && !formData.name) {
+            setErrorParam("Product Name is required.");
+            return;
         }
-    };
-
-    const removeImage = (index: number) => {
-        setImages(prev => {
-            const newArr = [...prev];
-            URL.revokeObjectURL(newArr[index].url);
-            newArr.splice(index, 1);
-            return newArr;
-        });
-    };
-
-    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (video) URL.revokeObjectURL(video.url);
-            setVideo({ file, url: URL.createObjectURL(file) });
+        if (currentStep === 1 && !formData.price) {
+            setErrorParam("Price is required.");
+            return;
         }
+        setErrorParam(null);
+        setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
     };
 
-    const removeVideo = () => {
-        if (video) URL.revokeObjectURL(video.url);
-        setVideo(null);
-    };
-
-    const addVariant = () => {
-        setVariants(prev => [...prev, { id: Math.random().toString(36).substring(7), size: "", color: "", stock: "0", sku: "" }]);
-    };
-
-    const updateVariant = (id: string, field: string, value: string) => {
-        setVariants(prev => prev.map(v => v.id === id ? { ...v, [field]: value } : v));
-    };
-
-    const removeVariant = (id: string) => {
-        setVariants(prev => prev.filter(v => v.id !== id));
-    };
-
-    const addDetail = () => {
-        setDetails(prev => [...prev, { id: Math.random().toString(36).substring(7), label: "", value: "" }]);
-    };
-
-    const updateDetail = (id: string, field: 'label' | 'value', val: string) => {
-        setDetails(prev => prev.map(d => d.id === id ? { ...d, [field]: val } : d));
-    };
-
-    const removeDetail = (id: string) => {
-        setDetails(prev => prev.filter(d => d.id !== id));
-    };
+    const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setErrorParam(null);
-        setSuccess(false);
-
-        if (!formData.name || !formData.price) {
-            setErrorParam("Name and Price are required.");
-            return;
-        }
-
-        console.log("Client: Form Submission Start", {
-            name: formData.name,
-            price: formData.price,
-            original_price: formData.original_price,
-            imagesCount: images.length,
-            video: !!video,
-            variantsCount: variants.length
-        });
-
         setLoading(true);
+        setErrorParam(null);
+        processedUrlsRef.current = [];
+
         try {
             const supabase = createClient();
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
-            // 1. Upload Video if exists
-            if (video?.file) {
-                setStatusMessage("Uploading video...");
+            // 1. Video Upload
+            if (video) {
+                setStatusMessage("Uploading high-res video...");
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
             }
 
-            // 2. Compress and Upload Images
+            // 2. Sequential Image Processing (Hardened for Safari)
             for (let i = 0; i < images.length; i++) {
-                const img = images[i];
-                setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
-                const compressedFile = await compressImage(img.file);
+                setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
+                const compressed = await compressImage(images[i].file);
                 
                 setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
-                const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
-                finalImageUrls.push(publicUrl);
+                const url = await uploadToSupabase(supabase, 'products', compressed);
+                finalImageUrls.push(url);
+                processedUrlsRef.current.push(url);
             }
 
-            setStatusMessage("Saving product data...");
-
-            // 3. Call Server Action with URLs
+            setStatusMessage("Finalizing data...");
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -173,237 +148,234 @@ export default function AddProductPage() {
                 category_id: formData.category_id || null,
                 imageUrls: finalImageUrls,
                 videoUrl: finalVideoUrl,
-                variants: JSON.stringify(variants.map(v => ({ size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku }))),
+                variants: JSON.stringify(variants.map(v => ({ 
+                    size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku 
+                }))),
                 details: JSON.stringify(details.reduce((acc, curr) => {
                     if (curr.label.trim()) acc[curr.label.trim()] = curr.value;
                     return acc;
                 }, {} as Record<string, string>))
             });
 
-            console.log("Client: Action Result", result);
-
             if (!result.success) throw new Error(result.error);
+            
             setSuccess(true);
             setTimeout(() => router.push("/admin/products"), 1500);
         } catch (err: any) {
-            console.error("Client: Submission Error", err);
-            setErrorParam(err?.message || "An unexpected error occurred.");
-        } finally {
+            console.error("Save Error:", err);
+            setErrorParam(err.message || "An unexpected error occurred.");
             setLoading(false);
-            setStatusMessage("");
         }
     };
 
-    return (
-        <div className="flex flex-col h-full overflow-hidden">
-            {/* Fixed Header section */}
-            <div className="flex-shrink-0 mb-4 px-1">
-                <div className="flex items-center gap-3">
-                    <Link href="/admin/products" className="p-2 hover:bg-white/80 bg-gray-100 rounded-full transition-colors text-gray-500">
-                        <ArrowLeft size={18} />
-                    </Link>
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Add Clothing Product</h1>
-                        <p className="text-[10px] md:text-sm text-gray-500">New product with variants & media.</p>
+    // Render Logic for Steps
+    const renderStepContent = () => {
+        switch (currentStep) {
+            case 0: return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Essentials</h2>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Product Name</label>
+                            <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all" placeholder="e.g. Midnight Onyx Hoodie" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Collection</label>
+                            <div className="relative">
+                                <select name="category_id" value={formData.category_id} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all appearance-none">
+                                    <option value="">Select Category</option>
+                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Narrative / Description</label>
+                            <textarea name="description" rows={4} value={formData.description} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all" placeholder="Tell the story of this piece..." />
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Scrollable Form Content */}
-            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pb-20 md:pb-12">
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-                {/* Left Column: Form Details & Variants */}
-                <div className="col-span-1 lg:col-span-2 space-y-4 md:space-y-6">
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 md:space-y-6">
-                        <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Basic Info</h2>
-                        <div className="space-y-3 md:space-y-4">
+            );
+            case 1: return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Pricing</h2>
+                        <div className="grid grid-cols-1 gap-6">
                             <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Product Name *</label>
-                                <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="e.g. Classic Denim Jacket" />
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Selling Price (₹)</label>
+                                <input type="number" inputMode="numeric" name="price" required value={formData.price} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-lg font-bold focus:ring-2 focus:ring-black transition-all" placeholder="0.00" />
                             </div>
                             <div>
-                                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea name="description" rows={3} value={formData.description} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="Material, care instructions..." />
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Original Price / MRP (₹)</label>
+                                <input type="number" inputMode="numeric" name="original_price" value={formData.original_price} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-lg font-medium text-gray-500 line-through focus:ring-2 focus:ring-black transition-all" placeholder="Optional" />
                             </div>
                         </div>
                     </div>
-
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                        <div className="col-span-1 sm:col-span-2"><h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Pricing & Category</h2></div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Selling Price (₹) *</label>
-                            <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-500 text-sm">₹</span></div>
-                                <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleInputChange} className="w-full pl-8 border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="0.00" />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Original Price / MRP (₹)</label>
-                            <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-500 text-sm">₹</span></div>
-                                <input type="number" name="original_price" min="0" step="0.01" value={formData.original_price} onChange={handleInputChange} className="w-full pl-8 border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="0.00" />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select name="category_id" value={formData.category_id} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border">
-                                <option value="">Select Category</option>
-                                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Variants Section */}
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 md:space-y-6">
-                        <div className="flex justify-between items-center border-b pb-2">
-                            <h2 className="text-md md:text-lg font-semibold text-gray-900">Product Variants</h2>
-                            <button type="button" onClick={addVariant} className="flex items-center text-xs bg-black text-white px-3 py-1.5 rounded-lg font-medium transition">
-                                <Plus size={14} className="mr-1" /> Add Variant
-                            </button>
-                        </div>
-                        {variants.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">No variants added. Click 'Add Variant' to add sizes, colors, and stock.</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {variants.map((v) => (
-                                    <div key={v.id} className="grid grid-cols-4 gap-3 items-end bg-gray-50 p-4 rounded-xl border border-gray-100 relative group">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                                            <input type="text" value={v.size} onChange={(e) => updateVariant(v.id, "size", e.target.value)} placeholder="S, M, L..." className="w-full text-sm border-gray-300 rounded-md p-2 border" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                                            <input type="text" value={v.color} onChange={(e) => updateVariant(v.id, "color", e.target.value)} placeholder="Red, #FFF" className="w-full text-sm border-gray-300 rounded-md p-2 border" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Stock</label>
-                                            <input type="number" min="0" value={v.stock} onChange={(e) => updateVariant(v.id, "stock", e.target.value)} className="w-full text-sm border-gray-300 rounded-md p-2 border" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
-                                            <input type="text" value={v.sku} onChange={(e) => updateVariant(v.id, "sku", e.target.value)} placeholder="SKU-123" className="w-full text-sm border-gray-300 rounded-md p-2 border" />
-                                        </div>
-                                        <button type="button" onClick={() => removeVariant(v.id)} className="absolute -top-2 -right-2 bg-white border border-gray-200 text-red-500 p-1.5 rounded-full shadow-sm hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    {/* Product Details Section */}
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 md:space-y-6 mt-6">
-                        <div className="flex justify-between items-center border-b pb-2">
-                            <h2 className="text-md md:text-lg font-semibold text-gray-900">Product Details (Tabs)</h2>
-                            <button type="button" onClick={addDetail} className="flex items-center text-xs bg-black text-white px-3 py-1.5 rounded-lg font-medium transition">
-                                <Plus size={14} className="mr-1" /> Add Detail
-                            </button>
-                        </div>
-                        <p className="text-[10px] text-gray-500">These will appear in the "Details" tab on the product page as key-value pairs (e.g. Material: Cotton).</p>
+                </div>
+            );
+            case 2: return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Media Portfolio</h2>
+                        
+                        {/* Images */}
                         <div className="space-y-3">
-                            {details.map((d) => (
-                                <div key={d.id} className="flex gap-3 items-center bg-gray-50 p-3 rounded-xl border border-gray-100 relative group">
-                                    <div className="flex-1">
-                                        <input type="text" value={d.label} onChange={(e) => updateDetail(d.id, "label", e.target.value)} placeholder="Label (e.g. Material)" className="w-full text-xs border-gray-300 rounded-lg p-2 border" />
-                                    </div>
-                                    <div className="flex-[2]">
-                                        <input type="text" value={d.value} onChange={(e) => updateDetail(d.id, "value", e.target.value)} placeholder="Value (e.g. 100% Cotton)" className="w-full text-xs border-gray-300 rounded-lg p-2 border" />
-                                    </div>
-                                    <button type="button" onClick={() => removeDetail(d.id)} className="text-red-500 p-1 hover:bg-red-50 rounded-full">
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column: Media & Submit */}
-                <div className="col-span-1 lg:col-span-1 space-y-4 md:space-y-6">
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Images</h2>
-                        <div className="mt-2 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition cursor-pointer relative overflow-hidden group">
-                            <div className="text-center">
-                                <UploadCloud className="mx-auto h-8 w-8 text-gray-400 group-hover:text-black transition" />
-                                <div className="mt-2 text-xs text-gray-600">
-                                    <label className="cursor-pointer font-medium text-black hover:text-gray-700">
-                                        <span>Select images</span>
-                                        <input type="file" multiple className="sr-only" accept="image/*" onChange={handleImagesChange} />
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        {images.length > 0 && (
-                            <div className="grid grid-cols-3 gap-2 mt-4">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Visuals</label>
+                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-3xl p-8 hover:bg-gray-50 transition cursor-pointer group">
+                                <UploadCloud size={32} className="text-gray-300 group-hover:text-black transition-colors" />
+                                <span className="text-xs font-bold mt-2 uppercase">Select Files</span>
+                                <input type="file" multiple accept="image/*" onChange={handleImagesChange} className="hidden" />
+                            </label>
+                            <div className="grid grid-cols-4 gap-2">
                                 {images.map((img, idx) => (
-                                    <div key={idx} className="relative group rounded-md overflow-hidden bg-gray-100 aspect-square">
-                                        <img src={img.url} alt={`Preview ${idx}`} className="object-cover w-full h-full" />
-                                        <button type="button" onClick={() => removeImage(idx)} className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 group">
+                                        <img src={img.url} className="w-full h-full object-cover" />
+                                        <button onClick={(e) => { e.preventDefault(); removeImage(idx); }} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="text-white" size={16} />
                                         </button>
                                     </div>
                                 ))}
                             </div>
-                        )}
-                    </div>
-
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Video (Optional)</h2>
-                        <div className="mt-2 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition cursor-pointer relative overflow-hidden group">
-                            <div className="text-center">
-                                <Video className="mx-auto h-8 w-8 text-gray-400 group-hover:text-black transition" />
-                                <div className="mt-2 text-xs text-gray-600">
-                                    <label className="cursor-pointer font-medium text-black hover:text-gray-700">
-                                        <span>Upload Video</span>
-                                        <input type="file" className="sr-only" accept="video/mp4,video/webm" onChange={handleVideoChange} />
-                                    </label>
-                                </div>
-                            </div>
                         </div>
-                        {video && (
-                            <div className="relative mt-4 rounded-xl overflow-hidden group">
-                                <video src={video.url} className="w-full h-auto aspect-video bg-black" controls />
-                                <button type="button" onClick={removeVideo} className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition">
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        )}
-                    </div>
 
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                        <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Product Card Preview</h2>
-                        <div className="flex justify-center p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                            <div className="w-full max-w-[280px]">
-                                <ProductCard 
-                                    product={{
-                                        id: 'preview',
-                                        name: formData.name || "Product Name",
-                                        price: Number(formData.price) || 0,
-                                        original_price: formData.original_price ? Number(formData.original_price) : undefined,
-                                        mediaUrl: images.length > 0 ? images[0].url : undefined
-                                    }} 
-                                />
-                            </div>
+                        {/* Video */}
+                        <div className="space-y-3">
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Cinematic Video</label>
+                            <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-3xl p-8 hover:bg-gray-50 transition cursor-pointer group">
+                                <Video size={32} className="text-gray-300 group-hover:text-black transition-colors" />
+                                <span className="text-xs font-bold mt-2 uppercase truncate max-w-full px-4">{video ? video.file.name : "Select Video"}</span>
+                                <input type="file" accept="video/mp4,video/webm" onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) setVideo({ file, url: URL.createObjectURL(file) });
+                                }} className="hidden" />
+                            </label>
                         </div>
-                        <p className="text-[10px] text-gray-400 text-center italic">This is how your product will appear on the shop page.</p>
-                    </div>
-
-                    <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                        {errorParam && <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">{errorParam}</div>}
-                        {success ? (
-                            <div className="flex items-center gap-3 text-green-700 bg-green-50 p-4 rounded-xl border border-green-100">
-                                <CheckCircle2 size={24} />
-                                <span className="font-medium">Product saved!</span>
-                            </div>
-                        ) : (
-                            <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> Saving...</> : 'Save Product Data'}
-                            </button>
-                        )}
                     </div>
                 </div>
-            </form>
+            );
+            case 3: return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900">Variants & Stock</h2>
+                            <button onClick={() => setVariants(v => [...v, { id: Math.random().toString(36), size: "", color: "", stock: "10", sku: "" }])} className="p-2 bg-black text-white rounded-full"><Plus size={16} /></button>
+                        </div>
+                        <div className="space-y-3">
+                            {variants.map((v) => (
+                                <div key={v.id} className="p-4 bg-gray-50 rounded-2xl grid grid-cols-2 gap-3 relative">
+                                    <input placeholder="Size (e.g. S)" value={v.size} onChange={e => setVariants(prev => prev.map(item => item.id === v.id ? {...item, size: e.target.value} : item))} className="bg-white p-2 rounded-lg text-xs" />
+                                    <input placeholder="Color" value={v.color} onChange={e => setVariants(prev => prev.map(item => item.id === v.id ? {...item, color: e.target.value} : item))} className="bg-white p-2 rounded-lg text-xs" />
+                                    <input placeholder="Stock" type="number" value={v.stock} onChange={e => setVariants(prev => prev.map(item => item.id === v.id ? {...item, stock: e.target.value} : item))} className="bg-white p-2 rounded-lg text-xs" />
+                                    <button onClick={() => setVariants(prev => prev.filter(i => i.id !== v.id))} className="absolute -top-2 -right-2 bg-white shadow-md rounded-full p-1 text-red-500"><Trash2 size={12} /></button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+            case 4: return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Final Review</h2>
+                        <div className="flex justify-center scale-90 origin-top">
+                            <ProductCard product={{
+                                id: 'p', name: formData.name, price: Number(formData.price), 
+                                original_price: Number(formData.original_price), 
+                                mediaUrl: images.length > 0 ? images[0].url : undefined
+                            }} />
+                        </div>
+                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <ul className="text-[10px] text-blue-700 font-bold uppercase space-y-1">
+                                <li>• {images.length} Images will be compressed for Safari</li>
+                                <li>• {variants.length} Stock-keeping units (SKU)</li>
+                                <li>• Collection: {formData.category || "General"}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-gray-50 flex flex-col z-[60] overflow-hidden">
+            {/* Minimal Header */}
+            <div className="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-20">
+                <Link href="/admin/products" className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                    <ArrowLeft size={18} />
+                </Link>
+                <div className="flex items-center gap-1.5">
+                    {STEPS.map((_, i) => (
+                        <div key={i} className={cn(
+                            "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                            i === currentStep ? "w-6 bg-black" : (i < currentStep ? "bg-black/20" : "bg-gray-200")
+                        )} />
+                    ))}
+                </div>
+                <div className="w-8" />
             </div>
+
+            {/* Scrollable Wizard Area */}
+            <div className="flex-1 overflow-y-auto pt-6 pb-24 px-4 scrollbar-hide">
+                <div className="max-w-md mx-auto h-full">
+                    {renderStepContent()}
+                    {errorParam && <div className="mt-4 p-4 bg-red-50 text-red-700 text-[10px] font-bold uppercase rounded-2xl border border-red-100">{errorParam}</div>}
+                </div>
+            </div>
+
+            {/* Fixed Navigation Bar */}
+            <div className="flex-shrink-0 p-4 bg-white border-t border-gray-100 z-40">
+                <div className="max-w-md mx-auto flex gap-3">
+                    {currentStep > 0 && (
+                        <button onClick={prevStep} className="flex-1 h-14 bg-white border border-gray-200 rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-sm">
+                            <ChevronLeft size={14} /> Back
+                        </button>
+                    )}
+                    {currentStep < STEPS.length - 1 ? (
+                        <button onClick={nextStep} className="flex-[2] h-14 bg-black text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-xl shadow-black/10 active:scale-95 transition-all">
+                            Next Step <ChevronRight size={14} />
+                        </button>
+                    ) : (
+                        <button onClick={handleSubmit} disabled={loading} className="flex-[2] h-14 bg-blue-600 text-white rounded-2xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                            {loading ? <Loader2 className="animate-spin" size={14} /> : <><Save size={14} /> Push Live</>}
+                        </button>
+                    )}
+                </div>
+                <div className="h-[env(safe-area-inset-bottom)]" />
+            </div>
+
+            {/* SAVING OVERLAY (Critical for Safari "stuck" prevention) */}
+            {loading && (
+                <div className="fixed inset-0 bg-white/80 backdrop-blur-xl z-[100] flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+                    <div className="relative">
+                        <div className="w-24 h-24 border-4 border-gray-100 rounded-full animate-pulse" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Loader2 className="animate-spin text-black" size={32} />
+                        </div>
+                    </div>
+                    <p className="mt-8 text-lg font-bold text-gray-900 leading-tight">Syncing with Cloud</p>
+                    <p className="mt-2 text-[10px] font-bold text-blue-600 uppercase tracking-widest h-4">{statusMessage}</p>
+                    <div className="mt-12 w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-black animate-[loading_2s_ease-in-out_infinite]" />
+                    </div>
+                    <style jsx>{`
+                        @keyframes loading {
+                            0% { transform: translateX(-100%); }
+                            100% { transform: translateX(100%); }
+                        }
+                    `}</style>
+                </div>
+            )}
+
+            {/* SUCCESS OVERLAY */}
+            {success && (
+                <div className="fixed inset-0 bg-black z-[110] flex flex-col items-center justify-center p-8 text-center animate-in slide-in-from-bottom-full duration-700">
+                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
+                        <CheckCircle2 className="text-white" size={40} />
+                    </div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Product Live</h2>
+                    <p className="text-gray-400 mt-2 text-sm uppercase tracking-widest">Redirecting to inventory...</p>
+                </div>
+            )}
         </div>
     );
 }

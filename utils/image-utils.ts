@@ -1,27 +1,27 @@
 
 /**
  * Robust image compression utility designed for multi-platform compatibility,
- * specifically addressing Safari/iPhone hangs during image processing.
+ * specifically addressing Safari/iPhone hangs and memory leaks.
  */
 export async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
-    // Standard sanity check
     if (!file.type.startsWith('image/')) {
         return file;
     }
 
+    // Safari/iPhone Hard Limits: Avoid total pixel count exceeding a reasonable threshold
+    // (Safari often crashes or silently fails if images are > 16.7M pixels)
+    const MAX_PIXELS = 16000000; 
+
     return new Promise((resolve, reject) => {
-        // 30s Safety Timeout to prevent UI from hanging on "Saving..." forever
         const timeout = setTimeout(() => {
-            reject(new Error("Image processing timed out. The file might be too large or corrupted."));
-        }, 30000);
+            reject(new Error("Processing timed out. Safari might have paused the tab or the image is too large."));
+        }, 45000); // 45s for high-res images
 
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
 
         img.onload = async () => {
             try {
-                // iPhone/Safari fix: Ensure image is internally decoded before drawing to canvas.
-                // This prevents silent hangs in Safari 14+ when handling high-res images or WebP/AVIF.
                 if ('decode' in img) {
                     await img.decode();
                 }
@@ -30,30 +30,39 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                 let width = img.width;
                 let height = img.height;
 
-                // Only resize if width exceeds maxWidth
+                // 1. Check for Safari memory limit (total pixels)
+                if (width * height > MAX_PIXELS) {
+                    const ratio = Math.sqrt(MAX_PIXELS / (width * height));
+                    width *= ratio;
+                    height *= ratio;
+                }
+
+                // 2. Apply user-requested maxWidth
                 if (width > maxWidth) {
                     height = (maxWidth / width) * height;
                     width = maxWidth;
                 }
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.width > 0 && canvas.height > 0 ? canvas.getContext('2d') : null;
+                canvas.width = Math.floor(width);
+                canvas.height = Math.floor(height);
+                const ctx = canvas.getContext('2d');
 
                 if (!ctx) {
-                    throw new Error("Could not initialize canvas context.");
+                    canvas.width = 0; canvas.height = 0;
+                    throw new Error("Canvas context vanished (Safari memory pressure?)");
                 }
 
-                ctx.drawImage(img, 0, 0, width, height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Convert to JPEG for universal compatibility and predictable file size reduce
                 canvas.toBlob((blob) => {
+                    // CRITICAL: Clean up canvas memory immediately
+                    canvas.width = 0;
+                    canvas.height = 0;
+                    
                     clearTimeout(timeout);
                     URL.revokeObjectURL(objectUrl);
 
                     if (blob) {
-                        // Create a new File object from the blob
-                        // We replace the original extension with .jpg for storage consistency
                         const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
                         const compressedFile = new File([blob], newName, {
                             type: 'image/jpeg',
@@ -61,24 +70,23 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                         });
                         resolve(compressedFile);
                     } else {
-                        reject(new Error("Image compression failed (Canvas to Blob)."));
+                        reject(new Error("Safari Canvas failure: Image might be too large for GPU memory. Try a smaller file."));
                     }
                 }, 'image/jpeg', quality);
 
             } catch (err: any) {
                 clearTimeout(timeout);
                 URL.revokeObjectURL(objectUrl);
-                reject(new Error(`Compression error: ${err.message}`));
+                reject(new Error(`Compression Error: ${err.message}`));
             }
         };
 
         img.onerror = () => {
             clearTimeout(timeout);
             URL.revokeObjectURL(objectUrl);
-            reject(new Error("Failed to load image for processing. Ensure it's a valid image format (JPG, PNG, WebP, AVIF, HEIC)."));
+            reject(new Error("Invalid image format or load failure."));
         };
 
-        // Trigger loading
         img.src = objectUrl;
     });
 }
