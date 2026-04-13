@@ -1,50 +1,38 @@
-import { createClient } from '@/utils/supabase/client';
-
 export const couponClientService = {
-  getClient() {
-    return createClient();
-  },
-
   async getAllCoupons() {
-    const supabase = this.getClient();
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/coupons');
+    if (!res.ok) throw new Error("Failed to fetch coupons");
+    const data = await res.json();
+    return data.coupons;
   },
 
   async createCoupon(coupon: any) {
-    const supabase = this.getClient();
-    const { data, error } = await supabase
-      .from('coupons')
-      .insert(coupon)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(coupon)
+    });
+    if (!res.ok) throw new Error("Failed to create coupon");
+    const data = await res.json();
+    return data.coupon;
   },
 
   async updateCoupon(id: string, updates: any) {
-    const supabase = this.getClient();
-    const { data, error } = await supabase
-      .from('coupons')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/coupons/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error("Failed to update coupon");
+    const data = await res.json();
+    return data.coupon;
   },
 
   async deleteCoupon(id: string) {
-    const supabase = this.getClient();
-    const { error } = await supabase
-      .from('coupons')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+    const res = await fetch(`/api/coupons/${id}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) throw new Error("Failed to delete coupon");
     return true;
   }
 };

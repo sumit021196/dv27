@@ -60,13 +60,11 @@ export async function updateProductAction(productId: string | number, formData: 
             urlsToDelete.push(oldVideoUrl);
         }
 
-        // Delete from storage
-        for (const url of urlsToDelete) {
-            const path = getPathFromUrl(url);
-            if (path) {
-                console.log(`Deleting file from storage: ${path}`);
-                await supabase.storage.from('products').remove([path]);
-            }
+        // Delete from storage using bulk operation
+        const pathsToRemove = urlsToDelete.map(url => getPathFromUrl(url)).filter((p): p is string => p !== null);
+        if (pathsToRemove.length > 0) {
+            console.log(`Deleting ${pathsToRemove.length} files from storage in bulk`);
+            await supabase.storage.from('products').remove(pathsToRemove);
         }
 
         // 3. Update products table
@@ -91,43 +89,53 @@ export async function updateProductAction(productId: string | number, formData: 
 
         if (dbError) throw dbError;
 
-        // 4. Sync product_images table
-        // Delete all old images for this product
-        await supabase.from('product_images').delete().eq('product_id', productId);
-        
-        // Insert new images
-        if (newImageUrls.length > 0) {
-            const imageInserts = newImageUrls.map((url, idx) => ({
-                product_id: productId,
-                image_url: url,
-                display_order: idx
-            }));
-            const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
-            if (imgError) console.error("Error syncing images:", imgError);
+        // 4. & 5. Sync product_images and product_variants tables concurrently
+        const syncPromises = [];
+
+        // Sync product_images
+        syncPromises.push((async () => {
+            // Delete all old images for this product
+            await supabase.from('product_images').delete().eq('product_id', productId);
+
+            // Insert new images
+            if (newImageUrls.length > 0) {
+                const imageInserts = newImageUrls.map((url, idx) => ({
+                    product_id: productId,
+                    image_url: url,
+                    display_order: idx
+                }));
+                const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
+                if (imgError) console.error("Error syncing images:", imgError);
+            }
+        })());
+
+        // Sync product_variants
+        if (formData.variants) {
+            syncPromises.push((async () => {
+                try {
+                    const parsedVariants = JSON.parse(formData.variants as string);
+                    // Delete old variants
+                    await supabase.from('product_variants').delete().eq('product_id', productId);
+
+                    if (Array.isArray(parsedVariants) && parsedVariants.length > 0) {
+                        const variantInserts = parsedVariants.map((v: any) => ({
+                            product_id: productId,
+                            color: v.color || null,
+                            size: v.size || null,
+                            stock: Number(v.stock) || 0,
+                            sku: v.sku || null
+                        }));
+                        const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
+                        if (varError) console.error("Error syncing variants:", varError);
+                    }
+                } catch (jsonErr) {
+                    console.error("Failed to parse variants JSON:", jsonErr);
+                }
+            })());
         }
 
-        // 5. Sync product_variants table
-        if (formData.variants) {
-            try {
-                const parsedVariants = JSON.parse(formData.variants);
-                // Delete old variants
-                await supabase.from('product_variants').delete().eq('product_id', productId);
-                
-                if (Array.isArray(parsedVariants) && parsedVariants.length > 0) {
-                    const variantInserts = parsedVariants.map((v: any) => ({
-                        product_id: productId,
-                        color: v.color || null,
-                        size: v.size || null,
-                        stock: Number(v.stock) || 0,
-                        sku: v.sku || null
-                    }));
-                    const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
-                    if (varError) console.error("Error syncing variants:", varError);
-                }
-            } catch (jsonErr) {
-                console.error("Failed to parse variants JSON:", jsonErr);
-            }
-        }
+        // Wait for both sync operations to complete
+        await Promise.all(syncPromises);
 
         revalidatePath("/admin/products");
         revalidatePath(`/admin/products/${productId}`);

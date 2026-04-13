@@ -1,64 +1,39 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { revalidatePath } from 'next/cache';
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
         const supabase = await createClient();
-        
-        // Ensure admin
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-        const { data: review } = await supabase.from('reviews').select('product_id').eq('id', id).single();
-
-        const { error } = await supabase
-            .from('reviews')
-            .delete()
-            .eq('id', id);
+        const body = await req.json();
+        const supabaseAdmin = await createClient(true);
+        const { data, error } = await supabaseAdmin.from('coupons').update(body).eq('id', id).select().single();
 
         if (error) throw error;
-
-        revalidatePath('/admin/reviews');
-        if (review?.product_id) {
-            revalidatePath(`/product/${review.product_id}`);
-        }
-
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ coupon: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const { status } = await req.json();
         const supabase = await createClient();
-        
-        // Ensure admin
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
         if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-        const { data: review, error } = await supabase
-            .from('reviews')
-            .update({ status })
-            .eq('id', id)
-            .select('product_id')
-            .single();
+        const supabaseAdmin = await createClient(true);
+        const { error } = await supabaseAdmin.from('coupons').delete().eq('id', id);
 
         if (error) throw error;
-
-        revalidatePath('/admin/reviews');
-        if (review?.product_id) {
-            revalidatePath(`/product/${review.product_id}`);
-        }
-
         return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -57,36 +57,46 @@ export async function createProductAction(formData: {
         const productId = productData.id;
         console.log("Product Inserted with ID:", productId);
 
-        // 4. Insert extra images into product_images
+        // 4. & 5. Insert extra images and Variants concurrently
+        const insertPromises = [];
+
+        // Insert extra images
         if (finalImageUrls.length > 0) {
-            const imageInserts = finalImageUrls.map((url, idx) => ({
-                product_id: productId,
-                image_url: url,
-                display_order: idx
-            }));
-            const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
-            if (imgError) console.error("Error inserting multiple images (Logged and continuing):", imgError);
+            insertPromises.push((async () => {
+                const imageInserts = finalImageUrls.map((url, idx) => ({
+                    product_id: productId,
+                    image_url: url,
+                    display_order: idx
+                }));
+                const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
+                if (imgError) console.error("Error inserting multiple images (Logged and continuing):", imgError);
+            })());
         }
 
-        // 5. Insert Variants
+        // Insert Variants
         if (formData.variants) {
-            try {
-                const parsedVariants = JSON.parse(formData.variants);
-                if (Array.isArray(parsedVariants) && parsedVariants.length > 0) {
-                    const variantInserts = parsedVariants.map((v: any) => ({
-                        product_id: productId,
-                        color: v.color || null,
-                        size: v.size || null,
-                        stock: Number(v.stock) || 0,
-                        sku: v.sku || null
-                    }));
-                    const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
-                    if (varError) console.error("Error inserting variants (Logged and continuing):", varError);
+            insertPromises.push((async () => {
+                try {
+                    const parsedVariants = JSON.parse(formData.variants as string);
+                    if (Array.isArray(parsedVariants) && parsedVariants.length > 0) {
+                        const variantInserts = parsedVariants.map((v: any) => ({
+                            product_id: productId,
+                            color: v.color || null,
+                            size: v.size || null,
+                            stock: Number(v.stock) || 0,
+                            sku: v.sku || null
+                        }));
+                        const { error: varError } = await supabase.from('product_variants').insert(variantInserts);
+                        if (varError) console.error("Error inserting variants (Logged and continuing):", varError);
+                    }
+                } catch (jsonErr) {
+                    console.error("Failed to parse variants JSON:", jsonErr);
                 }
-            } catch (jsonErr) {
-                console.error("Failed to parse variants JSON:", jsonErr);
-            }
+            })());
         }
+
+        // Wait for both insert operations to complete
+        await Promise.all(insertPromises);
 
         revalidatePath("/admin/products");
         revalidatePath("/");

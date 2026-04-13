@@ -38,23 +38,21 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
         }, 30000);
 
         const img = new Image();
-        const objectUrl = URL.createObjectURL(file);
+        // Safari iOS 16/17 Fix: Adding crossOrigin anonymous helps WebKit safely process blobs
+        img.crossOrigin = "anonymous";
+
+        // Use FileReader instead of URL.createObjectURL for better iOS compatibility
+        // object URLs can sometimes hang or fail to resolve in background tabs/workers on iOS
+        const reader = new FileReader();
 
         img.onload = async () => {
             try {
-                // iPhone/Safari fix: Ensure image is internally decoded before drawing to canvas.
-                // However, Safari often silently hangs indefinitely on `img.decode()` for WebP/AVIF images.
-                // We race `img.decode()` against a 2-second timeout so it doesn't freeze the whole upload process.
-                if ('decode' in img) {
-                    try {
-                        await Promise.race([
-                            img.decode(),
-                            new Promise((_, r) => setTimeout(() => r(new Error("decode timeout")), 2000))
-                        ]);
-                    } catch (decodeErr) {
-                        console.warn("img.decode() timed out or failed, proceeding with fallback drawing", decodeErr);
-                    }
-                }
+                // Wait a tiny bit on iOS to ensure image is ready in memory
+                await new Promise(r => setTimeout(r, 100));
+
+                // Remove img.decode() entirely. It's notoriously buggy on iOS Safari and causes
+                // silent hangs on image processing, particularly with larger files or formats like WEBP.
+                // The browser will synchronously decode when we call drawImage anyway.
 
                 const canvas = document.createElement('canvas');
                 let width = img.width;
@@ -79,7 +77,10 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                 // Convert to JPEG for universal compatibility and predictable file size reduce
                 canvas.toBlob((blob) => {
                     clearTimeout(timeout);
-                    URL.revokeObjectURL(objectUrl);
+
+                    // Deallocate canvas memory to prevent silent Out-Of-Memory crashes on iOS Safari
+                    canvas.width = 0;
+                    canvas.height = 0;
 
                     if (blob) {
                         // Create a new File object from the blob
@@ -97,19 +98,31 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
 
             } catch (err: any) {
                 clearTimeout(timeout);
-                URL.revokeObjectURL(objectUrl);
                 reject(new Error(`Compression error: ${err.message}`));
             }
         };
 
         img.onerror = () => {
             clearTimeout(timeout);
-            URL.revokeObjectURL(objectUrl);
             reject(new Error("Failed to load image for processing. Ensure it's a valid image format (JPG, PNG, WebP, AVIF, HEIC)."));
         };
 
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                img.src = e.target.result as string;
+            } else {
+                clearTimeout(timeout);
+                reject(new Error("Failed to read image file."));
+            }
+        };
+
+        reader.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error("Failed to read file for processing."));
+        };
+
         // Trigger loading
-        img.src = objectUrl;
+        reader.readAsDataURL(file);
     });
 }
 

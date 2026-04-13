@@ -19,7 +19,7 @@ export async function GET() {
                     created_at TIMESTAMPTZ DEFAULT NOW()
                 );
 
-                CREATE TABLE IF NOT EXISTS user_coupons (
+                CREATE TABLE IF NOT EXISTS coupon_usages (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
                     coupon_id UUID REFERENCES coupons(id) ON DELETE CASCADE,
