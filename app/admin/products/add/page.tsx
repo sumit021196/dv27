@@ -163,23 +163,30 @@ export default function AddProductPage() {
         processedUrlsRef.current = [];
 
         try {
+            console.log("--- Starting Product Save ---");
             const supabase = createClient();
+            
+            // PRE-FETCH SESSION: Avoid Safari identity-check hangs inside the loop
+            console.log("[Supabase Auth] Pre-fetching session token...");
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token || undefined;
+            
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
             // 1. Video Upload
             if (video) {
                 setStatusMessage("Uploading high-res video...");
-                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
+                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
             }
 
-            // 2. Sequential Image Processing (Hardened for Safari)
+            // 2. Sequential Image Processing
             for (let i = 0; i < images.length; i++) {
                 setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
                 const compressed = await compressImage(images[i].file);
                 
                 setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
-                const url = await uploadToSupabase(supabase, 'products', compressed);
+                const url = await uploadToSupabase(supabase, 'products', compressed, token);
                 finalImageUrls.push(url);
                 processedUrlsRef.current.push(url);
             }
@@ -325,7 +332,7 @@ export default function AddProductPage() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                         <h2 className="text-xl font-bold text-gray-900">Final Review</h2>
-                        <div className="flex justify-center scale-90 origin-top">
+                        <div className="relative flex justify-center scale-90 origin-top">
                             <ProductCard product={{
                                 id: 'p', name: formData.name, price: Number(formData.price), 
                                 original_price: Number(formData.original_price), 
