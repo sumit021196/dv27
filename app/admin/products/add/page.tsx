@@ -104,8 +104,15 @@ export default function AddProductPage() {
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Pre-upload validation
+            const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+            if (file.size > MAX_VIDEO_SIZE) {
+                setErrorParam("Selected video exceeds the 50MB limit.");
+                return;
+            }
             if (video) URL.revokeObjectURL(video.url);
             setVideo({ file, url: URL.createObjectURL(file) });
+            setErrorParam(null);
         }
     };
 
@@ -140,6 +147,10 @@ export default function AddProductPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Prevent multiple form submissions
+        if (loading) return;
+
         setErrorParam(null);
         setSuccess(false);
 
@@ -170,13 +181,37 @@ export default function AddProductPage() {
         setLoading(true);
         try {
             const supabase = createClient();
+
+            // Check and refresh auth session before starting the upload
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) {
+                // Try refreshing the session just in case it's stale
+                const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+                if (refreshError || !refreshedSession) {
+                    throw new Error("Your session has expired. Please refresh the page and log in again.");
+                }
+            }
+
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
             // 1. Upload Video if exists
             if (video?.file) {
+                // Video size check (e.g. max 50MB)
+                const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+                if (video.file.size > MAX_VIDEO_SIZE) {
+                    throw new Error("Video file is too large. Maximum size is 50MB.");
+                }
+
                 setStatusMessage("Uploading video...");
-                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
+
+                // Add a specific timeout for video upload since it can be large
+                const videoUploadPromise = uploadToSupabase(supabase, 'products', video.file);
+                const videoTimeoutPromise = new Promise<string>((_, reject) =>
+                    setTimeout(() => reject(new Error("Video upload timed out. File might be too large or connection is too slow.")), 60000)
+                );
+
+                finalVideoUrl = await Promise.race([videoUploadPromise, videoTimeoutPromise]);
             }
 
             // 2. Compress and Upload Images
@@ -192,8 +227,8 @@ export default function AddProductPage() {
 
             setStatusMessage("Saving product data...");
 
-            // 3. Call Server Action with URLs
-            const result = await createProductAction({
+            // 3. Call Server Action with URLs with a race condition for timeout handling
+            const actionPromise = createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
                 original_price: formData.original_price ? Number(formData.original_price) : undefined,
@@ -209,10 +244,38 @@ export default function AddProductPage() {
                 }, {} as Record<string, string>))
             });
 
+            const timeoutPromise = new Promise<{ success: boolean; error?: string }>((_, reject) =>
+                setTimeout(() => reject(new Error("Server timeout. The request took too long.")), 15000)
+            );
+
+            const result = await Promise.race([actionPromise, timeoutPromise]);
+
             console.log("Client: Action Result", result);
 
-            if (!result.success) throw new Error(result.error);
+            if (!result.success) {
+                if (result.error?.includes("413") || result.error?.toLowerCase().includes("payload too large")) {
+                    throw new Error("Payload Too Large (413): Please upload smaller images or a shorter video.");
+                } else if (result.error?.toLowerCase().includes("network error") || result.error?.toLowerCase().includes("fetch failed")) {
+                    throw new Error("Network Error: Please check your internet connection.");
+                }
+                throw new Error(result.error);
+            }
             setSuccess(true);
+
+            // Explicitly reset form state to prevent "second-entry-stuck" issue
+            setFormData({
+                name: "",
+                price: "",
+                original_price: "",
+                description: "",
+                category: "",
+                category_id: "",
+            });
+            setImages([]);
+            setVideo(null);
+            setVariants([]);
+            setDetails([]);
+
             setTimeout(() => router.push("/admin/products"), 1500);
         } catch (err: any) {
             console.error("Client: Submission Error", err);

@@ -48,7 +48,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [catsLoading, setCatsLoading] = useState(true);
 
     useEffect(() => {
-        let isMounted = true;
+        const isMounted = true;
         const loadInitialData = async () => {
             try {
                 // 1. Load categories
