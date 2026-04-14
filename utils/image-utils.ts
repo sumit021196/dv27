@@ -3,12 +3,12 @@
  * Robust image compression utility designed for multi-platform compatibility,
  * specifically addressing Safari/iPhone hangs and memory leaks.
  */
-import heic2any from 'heic2any';
-
 export async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
     // Convert HEIC/HEIF to JPEG first
     if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
         try {
+            // Dynamic import to avoid SSR 'window is not defined' errors
+            const heic2any = (await import('heic2any')).default;
             const convertedBlob = await heic2any({
                 blob: file,
                 toType: 'image/jpeg',
