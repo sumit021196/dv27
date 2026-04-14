@@ -136,7 +136,12 @@ export class ProductService implements IProductService {
 
             const { data: catWithProds, error: joinError } = await query;
 
-            if (joinError || !catWithProds) return [];
+            if (joinError) {
+                console.error("Supabase Error fetching categories:", joinError);
+                throw joinError;
+            }
+
+            if (!catWithProds) return [];
 
             return catWithProds.map((c: any) => ({
                 id: c.id,
@@ -144,8 +149,9 @@ export class ProductService implements IProductService {
                 slug: c.slug,
                 is_active: c.is_active
             }));
-        } catch {
-            return [];
+        } catch (error) {
+            console.error("Failed to fetch categories:", error);
+            throw error; // Throw error instead of silently returning [] so UI can catch and retry
         }
     }
 

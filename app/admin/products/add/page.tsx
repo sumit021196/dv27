@@ -35,6 +35,7 @@ export default function AddProductPage() {
 
     // Form Data States
     const [categories, setCategories] = useState<Category[]>([]);
+    const [catsLoading, setCatsLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: "",
         price: "",
@@ -56,13 +57,30 @@ export default function AddProductPage() {
     const processedUrlsRef = useRef<string[]>([]);
 
     useEffect(() => {
+        let isMounted = true;
         const loadCats = async () => {
             try {
-                const data = await productService.getCategories();
-                setCategories(data);
-            } catch (err) { }
+                setCatsLoading(true);
+                // Call API directly to bypass any potential Supabase client issues during hydration
+                const res = await fetch('/api/categories');
+                if (!res.ok) throw new Error("Failed to fetch categories");
+                const data = await res.json();
+                if (isMounted) {
+                    setCategories(data.categories || []);
+                    setErrorParam(null);
+                }
+            } catch (err: any) {
+                console.error("Error loading categories:", err);
+                if (isMounted) {
+                    setErrorParam("Failed to load categories. Please check your network or refresh the page.");
+                }
+            } finally {
+                if (isMounted) setCatsLoading(false);
+            }
         };
         loadCats();
+
+        return () => { isMounted = false; };
     }, []);
 
     // Cleanup object URLs on unmount
@@ -112,8 +130,36 @@ export default function AddProductPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setErrorParam(null);
+        setSuccess(false);
+
+        // Validation logic from main
+        if (!formData.name || !formData.price) {
+            setErrorParam("Name and Price are required.");
+            return;
+        }
+
+        if (categories.length > 0 && !formData.category_id) {
+            setErrorParam("Please select a category.");
+            return;
+        }
+
+        if (catsLoading) {
+            setErrorParam("Please wait for categories to finish loading before saving.");
+            return;
+        }
+
+        console.log("Client: Form Submission Start", {
+            name: formData.name,
+            price: formData.price,
+            original_price: formData.original_price,
+            imagesCount: images.length,
+            video: !!video,
+            variantsCount: variants.length
+        });
+
+        // Hardened save logic
+        setLoading(true);
         processedUrlsRef.current = [];
 
         try {
@@ -174,7 +220,10 @@ export default function AddProductPage() {
             case 0: return (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Essentials</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-bold text-gray-900">Essentials</h2>
+                            {catsLoading && <Loader2 className="animate-spin text-gray-300" size={16} />}
+                        </div>
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Product Name</label>
                             <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all" placeholder="e.g. Midnight Onyx Hoodie" />
@@ -182,8 +231,8 @@ export default function AddProductPage() {
                         <div>
                             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Collection</label>
                             <div className="relative">
-                                <select name="category_id" value={formData.category_id} onChange={handleInputChange} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all appearance-none">
-                                    <option value="">Select Category</option>
+                                <select name="category_id" value={formData.category_id} onChange={handleInputChange} disabled={catsLoading} className="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-black transition-all appearance-none disabled:opacity-50">
+                                    <option value="">{catsLoading ? "Loading Categories..." : "Select Category"}</option>
                                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                 </select>
                             </div>
@@ -228,7 +277,7 @@ export default function AddProductPage() {
                             <div className="grid grid-cols-4 gap-2">
                                 {images.map((img, idx) => (
                                     <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 group">
-                                        <img src={img.url} className="w-full h-full object-cover" />
+                                        <img src={img.url} className="w-full h-full object-cover" alt="Product preview" />
                                         <button onClick={(e) => { e.preventDefault(); removeImage(idx); }} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Trash2 className="text-white" size={16} />
                                         </button>

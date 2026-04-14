@@ -45,13 +45,27 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [details, setDetails] = useState<{ id: string; label: string; value: string }[]>([]);
 
     const [categories, setCategories] = useState<Category[]>([]);
+    const [catsLoading, setCatsLoading] = useState(true);
 
     useEffect(() => {
+        let isMounted = true;
         const loadInitialData = async () => {
             try {
                 // 1. Load categories
-                const cats = await productService.getCategories(true);
-                setCategories(cats.filter(c => c.is_active));
+                setCatsLoading(true);
+                try {
+                    const resCats = await fetch('/api/categories');
+                    if (!resCats.ok) throw new Error("Failed to fetch categories");
+                    const dataCats = await resCats.json();
+                    if (isMounted) {
+                        const allCats: Category[] = dataCats.categories || [];
+                        setCategories(allCats.filter(c => c.is_active));
+                    }
+                } catch (catErr) {
+                    console.error("Failed to load categories:", catErr);
+                } finally {
+                    if (isMounted) setCatsLoading(false);
+                }
 
                 // 2. Load product
                 const res = await fetch(`/api/products/${productId}`);
@@ -179,6 +193,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (categories.length > 0 && !categoryId) {
+            setError("Please select a category.");
+            return;
+        }
+
+        if (catsLoading) {
+            setError("Please wait for categories to finish loading before saving.");
+            return;
+        }
+
         setIsLoading(true);
         setError("");
         setSuccess(false);
@@ -266,7 +291,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pb-20 md:pb-12">
+            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-hide pb-32 md:pb-12">
                 <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                     {/* Left Column */}
                     <div className="col-span-1 lg:col-span-2 space-y-4 md:space-y-6">
@@ -411,9 +436,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                         {/* Status & Category */}
                         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full border-gray-200 rounded-xl text-sm p-3 border">
-                                    <option value="">Select Category</option>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                                <select disabled={catsLoading} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full border-gray-200 rounded-xl text-sm p-3 border disabled:bg-gray-50">
+                                    <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
                                     {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                                 </select>
                             </div>
