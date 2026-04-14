@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UploadCloud, CheckCircle2, ArrowLeft, Loader2, Plus, Trash2, Video, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,22 +12,25 @@ import { createClient } from "@/utils/supabase/client";
 import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
 
+const INITIAL_FORM_DATA = {
+    name: "",
+    price: "",
+    original_price: "",
+    description: "",
+    category: "",
+    category_id: "",
+};
+
 export default function AddProductPage() {
     const router = useRouter();
+    const isSubmitting = useRef(false);
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
 
     const [categories, setCategories] = useState<Category[]>([]);
-    const [formData, setFormData] = useState({
-        name: "",
-        price: "",
-        original_price: "",
-        description: "",
-        category: "",
-        category_id: "",
-    });
+    const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
     // Advanced Media & Variants State
     const [images, setImages] = useState<{file: File, url: string}[]>([]);
@@ -138,61 +141,97 @@ export default function AddProductPage() {
         setDetails(prev => prev.filter(d => d.id !== id));
     };
 
+    const resetAllState = () => {
+        console.log("[State Cleanup] Resetting form and clearing memory...");
+        
+        // 1. Clear media URLs from browser memory
+        images.forEach(img => URL.revokeObjectURL(img.url));
+        if (video) URL.revokeObjectURL(video.url);
+        
+        // 2. Reset basic form states
+        setFormData(INITIAL_FORM_DATA);
+        setImages([]);
+        setVideo(null);
+        setVariants([]);
+        setDetails([
+            { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
+            { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
+        ]);
+        
+        // 3. Clear UI feedback
+        setSuccess(false);
+        setErrorParam(null);
+        setStatusMessage("");
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // 1. Transaction Lock: Prevent double-hits on the server
+        if (isSubmitting.current) return;
+        isSubmitting.current = true;
+
         setErrorParam(null);
         setSuccess(false);
 
+        // Validation checks
         if (!formData.name || !formData.price) {
             setErrorParam("Name and Price are required.");
+            isSubmitting.current = false;
             return;
         }
 
         if (categories.length > 0 && !formData.category_id) {
             setErrorParam("Please select a category.");
+            isSubmitting.current = false;
             return;
         }
-
-        if (catsLoading) {
-            setErrorParam("Please wait for categories to finish loading before saving.");
-            return;
-        }
-
-        console.log("Client: Form Submission Start", {
-            name: formData.name,
-            price: formData.price,
-            original_price: formData.original_price,
-            imagesCount: images.length,
-            video: !!video,
-            variantsCount: variants.length
-        });
 
         setLoading(true);
+
         try {
+            console.log("--- Starting Sequential Product Save ---");
             const supabase = createClient();
+
+            // 2. One-Time Auth Handshake: Fetch token once to avoid Safari IDB lock
+            setStatusMessage("Verifying handshake...");
+            console.log("[Supabase Auth] Pre-fetching session token...");
+            
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth handshake timeout")), 8000));
+            
+            let token: string | undefined;
+            try {
+                const sessionRes = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                token = sessionRes?.data?.session?.access_token || undefined;
+                console.log("[Supabase Auth] Token verified.");
+            } catch (e) {
+                console.warn("[Supabase Auth] Handshake timed out, proceeding with anonymous/SDK fallback.");
+                token = undefined;
+            }
+
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
-            // 1. Upload Video if exists
+            // 3. Sequential Media Processing
             if (video?.file) {
-                setStatusMessage("Uploading video...");
-                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file);
+                setStatusMessage("Syncing video...");
+                finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
             }
 
-            // 2. Compress and Upload Images
             for (let i = 0; i < images.length; i++) {
                 const img = images[i];
-                setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
+                setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
                 const compressedFile = await compressImage(img.file);
                 
-                setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
-                const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile);
+                setStatusMessage(`Syncing image ${i + 1}/${images.length}...`);
+                const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile, token);
                 finalImageUrls.push(publicUrl);
             }
 
-            setStatusMessage("Saving product data...");
+            setStatusMessage("Registering product...");
 
-            // 3. Call Server Action with URLs
+            // 4. Register with Server Action
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -209,16 +248,25 @@ export default function AddProductPage() {
                 }, {} as Record<string, string>))
             });
 
-            console.log("Client: Action Result", result);
-
             if (!result.success) throw new Error(result.error);
+
+            // 5. Success Flow: Cleanup state before redirect
             setSuccess(true);
-            setTimeout(() => router.push("/admin/products"), 1500);
+            setStatusMessage("Success! Redirecting...");
+            
+            setTimeout(() => {
+                resetAllState();
+                router.push("/admin/products");
+                router.refresh();
+                isSubmitting.current = false;
+            }, 1500);
+
         } catch (err: any) {
-            console.error("Client: Submission Error", err);
-            setErrorParam(err?.message || "An unexpected error occurred.");
-        } finally {
+            console.error("Submission Failure:", err);
+            setErrorParam(err?.message || "An unexpected error occurred during the save process.");
             setLoading(false);
+            isSubmitting.current = false;
+        } finally {
             setStatusMessage("");
         }
     };

@@ -1,14 +1,18 @@
+import { SUPABASE_URL, SUPABASE_KEY } from './supabase/client';
 
 /**
  * Robust image compression utility designed for multi-platform compatibility,
- * specifically addressing Safari/iPhone hangs during image processing.
+ * specifically addressing Safari/iPhone hangs and memory leaks.
  */
-import heic2any from 'heic2any';
-
 export async function compressImage(file: File, maxWidth = 1600, quality = 0.8): Promise<File> {
+    // Prevent SSR errors
+    if (typeof window === 'undefined') return file;
+
     // Convert HEIC/HEIF to JPEG first
     if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
         try {
+            // Dynamic import for browser-only package
+            const heic2any = (await import('heic2any')).default;
             const convertedBlob = await heic2any({
                 blob: file,
                 toType: 'image/jpeg',
@@ -31,59 +35,61 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
         return file;
     }
 
+    // Safari/iPhone Hard Limits: Avoid total pixel count exceeding a reasonable threshold
+    // (Safari often crashes or silently fails if images are > 16.7M pixels)
+    const MAX_PIXELS = 16000000; 
+
     return new Promise((resolve, reject) => {
-        // 30s Safety Timeout to prevent UI from hanging on "Saving..." forever
         const timeout = setTimeout(() => {
-            reject(new Error("Image processing timed out. The file might be too large or corrupted."));
-        }, 30000);
+            reject(new Error("Processing timed out. Safari might have paused the tab or the image is too large."));
+        }, 45000); 
 
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
 
         img.onload = async () => {
             try {
-                // iPhone/Safari fix: Ensure image is internally decoded before drawing to canvas.
-                // However, Safari often silently hangs indefinitely on `img.decode()` for WebP/AVIF images.
-                // We race `img.decode()` against a 2-second timeout so it doesn't freeze the whole upload process.
                 if ('decode' in img) {
-                    try {
-                        await Promise.race([
-                            img.decode(),
-                            new Promise((_, r) => setTimeout(() => r(new Error("decode timeout")), 2000))
-                        ]);
-                    } catch (decodeErr) {
-                        console.warn("img.decode() timed out or failed, proceeding with fallback drawing", decodeErr);
-                    }
+                    await Promise.race([
+                        img.decode(),
+                        new Promise((_, r) => setTimeout(() => r(new Error("decode timeout")), 2000))
+                    ]);
                 }
-
+                
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
 
-                // Only resize if width exceeds maxWidth
+                if (width * height > MAX_PIXELS) {
+                    const ratio = Math.sqrt(MAX_PIXELS / (width * height));
+                    width *= ratio;
+                    height *= ratio;
+                }
+
                 if (width > maxWidth) {
                     height = (maxWidth / width) * height;
                     width = maxWidth;
                 }
 
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.width > 0 && canvas.height > 0 ? canvas.getContext('2d') : null;
+                canvas.width = Math.floor(width);
+                canvas.height = Math.floor(height);
+                const ctx = canvas.getContext('2d');
 
                 if (!ctx) {
-                    throw new Error("Could not initialize canvas context.");
+                    canvas.width = 0; canvas.height = 0;
+                    throw new Error("Canvas context vanished (Safari memory pressure?)");
                 }
 
-                ctx.drawImage(img, 0, 0, width, height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Convert to JPEG for universal compatibility and predictable file size reduce
                 canvas.toBlob((blob) => {
+                    canvas.width = 0;
+                    canvas.height = 0;
+                    
                     clearTimeout(timeout);
                     URL.revokeObjectURL(objectUrl);
 
                     if (blob) {
-                        // Create a new File object from the blob
-                        // We replace the original extension with .jpg for storage consistency
                         const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
                         const compressedFile = new File([blob], newName, {
                             type: 'image/jpeg',
@@ -91,48 +97,94 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
                         });
                         resolve(compressedFile);
                     } else {
-                        reject(new Error("Image compression failed (Canvas to Blob)."));
+                        reject(new Error("Safari Canvas failure: Image might be too large for GPU memory."));
                     }
                 }, 'image/jpeg', quality);
 
             } catch (err: any) {
                 clearTimeout(timeout);
                 URL.revokeObjectURL(objectUrl);
-                reject(new Error(`Compression error: ${err.message}`));
+                reject(new Error(`Compression Error: ${err.message}`));
             }
         };
 
         img.onerror = () => {
             clearTimeout(timeout);
             URL.revokeObjectURL(objectUrl);
-            reject(new Error("Failed to load image for processing. Ensure it's a valid image format (JPG, PNG, WebP, AVIF, HEIC)."));
+            reject(new Error("Invalid image format or load failure."));
         };
 
-        // Trigger loading
         img.src = objectUrl;
     });
 }
 
 /**
  * Utility to upload a file to a specific Supabase bucket and return the public URL.
+ * Hardened with timeout and retry logic for Safari/iPhone reliability.
  */
 export async function uploadToSupabase(
     supabase: any, 
     bucket: string, 
     file: File, 
+    token?: string,
     folder: string = ""
 ): Promise<string> {
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder ? folder + '/' : ''}${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     
-    const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
+    const maxRetries = 3;
+    let lastError: any = null;
 
-    if (uploadError) {
-        throw new Error(`Upload to ${bucket} failed: ${uploadError.message}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[Supabase Upload] Bypass Active - Attempt ${attempt}/${maxRetries} for ${fileName}`);
+            
+            // 1. Prepare raw data for Safari stability
+            const arrayBuffer = await file.arrayBuffer();
+
+            // 2. Construct direct REST URL
+            const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`;
+
+            // 3. Determine the Auth Token (Prefer passed token, fallback to anon key)
+            const activeToken = token || SUPABASE_KEY;
+
+            const fetchPromise = fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${activeToken}`,
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': file.type,
+                    'x-upsert': 'false'
+                },
+                body: arrayBuffer,
+                // @ts-ignore - Duplex is required for some modern fetch streams
+                duplex: 'half'
+            });
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Storage upload timed out after 60s")), 60000)
+            );
+
+            const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+                console.error(`[Supabase Upload] API Error:`, errorData);
+                lastError = errorData;
+                if (response.status === 403 || response.status === 401) break; 
+                continue;
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
+            return publicUrl;
+
+        } catch (err: any) {
+            console.error(`[Supabase Upload] Fetch Exception:`, err.message);
+            lastError = err;
+            if (attempt === maxRetries) break;
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
     }
 
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
-    return publicUrl;
+    throw new Error(`Upload to ${bucket} failed after ${maxRetries} attempts. Last error: ${lastError?.message || 'Unknown'}`);
 }
