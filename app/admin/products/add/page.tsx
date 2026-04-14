@@ -43,12 +43,26 @@ export default function AddProductPage() {
 
     const [catsLoading, setCatsLoading] = useState(true);
 
+    const sessionTokenRef = useRef<string | undefined>();
+
     useEffect(() => {
         let isMounted = true;
+        
+        // Pre-fetch Auth Token once on mount so we never hit the Safari DB lock during upload.
+        const preFetchSession = async () => {
+            const supabase = createClient();
+            try {
+                const { data } = await supabase.auth.getSession();
+                if (isMounted) sessionTokenRef.current = data.session?.access_token;
+            } catch (e) {
+                console.warn("[Auth] Failed to prefetch session", e);
+            }
+        };
+        preFetchSession();
+
         const loadCats = async () => {
             try {
                 setCatsLoading(true);
-                // Call API directly to bypass any potential Supabase client issues during hydration
                 const res = await fetch('/api/categories');
                 if (!res.ok) throw new Error("Failed to fetch categories");
                 const data = await res.json();
@@ -142,7 +156,7 @@ export default function AddProductPage() {
     };
 
     const resetAllState = () => {
-        console.log("[State Cleanup] Resetting form and clearing memory...");
+        console.log("[State Cleanup] Resetting form and clearing memory for next product...");
         
         // 1. Clear media URLs from browser memory
         images.forEach(img => URL.revokeObjectURL(img.url));
@@ -162,6 +176,9 @@ export default function AddProductPage() {
         setSuccess(false);
         setErrorParam(null);
         setStatusMessage("");
+        
+        // Scroll to top automatically
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -193,21 +210,12 @@ export default function AddProductPage() {
             console.log("--- Starting Sequential Product Save ---");
             const supabase = createClient();
 
-            // 2. One-Time Auth Handshake: Fetch token once to avoid Safari IDB lock
-            setStatusMessage("Verifying handshake...");
-            console.log("[Supabase Auth] Pre-fetching session token...");
-            
-            const sessionPromise = supabase.auth.getSession();
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth handshake timeout")), 8000));
-            
-            let token: string | undefined;
-            try {
-                const sessionRes = await Promise.race([sessionPromise, timeoutPromise]) as any;
-                token = sessionRes?.data?.session?.access_token || undefined;
-                console.log("[Supabase Auth] Token verified.");
-            } catch (e) {
-                console.warn("[Supabase Auth] Handshake timed out, proceeding with anonymous/SDK fallback.");
-                token = undefined;
+            // 2. Auth Context
+            let token = sessionTokenRef.current;
+            if (!token) {
+                setStatusMessage("Verifying session fallback...");
+                const { data } = await supabase.auth.getSession();
+                token = data.session?.access_token || undefined;
             }
 
             const finalImageUrls: string[] = [];
@@ -250,16 +258,10 @@ export default function AddProductPage() {
 
             if (!result.success) throw new Error(result.error);
 
-            // 5. Success Flow: Cleanup state before redirect
+            // 5. Success Flow: Halt execution here to let user decide next steps
             setSuccess(true);
-            setStatusMessage("Success! Redirecting...");
-            
-            setTimeout(() => {
-                resetAllState();
-                router.push("/admin/products");
-                router.refresh();
-                isSubmitting.current = false;
-            }, 1500);
+            setLoading(false);
+            isSubmitting.current = false;
 
         } catch (err: any) {
             console.error("Submission Failure:", err);
@@ -468,9 +470,18 @@ export default function AddProductPage() {
                     <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                         {errorParam && <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">{errorParam}</div>}
                         {success ? (
-                            <div className="flex items-center gap-3 text-green-700 bg-green-50 p-4 rounded-xl border border-green-100">
-                                <CheckCircle2 size={24} />
-                                <span className="font-medium">Product saved!</span>
+                            <div className="flex flex-col items-center gap-3 bg-green-50 p-6 rounded-xl border border-green-100 text-center">
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <CheckCircle2 size={24} />
+                                    <span className="font-bold text-lg">Product Saved!</span>
+                                </div>
+                                <p className="text-xs text-green-600">The product is now live.</p>
+                                <button type="button" onClick={resetAllState} className="mt-2 w-full bg-black text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-sm">
+                                    Add Another Product
+                                </button>
+                                <Link href="/admin/products" className="text-xs font-medium text-gray-500 underline mt-2 hover:text-black transition">
+                                    Return to Product List
+                                </Link>
                             </div>
                         ) : (
                             <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-70 disabled:cursor-not-allowed transition-all">
