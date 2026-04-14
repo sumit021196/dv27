@@ -115,24 +115,75 @@ export async function compressImage(file: File, maxWidth = 1600, quality = 0.8):
 
 /**
  * Utility to upload a file to a specific Supabase bucket and return the public URL.
+ * Hardened with timeout and retry logic for Safari/iPhone reliability.
  */
 export async function uploadToSupabase(
     supabase: any, 
     bucket: string, 
     file: File, 
+    token?: string,
     folder: string = ""
 ): Promise<string> {
     const fileExt = file.name.split('.').pop();
     const fileName = `${folder ? folder + '/' : ''}${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     
-    const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file);
+    const maxRetries = 3;
+    let lastError: any = null;
 
-    if (uploadError) {
-        throw new Error(`Upload to ${bucket} failed: ${uploadError.message}`);
+    // Dynamically retrieve URL and Key from env
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[Supabase Upload] Bypass Active - Attempt ${attempt}/${maxRetries} for ${fileName}`);
+            
+            // 1. Prepare raw data for Safari stability
+            const arrayBuffer = await file.arrayBuffer();
+
+            // 2. Construct direct REST URL
+            const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`;
+
+            // 3. Determine the Auth Token (Prefer passed token, fallback to anon key)
+            const activeToken = token || SUPABASE_KEY;
+
+            const fetchPromise = fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${activeToken}`,
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': file.type,
+                    'x-upsert': 'false'
+                },
+                body: arrayBuffer,
+                // @ts-ignore - Duplex is required for some modern fetch streams
+                duplex: 'half'
+            });
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Storage upload timed out after 60s")), 60000)
+            );
+
+            const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+                console.error(`[Supabase Upload] API Error:`, errorData);
+                lastError = errorData;
+                if (response.status === 403 || response.status === 401) break; 
+                continue;
+            }
+
+            const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
+            return publicUrl;
+
+        } catch (err: any) {
+            console.error(`[Supabase Upload] Fetch Exception:`, err.message);
+            lastError = err;
+            if (attempt === maxRetries) break;
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+        }
     }
 
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName);
-    return publicUrl;
+    throw new Error(`Upload to ${bucket} failed after ${maxRetries} attempts. Last error: ${lastError?.message || 'Unknown'}`);
 }
