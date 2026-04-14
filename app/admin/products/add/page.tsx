@@ -214,8 +214,15 @@ export default function AddProductPage() {
             let token = sessionTokenRef.current;
             if (!token) {
                 setStatusMessage("Verifying session fallback...");
-                const { data } = await supabase.auth.getSession();
-                token = data.session?.access_token || undefined;
+                try {
+                    const sessionPromise = supabase.auth.getSession();
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth handshake timeout")), 5000));
+                    const sessionRes = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                    token = sessionRes?.data?.session?.access_token || undefined;
+                } catch (e) {
+                    console.warn("[Auth] Fallback timed out, proceeding without token", e);
+                    token = undefined;
+                }
             }
 
             const finalImageUrls: string[] = [];
