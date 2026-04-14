@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
     Settings, Save, Loader2, Megaphone, Smartphone, Info, 
     Palette, Share2, Globe, ShieldCheck, Truck, MessageCircle,
@@ -16,9 +16,28 @@ export default function AdminSettingsPage() {
     const [saving, setSaving] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState<string>("identity");
+    const [isDesktop, setIsDesktop] = useState(false);
+    const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         fetchSettings();
+    }, []);
+
+    useEffect(() => {
+        const updateViewport = () => {
+            setIsDesktop(window.innerWidth >= 768);
+        };
+        updateViewport();
+        window.addEventListener("resize", updateViewport);
+        return () => {
+            window.removeEventListener("resize", updateViewport);
+        };
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+        };
     }, []);
 
     const fetchSettings = async () => {
@@ -44,7 +63,8 @@ export default function AdminSettingsPage() {
             });
             if (res.ok) {
                 setSuccess(key);
-                setTimeout(() => setSuccess(null), 3000);
+                if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+                successTimeoutRef.current = setTimeout(() => setSuccess(null), 3000);
                 setSettings((prev: any) => ({ ...prev, [key]: value }));
                 refreshSettings();
             } else {
@@ -116,7 +136,7 @@ export default function AdminSettingsPage() {
                     "md:block md:space-y-8" // Desktop stack layout
                 )}>
                     {/* Identity Section */}
-                    {(!activeSection || activeSection === "identity" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "identity" || isDesktop) && (
                         <SettingCard 
                             title="Site Identity" 
                             icon={<Info className="h-5 w-5 text-blue-500" />}
@@ -155,7 +175,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Announcement Ticker Section */}
-                    {(!activeSection || activeSection === "identity" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "identity" || isDesktop) && (
                         <SettingCard 
                             title="Announcement Ticker" 
                             icon={<Megaphone className="h-5 w-5 text-orange-500" />}
@@ -178,7 +198,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Design Section */}
-                    {(!activeSection || activeSection === "design" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "design" || isDesktop) && (
                         <SettingCard 
                             title="Website Design" 
                             icon={<Palette className="h-5 w-5 text-purple-500" />}
@@ -225,7 +245,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Contact Section */}
-                    {(!activeSection || activeSection === "contact" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "contact" || isDesktop) && (
                         <SettingCard 
                             title="Contact Details" 
                             icon={<Smartphone className="h-5 w-5 text-green-500" />}
@@ -281,7 +301,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Social Section */}
-                    {(!activeSection || activeSection === "social" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "social" || isDesktop) && (
                         <SettingCard 
                             title="Social Media" 
                             icon={<Share2 className="h-5 w-5 text-blue-500" />}
@@ -312,7 +332,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Store Configuration Section */}
-                    {(!activeSection || activeSection === "store" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "store" || isDesktop) && (
                         <SettingCard 
                             title="Store Ops" 
                             icon={<ShieldCheck className="h-5 w-5 text-indigo-500" />}
@@ -366,7 +386,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* SEO Section */}
-                    {(!activeSection || activeSection === "seo" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "seo" || isDesktop) && (
                         /* ... existing SEO section ... */
                         <SettingCard 
                             title="SEO & Search" 
@@ -409,7 +429,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Trust Signals Section */}
-                    {(!activeSection || activeSection === "trust" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "trust" || isDesktop) && (
                         <SettingCard 
                             title="Trust Signals" 
                             icon={<Truck className="h-5 w-5 text-orange-500" />}
@@ -480,7 +500,7 @@ export default function AdminSettingsPage() {
                     )}
 
                     {/* Home Page Sections */}
-                    {(!activeSection || activeSection === "sections" || window.innerWidth >= 768) && (
+                    {(!activeSection || activeSection === "sections" || isDesktop) && (
                         <SettingCard 
                             title="Home Page Sections" 
                             icon={<Megaphone className="h-5 w-5 text-pink-500" />}

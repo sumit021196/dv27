@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -51,6 +52,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             .single();
 
         if (error) throw error;
+        revalidatePath('/admin/orders');
+        revalidatePath(`/admin/orders/${id}`);
         return NextResponse.json({ order: data, success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

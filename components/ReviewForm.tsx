@@ -31,6 +31,8 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewsRef = useRef<{url: string, type: 'image' | 'video'}[]>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -39,6 +41,17 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
       setUser(user);
     };
     checkUser();
+  }, []);
+
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((preview) => URL.revokeObjectURL(preview.url));
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+    };
   }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,6 +89,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
 
   const removeMedia = (index: number) => {
     const item = previews[index];
+    URL.revokeObjectURL(item.url);
     if (item.type === 'image') {
         // Find match in images array and remove one instance
         setImages(prev => {
@@ -94,6 +108,27 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
         });
     }
     setPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const resetFormState = () => {
+    setRating(0);
+    setComment("");
+    setName("");
+    setImages([]);
+    setVideos([]);
+    previewsRef.current.forEach((preview) => URL.revokeObjectURL(preview.url));
+    setPreviews([]);
+    setIsSuccess(false);
+    setError(null);
+  };
+
+  const handleCloseForm = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    resetFormState();
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,17 +163,9 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     
     if (result.success) {
       setIsSuccess(true);
-      setTimeout(() => {
+      successTimeoutRef.current = setTimeout(() => {
         onSuccess();
-        onClose();
-        // Reset form
-        setRating(0);
-        setComment("");
-        setName("");
-        setImages([]);
-        setVideos([]);
-        setPreviews([]);
-        setIsSuccess(false);
+        handleCloseForm();
       }, 2000);
     } else {
       setError(result.error || "Something went wrong");
@@ -155,7 +182,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleCloseForm}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
           />
 
@@ -173,7 +200,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[200px]">{productName}</p>
               </div>
               <button 
-                onClick={onClose}
+                onClick={handleCloseForm}
                 className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
               >
                 <X size={16} />

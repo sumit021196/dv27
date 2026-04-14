@@ -37,6 +37,11 @@ export function AdminSidebar() {
     const pathname = usePathname();
     const router = useRouter();
 
+    // Hide sidebar for high-focus wizard pages like Add Product
+    if (pathname === "/admin/products/add" || pathname.includes("/admin/products/edit")) {
+        return null;
+    }
+
     const handleLogout = async () => {
         await logout();
         router.push("/");

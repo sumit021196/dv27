@@ -36,6 +36,11 @@ const navItems = [
 export function AdminBottomNav() {
     const pathname = usePathname();
     const router = useRouter();
+
+    // Hide bottom nav for focal wizard screens
+    if (pathname === "/admin/products/add" || pathname.includes("/admin/products/edit")) {
+        return null;
+    }
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const handleLogout = async () => {

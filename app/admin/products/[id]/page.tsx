@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Plus, Trash2, UploadCloud, Video, CheckCircle2, Save } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +14,9 @@ import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
+    const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const imagesRef = useRef<{ url: string; file?: File }[]>([]);
+    const videoRef = useRef<{ url: string; file?: File } | null>(null);
     const resolvedParams = use(params);
     const productId = resolvedParams.id;
 
@@ -131,6 +134,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         loadInitialData();
     }, [productId]);
+
+    useEffect(() => {
+        imagesRef.current = images;
+    }, [images]);
+
+    useEffect(() => {
+        videoRef.current = video;
+    }, [video]);
+
+    useEffect(() => {
+        return () => {
+            imagesRef.current.forEach((img) => {
+                if (img.file) URL.revokeObjectURL(img.url);
+            });
+            if (videoRef.current?.file) URL.revokeObjectURL(videoRef.current.url);
+            if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+        };
+    }, []);
 
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -261,7 +282,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             if (!result.success) throw new Error(result.error);
 
             setSuccess(true);
-            setTimeout(() => {
+            redirectTimeoutRef.current = setTimeout(() => {
                 router.push("/admin/products");
                 router.refresh();
             }, 1000);
