@@ -166,10 +166,22 @@ export default function AddProductPage() {
             console.log("--- Starting Product Save ---");
             const supabase = createClient();
             
-            // PRE-FETCH SESSION: Avoid Safari identity-check hangs inside the loop
+            // PRE-FETCH SESSION: Avoid Safari identity-check hangs with a 5s safety timeout
+            setStatusMessage("Verifying session...");
             console.log("[Supabase Auth] Pre-fetching session token...");
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token || undefined;
+            
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 5000));
+            
+            let token: string | undefined;
+            try {
+                const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                token = session?.access_token || undefined;
+                console.log("[Supabase Auth] Session verified.");
+            } catch (e) {
+                console.warn("[Supabase Auth] Session verification timed out or failed, proceeding with anon access.");
+                token = undefined;
+            }
             
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
