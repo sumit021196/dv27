@@ -25,6 +25,9 @@ export default function AddProductPage() {
     const router = useRouter();
     const isSubmitting = useRef(false);
     const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);          // 0-100
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
@@ -222,6 +225,10 @@ export default function AddProductPage() {
         }
 
         setLoading(true);
+        setProgress(0);
+        setElapsedSeconds(0);
+        // Start elapsed-time ticker
+        elapsedTimerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
 
         try {
             console.log('--- Starting Sequential Product Save ---');
@@ -229,6 +236,7 @@ export default function AddProductPage() {
 
             // 2. Auth — 3s timeout, falls back to cached token
             setStatusMessage('Verifying session...');
+            setProgress(5);
             const token = await refreshSessionToken();
             if (!token) console.warn('[Auth] No token — uploads will use anon key');
 
@@ -243,19 +251,24 @@ export default function AddProductPage() {
 
             for (let i = 0; i < images.length; i++) {
                 const img = images[i];
-                setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
+                const pBase = 10 + (i / images.length) * 70; // 10% → 80% across all images
+
+                setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
+                setProgress(Math.round(pBase));
                 const compressedFile = await compressImage(img.file);
 
                 // 80ms yield: Safari WebKit GC time to free canvas GPU memory
                 await new Promise(r => setTimeout(r, 80));
 
-                setStatusMessage(`Syncing image ${i + 1}/${images.length}...`);
+                setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
+                setProgress(Math.round(pBase + (35 / images.length)));
                 const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile, token);
                 finalImageUrls.push(publicUrl);
             }
 
             // 4. Register with Server Action
-            setStatusMessage('Registering product...');
+            setStatusMessage('Saving to database...');
+            setProgress(85);
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -274,7 +287,8 @@ export default function AddProductPage() {
 
             if (!result.success) throw new Error(result.error);
 
-            // 5. Success — loading/isSubmitting reset happens in finally below
+            // 5. Success
+            setProgress(100);
             setSuccess(true);
 
         } catch (err: any) {
@@ -282,6 +296,7 @@ export default function AddProductPage() {
             setErrorParam(err?.message || 'An unexpected error occurred during the save process.');
         } finally {
             // CRITICAL: always runs — guarantees button never stays stuck on "Saving..."
+            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
             setLoading(false);
             isSubmitting.current = false;
             setStatusMessage('');
@@ -498,9 +513,36 @@ export default function AddProductPage() {
                                     Return to Product List
                                 </Link>
                             </div>
+                        ) : loading ? (
+                            /* ── Progress Card ── */
+                            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                                {/* Header row */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 size={14} className="animate-spin text-black" />
+                                        <span className="text-xs font-semibold text-gray-800 truncate max-w-[160px]">
+                                            {statusMessage || 'Processing...'}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-900 tabular-nums">{progress}%</span>
+                                </div>
+
+                                {/* Progress bar */}
+                                <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-black rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+
+                                {/* Elapsed time */}
+                                <p className="text-[10px] text-gray-400 text-right tabular-nums">
+                                    ⏱ {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')} elapsed
+                                </p>
+                            </div>
                         ) : (
-                            <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> Saving...</> : 'Save Product Data'}
+                            <button type="submit" className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all">
+                                Save Product Data
                             </button>
                         )}
                     </div>
