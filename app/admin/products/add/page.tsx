@@ -45,18 +45,25 @@ export default function AddProductPage() {
 
     const sessionTokenRef = useRef<string | undefined>(undefined);
 
-    // Helper: always get a fresh access token from Supabase (does not trigger the lock)
+    // Helper: get a fresh access token — 3s timeout + cached fallback so it NEVER hangs.
+    // supabase.auth.getSession() can make a network call on Safari to refresh an expired
+    // token. If that request is slow/blocked, this timeout prevents infinite "Saving...".
     const refreshSessionToken = async (): Promise<string | undefined> => {
         try {
             const supabase = createClient();
-            // getSession() reads from localStorage — no network round-trip, no lock contention
-            const { data } = await supabase.auth.getSession();
-            const token = data.session?.access_token;
-            sessionTokenRef.current = token;
-            return token;
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('getSession timeout')), 3000)
+            );
+            const result = await Promise.race([
+                supabase.auth.getSession(),
+                timeoutPromise
+            ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+            const token = result?.data?.session?.access_token;
+            if (token) sessionTokenRef.current = token;
+            return token ?? sessionTokenRef.current; // fallback: use cached token
         } catch (e) {
-            console.warn("[Auth] Failed to refresh session token", e);
-            return undefined;
+            console.warn('[Auth] getSession timed out — using cached token', e);
+            return sessionTokenRef.current; // always return cached rather than undefined
         }
     };
 
@@ -217,20 +224,20 @@ export default function AddProductPage() {
         setLoading(true);
 
         try {
-            console.log("--- Starting Sequential Product Save ---");
+            console.log('--- Starting Sequential Product Save ---');
             const supabase = createClient();
 
-            // 2. Auth Context — always refresh token on every submit to avoid stale token on 2nd+ product
-            setStatusMessage("Verifying session...");
+            // 2. Auth — 3s timeout, falls back to cached token
+            setStatusMessage('Verifying session...');
             const token = await refreshSessionToken();
-            if (!token) console.warn("[Auth] No session token — uploads will use anon key");
+            if (!token) console.warn('[Auth] No token — uploads will use anon key');
 
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
             // 3. Sequential Media Processing
             if (video?.file) {
-                setStatusMessage("Syncing video...");
+                setStatusMessage('Syncing video...');
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
             }
 
@@ -239,9 +246,7 @@ export default function AddProductPage() {
                 setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
                 const compressedFile = await compressImage(img.file);
 
-                // 80ms yield between images: lets Safari's WebKit GC reclaim
-                // canvas GPU memory & blob store from the previous image.
-                // Without this, memory accumulates → 2nd product images hang.
+                // 80ms yield: Safari WebKit GC time to free canvas GPU memory
                 await new Promise(r => setTimeout(r, 80));
 
                 setStatusMessage(`Syncing image ${i + 1}/${images.length}...`);
@@ -249,13 +254,8 @@ export default function AddProductPage() {
                 finalImageUrls.push(publicUrl);
             }
 
-            // Refresh token just before the server action — if many images were
-            // uploaded, the initial token fetched at submit-start may have expired.
-            setStatusMessage("Registering product...");
-            const freshToken = await refreshSessionToken();
-            if (freshToken) console.log("[Auth] Token refreshed before DB write.");
-
             // 4. Register with Server Action
+            setStatusMessage('Registering product...');
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -274,18 +274,17 @@ export default function AddProductPage() {
 
             if (!result.success) throw new Error(result.error);
 
-            // 5. Success Flow: Halt execution here to let user decide next steps
+            // 5. Success — loading/isSubmitting reset happens in finally below
             setSuccess(true);
-            setLoading(false);
-            isSubmitting.current = false;
 
         } catch (err: any) {
-            console.error("Submission Failure:", err);
-            setErrorParam(err?.message || "An unexpected error occurred during the save process.");
+            console.error('Submission Failure:', err);
+            setErrorParam(err?.message || 'An unexpected error occurred during the save process.');
+        } finally {
+            // CRITICAL: always runs — guarantees button never stays stuck on "Saving..."
             setLoading(false);
             isSubmitting.current = false;
-        } finally {
-            setStatusMessage("");
+            setStatusMessage('');
         }
     };
 

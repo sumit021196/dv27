@@ -34,13 +34,22 @@ const makeVisibilityChecker = () => {
  */
 function readFileAsDataURL(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
+        // 10s timeout: FileReader can hang on Safari under memory pressure
+        const timer = setTimeout(() => {
+            reject(new Error('FileReader timed out — Safari memory pressure. Try a smaller image.'));
+        }, 10_000);
+
         const reader = new FileReader();
         reader.onload = (e) => {
+            clearTimeout(timer);
             const result = e.target?.result;
             if (typeof result === 'string') resolve(result);
             else reject(new Error('FileReader returned unexpected type'));
         };
-        reader.onerror = () => reject(new Error('FileReader failed to load image'));
+        reader.onerror = () => {
+            clearTimeout(timer);
+            reject(new Error('FileReader failed to load image'));
+        };
         reader.readAsDataURL(file);
     });
 }
