@@ -43,22 +43,28 @@ export default function AddProductPage() {
 
     const [catsLoading, setCatsLoading] = useState(true);
 
-    const sessionTokenRef = useRef<string | undefined>();
+    const sessionTokenRef = useRef<string | undefined>(undefined);
+
+    // Helper: always get a fresh access token from Supabase (does not trigger the lock)
+    const refreshSessionToken = async (): Promise<string | undefined> => {
+        try {
+            const supabase = createClient();
+            // getSession() reads from localStorage — no network round-trip, no lock contention
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
+            sessionTokenRef.current = token;
+            return token;
+        } catch (e) {
+            console.warn("[Auth] Failed to refresh session token", e);
+            return undefined;
+        }
+    };
 
     useEffect(() => {
         let isMounted = true;
         
-        // Pre-fetch Auth Token once on mount so we never hit the Safari DB lock during upload.
-        const preFetchSession = async () => {
-            const supabase = createClient();
-            try {
-                const { data } = await supabase.auth.getSession();
-                if (isMounted) sessionTokenRef.current = data.session?.access_token;
-            } catch (e) {
-                console.warn("[Auth] Failed to prefetch session", e);
-            }
-        };
-        preFetchSession();
+        // Pre-fetch Auth Token once on mount
+        refreshSessionToken();
 
         const loadCats = async () => {
             try {
@@ -82,7 +88,8 @@ export default function AddProductPage() {
         loadCats();
 
         return () => { isMounted = false; };
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -176,6 +183,9 @@ export default function AddProductPage() {
         setSuccess(false);
         setErrorParam(null);
         setStatusMessage("");
+
+        // 4. Pre-warm fresh session token so next submit is ready immediately
+        refreshSessionToken();
         
         // Scroll to top automatically
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -210,20 +220,10 @@ export default function AddProductPage() {
             console.log("--- Starting Sequential Product Save ---");
             const supabase = createClient();
 
-            // 2. Auth Context
-            let token = sessionTokenRef.current;
-            if (!token) {
-                setStatusMessage("Verifying session fallback...");
-                try {
-                    const sessionPromise = supabase.auth.getSession();
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth handshake timeout")), 5000));
-                    const sessionRes = await Promise.race([sessionPromise, timeoutPromise]) as any;
-                    token = sessionRes?.data?.session?.access_token || undefined;
-                } catch (e) {
-                    console.warn("[Auth] Fallback timed out, proceeding without token", e);
-                    token = undefined;
-                }
-            }
+            // 2. Auth Context — always refresh token on every submit to avoid stale token on 2nd+ product
+            setStatusMessage("Verifying session...");
+            const token = await refreshSessionToken();
+            if (!token) console.warn("[Auth] No session token — uploads will use anon key");
 
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
@@ -238,13 +238,22 @@ export default function AddProductPage() {
                 const img = images[i];
                 setStatusMessage(`Processing image ${i + 1}/${images.length}...`);
                 const compressedFile = await compressImage(img.file);
-                
+
+                // 80ms yield between images: lets Safari's WebKit GC reclaim
+                // canvas GPU memory & blob store from the previous image.
+                // Without this, memory accumulates → 2nd product images hang.
+                await new Promise(r => setTimeout(r, 80));
+
                 setStatusMessage(`Syncing image ${i + 1}/${images.length}...`);
                 const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile, token);
                 finalImageUrls.push(publicUrl);
             }
 
+            // Refresh token just before the server action — if many images were
+            // uploaded, the initial token fetched at submit-start may have expired.
             setStatusMessage("Registering product...");
+            const freshToken = await refreshSessionToken();
+            if (freshToken) console.log("[Auth] Token refreshed before DB write.");
 
             // 4. Register with Server Action
             const result = await createProductAction({
