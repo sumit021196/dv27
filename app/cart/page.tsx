@@ -192,17 +192,52 @@ export default function CartPage() {
 
               </div>
 
-              <div className="space-y-3 pt-6 border-t border-zinc-50">
-                <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
-                  <span>Subtotal</span>
-                  <span className="text-zinc-900 font-bold">₹{total.toLocaleString()}</span>
-                </div>
-                {cart.discount > 0 && (
-                  <div className="flex justify-between items-center text-sm font-medium text-emerald-600">
-                    <span>Discount ({cart.coupon})</span>
-                    <span className="font-bold">-₹{cart.discount.toLocaleString()}</span>
+                <div className="pt-6 border-t border-zinc-50 space-y-4">
+                  {!cart.coupon ? (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="coupon_input_page"
+                        placeholder="Coupon Code"
+                        className="w-full h-12 bg-zinc-50 border border-zinc-100 rounded-xl px-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-zinc-900/20 focus:bg-white transition-all pr-24"
+                      />
+                      <button 
+                        onClick={async () => {
+                          const input = document.getElementById('coupon_input_page') as HTMLInputElement;
+                          if (!input.value) return;
+                          const res = await cart.applyCoupon(input.value);
+                          if (!res.success) alert(res.message);
+                        }}
+                        className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-zinc-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-emerald-600" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">{cart.coupon}</span>
+                      </div>
+                      <button 
+                        onClick={() => cart.applyCoupon('')} // Assuming empty clears or add a clear method
+                        className="text-[10px] font-bold text-emerald-700/50 hover:text-emerald-700 uppercase"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
+                    <span>Subtotal</span>
+                    <span className="text-zinc-900 font-bold">₹{total.toLocaleString()}</span>
                   </div>
-                )}
+                  {cart.discount > 0 && (
+                    <div className="flex justify-between items-center text-sm font-medium text-emerald-600">
+                      <span>Discount ({cart.coupon})</span>
+                      <span className="font-bold">-₹{cart.discount.toLocaleString()}</span>
+                    </div>
+                  )}
                 <div className="flex justify-between items-center text-sm font-medium text-zinc-400">
                   <span>Shipping</span>
                   {shippingInfo?.serviceable ? (

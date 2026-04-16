@@ -44,16 +44,16 @@ export const couponService = {
     return true;
   },
 
-  async validateCoupon(code: string, userId?: string, cartTotal: number = 0, totalItems: number = 0) {
+  async validateCoupon(code: string, userId?: string, cartTotal: number = 0, totalItems: number = 0, phone?: string) {
     const supabase = await createClient();
     
     // 1. Fetch coupon
     const { data: coupon, error } = await supabase
       .from('coupons')
       .select('*')
-      .eq('code', code.toUpperCase())
+      .ilike('code', code)
       .eq('active', true)
-      .single();
+      .maybeSingle(); // maybeSingle is safer then .single() to avoid 406/404 errors throwing before we can handle them
 
     if (error || !coupon) throw new Error("Invalid or inactive coupon");
 
@@ -74,14 +74,26 @@ export const couponService = {
 
     // 5. Check user usage if logged in
     if (userId) {
-      const { data: usage, error: usageError } = await supabase
+      const { data: usage } = await supabase
         .from('coupon_usages')
         .select('*')
         .eq('user_id', userId)
         .eq('coupon_id', coupon.id)
-        .single();
+        .maybeSingle();
 
       if (usage) throw new Error("You have already used this coupon");
+    }
+
+    // 6. Check guest usage if phone provided
+    if (phone && !userId) {
+      const { data: guestUsage } = await supabase
+        .from('coupon_usages')
+        .select('*')
+        .eq('guest_phone', phone)
+        .eq('coupon_id', coupon.id)
+        .maybeSingle();
+
+      if (guestUsage) throw new Error("This mobile number has already used this coupon");
     }
 
     return coupon;

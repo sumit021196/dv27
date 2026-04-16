@@ -270,15 +270,29 @@ export default function CartDrawer() {
                                         <span className="text-xs font-black text-brand-accent">-₹{discount}</span>
                                     </div>
                                 ) : (
-                                    <TapScale className="w-full">
-                                        <div className="group flex items-center justify-between border border-dashed border-foreground/10 rounded-xl p-3 hover:border-brand-accent/50 transition-colors">
-                                            <div className="flex items-center gap-2">
-                                                <Ticket size={14} className="text-muted-foreground" />
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Add a coupon code?</p>
-                                            </div>
-                                            <p className="text-[10px] font-black uppercase text-brand-accent cursor-pointer">Apply</p>
+                                    <div className="space-y-4">
+                                        <div className="relative group">
+                                            <input
+                                                type="text"
+                                                id="coupon_input_drawer"
+                                                placeholder="Enter Coupon Code"
+                                                className="w-full h-14 bg-white border border-foreground/10 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest outline-none focus:border-brand-accent/50 focus:ring-4 focus:ring-brand-accent/5 transition-all pr-24"
+                                            />
+                                            <button 
+                                                onClick={async () => {
+                                                    const input = document.getElementById('coupon_input_drawer') as HTMLInputElement;
+                                                    if (!input.value) return;
+                                                    const res = await cart.applyCoupon(input.value);
+                                                    if (!res.success) {
+                                                        alert(res.message);
+                                                    }
+                                                }}
+                                                className="absolute right-2 top-2 bottom-2 px-5 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-accent hover:text-white transition-all active:scale-95"
+                                            >
+                                                Apply
+                                            </button>
                                         </div>
-                                    </TapScale>
+                                    </div>
                                 )}
 
                                 <div className="space-y-2">
