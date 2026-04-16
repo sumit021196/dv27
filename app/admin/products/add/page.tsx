@@ -48,8 +48,6 @@ export default function AddProductPage() {
 
     const [catsLoading, setCatsLoading] = useState(true);
 
-    const sessionTokenRef = useRef<string | undefined>(undefined);
-
     // Helper: get a fresh access token — 3s timeout + cached fallback so it NEVER hangs.
     // supabase.auth.getSession() can make a network call on Safari to refresh an expired
     // token. If that request is slow/blocked, this timeout prevents infinite "Saving...".
