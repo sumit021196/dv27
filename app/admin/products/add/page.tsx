@@ -24,6 +24,8 @@ const INITIAL_FORM_DATA = {
 export default function AddProductPage() {
     const router = useRouter();
     const isSubmitting = useRef(false);
+    // Session token reference for secure uploads
+    const sessionTokenRef = useRef<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);          // 0-100
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -100,6 +102,20 @@ export default function AddProductPage() {
         return () => { isMounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    // Proactive Session Token Fetch: Fetch once on mount to avoid Safari IDB lock during uploads
+    useEffect(() => {
+        const fetchToken = async () => {
+            try {
+                const supabase = createClient();
+                const { data } = await supabase.auth.getSession();
+                sessionTokenRef.current = data.session?.access_token;
+            } catch (err) {
+                console.warn("[Supabase Auth] Failed to pre-fetch token on mount.");
+            }
+        };
+        fetchToken();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -188,7 +204,6 @@ export default function AddProductPage() {
             { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
             { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
         ]);
-        
         // 3. Clear UI feedback
         setSuccess(false);
         setErrorParam(null);
@@ -224,6 +239,11 @@ export default function AddProductPage() {
             return;
         }
 
+        if (catsLoading) {
+            setErrorParam("Please wait for categories to finish loading before saving.");
+            isSubmitting.current = false;
+            return;
+        }
         setLoading(true);
         setProgress(0);
         setElapsedSeconds(0);
@@ -243,7 +263,6 @@ export default function AddProductPage() {
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
-            // 3. Sequential Media Processing
             if (video?.file) {
                 setStatusMessage('Syncing video...');
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
@@ -286,14 +305,22 @@ export default function AddProductPage() {
             });
 
             if (!result.success) throw new Error(result.error);
-
             // 5. Success
             setProgress(100);
             setSuccess(true);
+            
+            // Auto redirect after success like in main
+            setTimeout(() => {
+                resetAllState();
+                router.push("/admin/products");
+                router.refresh();
+                isSubmitting.current = false;
+            }, 1000);
 
         } catch (err: any) {
             console.error('Submission Failure:', err);
             setErrorParam(err?.message || 'An unexpected error occurred during the save process.');
+            isSubmitting.current = false;
         } finally {
             // CRITICAL: always runs — guarantees button never stays stuck on "Saving..."
             if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);

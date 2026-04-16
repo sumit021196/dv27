@@ -10,7 +10,7 @@ const razorpay = new Razorpay({
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderDetails, currency = 'INR', receipt = 'receipt_' + Date.now() } = body;
+    const { orderDetails, currency = 'INR', receipt = 'receipt_' + Date.now(), paymentMethod = 'online' } = body;
     
     if (!orderDetails || !orderDetails.items) {
        return NextResponse.json({ success: false, error: "Invalid payload" }, { status: 400 });
@@ -104,7 +104,18 @@ export async function POST(req: Request) {
                   if (count !== null && count >= (dbCoupon.max_uses_per_user || 1)) {
                       computedDiscount = 0; // Exceeded
                       dbCouponData = null;
-                  }
+                  } else if (orderDetails.customerPhone) {
+                   const { count } = await supabaseAdmin
+                     .from('coupon_usages')
+                     .select('*', { count: 'exact', head: true })
+                     .eq('coupon_id', dbCoupon.id)
+                     .eq('guest_phone', orderDetails.customerPhone);
+
+                   if (count !== null && count >= (dbCoupon.max_uses_per_user || 1)) {
+                       computedDiscount = 0; // Exceeded
+                       dbCouponData = null;
+                   }
+                }
                }
            } else {
                computedDiscount = 0;
@@ -113,26 +124,33 @@ export async function POST(req: Request) {
        }
     }
 
-    const shippingCost = 0;
+    const shippingCost = orderDetails.shipping?.cost || 0;
     const verifiedAmount = Math.max(0, computedSubtotal - computedDiscount + shippingCost);
 
-    // 1. Create Pending Order securely in Backend
-    const { data: orderData, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert({
+    // 1. Create Order securely in Backend
+    const orderToInsert = {
         user_id: user ? user.id : null,
-        customer_name: orderDetails.customerName,
+        customer_name: orderDetails.customerName || 'Guest User',
         customer_phone: orderDetails.customerPhone || null,
         total_amount: verifiedAmount,
         subtotal: computedSubtotal,
         shipping_fee: shippingCost,
-        status: 'pending',
+        status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
+        payment_method: paymentMethod,
         razorpay_order_id: null,
-      })
+        applied_coupon_id: dbCouponData?.id || null,
+    };
+
+    const { data: orderData, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert(orderToInsert)
       .select()
       .single();
 
-    if (orderError || !orderData) throw new Error("Could not construct draft order.");
+    if (orderError || !orderData) {
+        console.error("Order Insert Error:", orderError);
+        throw new Error("Could not construct draft order.");
+    }
     const orderDbId = orderData.id;
 
     // 2. Insert validated order items with Error Handling
@@ -167,13 +185,26 @@ export async function POST(req: Request) {
         throw new Error("Failed to save shipping details. Transaction rolled back.");
     }
 
-    // 4. Track intended coupon usage
-    if (dbCouponData && user) {
-        // Prepare row but maybe insert actual usage in Verify? 
-        // Best to just wait for Verify so we don't count cancelled sessions.
+    // 4. Record Coupon Usage IF COD (for Online, it happens in Verify)
+    if (dbCouponData && paymentMethod === 'cod') {
+        await supabaseAdmin.from('coupon_usages').insert({
+            coupon_id: dbCouponData.id,
+            user_id: user ? user.id : null,
+            guest_phone: orderDetails.customerPhone || null,
+            order_id: orderDbId,
+        });
     }
 
-    // Create Razorpay order
+    if (paymentMethod === 'cod') {
+        return NextResponse.json({ 
+            success: true, 
+            orderDbId, 
+            paymentMethod: 'cod',
+            message: "Order placed successfully (Cash on Delivery)"
+        });
+    }
+
+    // Create Razorpay order (for Online Payment)
     const options = {
       amount: Math.round(verifiedAmount * 100),
       currency,
@@ -188,7 +219,6 @@ export async function POST(req: Request) {
       .eq('id', orderDbId);
       
     if (rzpLinkError) {
-        // Rollback backend to prevent phantom pending orders paying on Razorpay side if linking fails
         await supabaseAdmin.from('orders').delete().eq('id', orderDbId);
         throw new Error("Failed to link payment gateway ID. Transaction rolled back.");
     }
