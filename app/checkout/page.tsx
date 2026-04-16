@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [shippingInfo, setShippingInfo] = useState<ServiceabilityResponse | null>(null);
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
   const [pincodeError, setPincodeError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -71,7 +72,38 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // 1. Create order on our backend
+      if (paymentMethod === 'cod') {
+        const res = await fetch('/api/payment/cod', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderDetails: {
+              customerName: name,
+              customerPhone: phone,
+              coupon: cart.coupon,
+              shipping: {
+                pincode,
+                address,
+                cost: shippingInfo?.shipping_cost || 0,
+                estimated_delivery: shippingInfo?.estimated_delivery || null
+              },
+              items: cart.items
+            }
+          })
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Failed to create COD order");
+        }
+
+        cart.clear(); // Clear cart on success
+        router.push(`/checkout/success?order_id=${data.orderId}`); // Redirection to dedicated success page
+        return;
+      }
+
+      // 1. Create order on our backend for Razorpay
       const res = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -253,6 +285,44 @@ export default function CheckoutPage() {
 
         {/* Order Summary */}
         <div className="bg-white rounded-[2rem] border border-zinc-100 p-6 sm:p-10 shadow-sm">
+          <h2 className="text-lg font-bold text-zinc-900 mb-6">Payment Method</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <button
+              onClick={() => setPaymentMethod('online')}
+              className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 ${
+                paymentMethod === 'online'
+                  ? 'border-zinc-900 bg-zinc-50/50'
+                  : 'border-zinc-100 hover:border-zinc-200 bg-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'online' ? 'border-zinc-900' : 'border-zinc-300'}`}>
+                  {paymentMethod === 'online' && <div className="w-2 h-2 rounded-full bg-zinc-900" />}
+                </div>
+                <span className="font-bold text-zinc-900 text-sm">Pay Online</span>
+              </div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-6">Cards, UPI, NetBanking</p>
+            </button>
+
+            <button
+              onClick={() => setPaymentMethod('cod')}
+              className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-start gap-2 ${
+                paymentMethod === 'cod'
+                  ? 'border-zinc-900 bg-zinc-50/50'
+                  : 'border-zinc-100 hover:border-zinc-200 bg-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'cod' ? 'border-zinc-900' : 'border-zinc-300'}`}>
+                  {paymentMethod === 'cod' && <div className="w-2 h-2 rounded-full bg-zinc-900" />}
+                </div>
+                <span className="font-bold text-zinc-900 text-sm">Cash on Delivery</span>
+              </div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-6">Pay when you receive</p>
+            </button>
+          </div>
+
           <h2 className="text-lg font-bold text-zinc-900 mb-6">Payment Summary</h2>
           
           <div className="space-y-4 mb-6">
@@ -297,15 +367,17 @@ export default function CheckoutPage() {
             ) : (
                <>
                  <ShieldCheck size={18} />
-                 Pay Securely
+                 {paymentMethod === 'cod' ? 'Place Order' : 'Pay Securely'}
                </>
             )}
           </button>
           
-          <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1.5">
-             <ShieldCheck size={12} />
-             Secured by Razorpay
-          </p>
+          {paymentMethod === 'online' && (
+            <p className="text-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-1.5">
+               <ShieldCheck size={12} />
+               Secured by Razorpay
+            </p>
+          )}
         </div>
 
       </div>

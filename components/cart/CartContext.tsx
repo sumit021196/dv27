@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { getActiveCouponByCode, getAutoApplyCoupons } from "@/app/cart/cart.actions";
 
 type CartItem = {
   id: string | number;
@@ -96,18 +97,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const totalSubtotal = items.reduce((acc, i) => acc + (i.price * i.qty), 0);
       
       const checkCoupons = async () => {
-        const supabase = createClient();
-        
         // 1. If we have a coupon applied, validate it
         if (coupon) {
-            const { data: currentCoupon } = await supabase
-                .from('coupons')
-                .select('*')
-                .eq('code', coupon)
-                .eq('active', true)
-                .single();
+            const { success, data: currentCoupon } = await getActiveCouponByCode(coupon);
             
-            if (!currentCoupon || 
+            if (!success || !currentCoupon ||
                 totalSubtotal < (currentCoupon.min_order_value || 0) || 
                 totalQty < (currentCoupon.min_quantity || 0) ||
                 (currentCoupon.expiry_date && new Date(currentCoupon.expiry_date) < new Date())) {
@@ -121,14 +115,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         // 2. If no coupon is applied, look for an auto-apply one
         if (!coupon) {
-            const { data: autoCoupons } = await supabase
-                .from('coupons')
-                .select('*')
-                .eq('active', true)
-                .eq('is_auto_apply', true)
-                .order('discount_value', { ascending: false }); // Prioritize higher discount
+            const { success, data: autoCoupons } = await getAutoApplyCoupons();
 
-            if (autoCoupons && (autoCoupons as Coupon[]).length > 0) {
+            if (success && autoCoupons && (autoCoupons as Coupon[]).length > 0) {
                 // Find the first one whose conditions are met
                 const validAuto = (autoCoupons as Coupon[]).find(c => 
                     totalSubtotal >= (c.min_order_value || 0) && 
@@ -161,15 +150,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = useCallback(() => setIsOpen(false), []);
 
   const applyCoupon = useCallback(async (code: string) => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-          .from('coupons')
-          .select('*')
-          .eq('code', code.toUpperCase())
-          .eq('active', true)
-          .single();
+      const { success, data } = await getActiveCouponByCode(code);
 
-      if (data) {
+      if (success && data) {
           setCoupon(data.code);
           setDiscount(data.discount_value);
           setShowConfetti(true);
