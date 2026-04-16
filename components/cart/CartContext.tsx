@@ -36,7 +36,7 @@ type CartCtx = {
   closeCart: () => void;
   coupon: string | null;
   discount: number;
-  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
+  applyCoupon: (code: string, phone?: string) => Promise<{ success: boolean; message: string }>;
   showConfetti: boolean;
   setShowConfetti: (show: boolean) => void;
 };
@@ -50,6 +50,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [coupon, setCoupon] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [manuallyRemovedCodes, setManuallyRemovedCodes] = useState<string[]>([]);
+  const [isAutoChecking, setIsAutoChecking] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -68,14 +71,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Clear cart on logout
+  // Sync userId and clear on logout
   useEffect(() => {
     const supabase = createClient();
+    
+    // Initial user fetch
+    const initUser = async () => {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) setUserId(data.user.id);
+    };
+    initUser();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          setUserId(session?.user.id || null);
+      }
       if (event === 'SIGNED_OUT') {
         setItems([]);
         setCoupon(null);
         setDiscount(0);
+        setUserId(null);
+        setManuallyRemovedCodes([]);
         localStorage.removeItem("cart");
         localStorage.removeItem("applied_coupon");
       }
@@ -86,98 +102,145 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Persistent cart storage
   useEffect(() => {
     if (!isMounted) return;
-    try {
-      localStorage.setItem("cart", JSON.stringify(items));
+    localStorage.setItem("cart", JSON.stringify(items));
+  }, [items, isMounted]);
 
-      // Dynamic Auto-apply Logic
-      const totalQty = items.reduce((acc, i) => acc + i.qty, 0);
-      const totalSubtotal = items.reduce((acc, i) => acc + (i.price * i.qty), 0);
-      
-      const checkCoupons = async () => {
-        const supabase = createClient();
-        
-        // 1. If we have a coupon applied, validate it
-        if (coupon) {
-            const { data: currentCoupon } = await supabase
-                .from('coupons')
-                .select('*')
-                .eq('code', coupon)
-                .eq('active', true)
-                .single();
+  // Main Auto-Apply Logic
+  useEffect(() => {
+    if (!isMounted || isAutoChecking) return;
+
+    const totalQty = items.reduce((acc, i) => acc + i.qty, 0);
+    const totalSubtotal = items.reduce((acc, i) => acc + (i.price * i.qty), 0);
+
+    const runAutoApply = async () => {
+        setIsAutoChecking(true);
+        try {
+            const supabase = createClient();
             
-            if (!currentCoupon || 
-                totalSubtotal < (currentCoupon.min_order_value || 0) || 
-                totalQty < (currentCoupon.min_quantity || 0) ||
-                (currentCoupon.expiry_date && new Date(currentCoupon.expiry_date) < new Date())) {
+            // 1. Validate currently applied coupon (manual or auto)
+            if (coupon) {
+                const { data: currentCoupon } = await supabase
+                    .from('coupons')
+                    .select('*')
+                    .ilike('code', coupon)
+                    .eq('active', true)
+                    .maybeSingle();
                 
-                // Conditions no longer met, clear it
-                setCoupon(null);
-                setDiscount(0);
-                localStorage.removeItem("applied_coupon");
-            }
-        }
-
-        // 2. If no coupon is applied, look for an auto-apply one
-        if (!coupon) {
-            const { data: autoCoupons } = await supabase
-                .from('coupons')
-                .select('*')
-                .eq('active', true)
-                .eq('is_auto_apply', true)
-                .order('discount_value', { ascending: false }); // Prioritize higher discount
-
-            if (autoCoupons && (autoCoupons as Coupon[]).length > 0) {
-                // Find the first one whose conditions are met
-                const validAuto = (autoCoupons as Coupon[]).find(c => 
-                    totalSubtotal >= (c.min_order_value || 0) && 
-                    totalQty >= (c.min_quantity || 0) &&
-                    (!c.expiry_date || new Date(c.expiry_date) > new Date())
-                );
-
-
-                if (validAuto) {
-                    setCoupon(validAuto.code);
-                    setDiscount(validAuto.discount_value);
-                    setShowConfetti(true);
-                    localStorage.setItem("applied_coupon", JSON.stringify({ 
-                        code: validAuto.code, 
-                        discount: validAuto.discount_value,
-                        isAuto: true 
-                    }));
+                if (!currentCoupon || 
+                    totalSubtotal < (currentCoupon.min_order_value || 0) || 
+                    totalQty < (currentCoupon.min_quantity || 0) ||
+                    (currentCoupon.expiry_date && new Date(currentCoupon.expiry_date) < new Date())) {
+                    
+                    setCoupon(null);
+                    setDiscount(0);
+                    localStorage.removeItem("applied_coupon");
                 }
             }
-        }
-      };
 
-      checkCoupons();
-    } catch (err) {
-      console.error("Auto coupon error", err);
-    }
-  }, [items, isMounted, coupon]);
+            // 2. Discover best auto-apply coupon if nothing is applied
+            // OR if the current coupon is NOT an auto-apply one but we want to check for better ones? 
+            // Usually, manual entry overrides auto-apply.
+            if (!coupon && items.length > 0) {
+                const { data: autoCoupons, error: fetchError } = await supabase
+                    .from('coupons')
+                    .select('*')
+                    .eq('active', true)
+                    .eq('is_auto_apply', true)
+                    .order('discount_value', { ascending: false });
+
+                console.log("[CartContext] AutoCoupons found:", autoCoupons?.length, autoCoupons, fetchError);
+
+                if (autoCoupons && autoCoupons.length > 0) {
+                    // Check usage for logged-in users
+                    let usedIds: string[] = [];
+                    if (userId) {
+                        const { data: usages } = await supabase
+                            .from('coupon_usages')
+                            .select('coupon_id')
+                            .eq('user_id', userId);
+                        usedIds = (usages || []).map((u: any) => u.coupon_id as string);
+                    }
+
+                    const bestValid = (autoCoupons as any[]).find((c: any) => {
+                        // Skip if manually removed in this session
+                        if (manuallyRemovedCodes.includes(c.code.toUpperCase())) return false;
+                        
+                        // Skip if already used (registered user)
+                        if (usedIds.includes(c.id)) return false;
+
+                        // Check criteria
+                        return totalSubtotal >= (c.min_order_value || 0) && 
+                               totalQty >= (c.min_quantity || 0) &&
+                               (!c.expiry_date || new Date(c.expiry_date) > new Date());
+                    });
+
+                    if (bestValid) {
+                        setCoupon(bestValid.code);
+                        setDiscount(bestValid.discount_value);
+                        setShowConfetti(true);
+                        localStorage.setItem("applied_coupon", JSON.stringify({ 
+                            code: bestValid.code, 
+                            discount: bestValid.discount_value 
+                        }));
+                    }
+                }
+            }
+        } finally {
+            setIsAutoChecking(false);
+        }
+    };
+
+    runAutoApply();
+  }, [items, isMounted, userId, manuallyRemovedCodes]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  const applyCoupon = useCallback(async (code: string) => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-          .from('coupons')
-          .select('*')
-          .eq('code', code.toUpperCase())
-          .eq('active', true)
-          .single();
-
-      if (data) {
-          setCoupon(data.code);
-          setDiscount(data.discount_value);
-          setShowConfetti(true);
-          localStorage.setItem("applied_coupon", JSON.stringify({ code: data.code, discount: data.discount_value }));
-          return { success: true, message: `₹${data.discount_value} Discount Applied!` };
+  const applyCoupon = useCallback(async (code: string, phone?: string) => {
+      if (!code) {
+          if (coupon) setManuallyRemovedCodes(prev => [...prev, coupon.toUpperCase()]);
+          setCoupon(null);
+          setDiscount(0);
+          localStorage.removeItem("applied_coupon");
+          return { success: true, message: "Coupon removed" };
       }
-      return { success: false, message: "Invalid or inactive coupon code" };
-  }, []);
+
+      const totalSubtotal = items.reduce((acc: number, i: any) => acc + (i.price * i.qty), 0);
+      const totalQty = items.reduce((acc: number, i: any) => acc + i.qty, 0);
+
+      try {
+          const res = await fetch('/api/coupons/validate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                  code, 
+                  phone, 
+                  cartTotal: totalSubtotal,
+                  totalItems: totalQty
+              })
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+              setCoupon(data.coupon.code);
+              setDiscount(data.coupon.discount_value);
+              setShowConfetti(true);
+              localStorage.setItem("applied_coupon", JSON.stringify({ 
+                  code: data.coupon.code, 
+                  discount: data.coupon.discount_value 
+              }));
+              return { success: true, message: `₹${data.coupon.discount_value} Discount Applied!` };
+          } else {
+              return { success: false, message: data.error || "Invalid coupon code" };
+          }
+      } catch (err) {
+          return { success: false, message: "Failed to validate coupon" };
+      }
+  }, [items]);
 
   const api = useMemo<CartCtx>(() => ({
     items,
@@ -189,9 +252,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     applyCoupon,
     showConfetti,
     setShowConfetti,
-    add: (i, q = 1) => {
-      setItems((prev) => {
-        const idx = prev.findIndex((p) => p.id === i.id && p.variant_id === i.variant_id && p.size === i.size && p.color === i.color);
+    add: (i: any, q: number = 1) => {
+      setItems((prev: any[]) => {
+        const idx = prev.findIndex((p: any) => p.id === i.id && p.variant_id === i.variant_id && p.size === i.size && p.color === i.color);
         if (idx >= 0) {
           const copy = [...prev];
           copy[idx] = { ...copy[idx], qty: copy[idx].qty + q };
@@ -203,7 +266,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           openCart();
       }
     },
-    remove: (uniqueId) => setItems((p) => p.filter((x) => `${x.id}-${x.variant_id || 'base'}-${x.size || 'none'}-${x.color || 'none'}` !== uniqueId)),
+    remove: (uniqueId: string) => setItems((p: any[]) => p.filter((x: any) => `${x.id}-${x.variant_id || 'base'}-${x.size || 'none'}-${x.color || 'none'}` !== uniqueId)),
     clear: () => {
         setItems([]);
         setCoupon(null);

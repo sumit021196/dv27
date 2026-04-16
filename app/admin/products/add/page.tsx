@@ -24,7 +24,8 @@ const INITIAL_FORM_DATA = {
 export default function AddProductPage() {
     const router = useRouter();
     const isSubmittingRef = useRef(false);
-    const sessionTokenRef = useRef<string | undefined>();
+    // Session token reference for secure uploads
+    const sessionTokenRef = useRef<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
