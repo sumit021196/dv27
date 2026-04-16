@@ -23,10 +23,13 @@ const INITIAL_FORM_DATA = {
 
 export default function AddProductPage() {
     const router = useRouter();
-    const isSubmittingRef = useRef(false);
+    const isSubmitting = useRef(false);
     // Session token reference for secure uploads
     const sessionTokenRef = useRef<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);          // 0-100
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const [statusMessage, setStatusMessage] = useState("");
     const [success, setSuccess] = useState(false);
     const [errorParam, setErrorParam] = useState<string | null>(null);
@@ -45,12 +48,37 @@ export default function AddProductPage() {
 
     const [catsLoading, setCatsLoading] = useState(true);
 
+    // Helper: get a fresh access token — 3s timeout + cached fallback so it NEVER hangs.
+    // supabase.auth.getSession() can make a network call on Safari to refresh an expired
+    // token. If that request is slow/blocked, this timeout prevents infinite "Saving...".
+    const refreshSessionToken = async (): Promise<string | undefined> => {
+        try {
+            const supabase = createClient();
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('getSession timeout')), 3000)
+            );
+            const result = await Promise.race([
+                supabase.auth.getSession(),
+                timeoutPromise
+            ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+            const token = result?.data?.session?.access_token;
+            if (token) sessionTokenRef.current = token;
+            return token ?? sessionTokenRef.current; // fallback: use cached token
+        } catch (e) {
+            console.warn('[Auth] getSession timed out — using cached token', e);
+            return sessionTokenRef.current; // always return cached rather than undefined
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
+        
+        // Pre-fetch Auth Token once on mount
+        refreshSessionToken();
+
         const loadCats = async () => {
             try {
                 setCatsLoading(true);
-                // Call API directly to bypass any potential Supabase client issues during hydration
                 const res = await fetch('/api/categories');
                 if (!res.ok) throw new Error("Failed to fetch categories");
                 const data = await res.json();
@@ -70,7 +98,8 @@ export default function AddProductPage() {
         loadCats();
 
         return () => { isMounted = false; };
-    }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // Proactive Session Token Fetch: Fetch once on mount to avoid Safari IDB lock during uploads
     useEffect(() => {
@@ -158,10 +187,13 @@ export default function AddProductPage() {
     };
 
     const resetAllState = () => {
-        console.log("[State Cleanup] Resetting form and clearing memory...");
+        console.log("[State Cleanup] Resetting form and clearing memory for next product...");
+        
+        // 1. Clear media URLs from browser memory
         images.forEach(img => URL.revokeObjectURL(img.url));
         if (video) URL.revokeObjectURL(video.url);
         
+        // 2. Reset basic form states
         setFormData(INITIAL_FORM_DATA);
         setImages([]);
         setVideo(null);
@@ -170,63 +202,90 @@ export default function AddProductPage() {
             { id: '1', label: 'Material', value: '100% Luxury French Terry Cotton' },
             { id: '2', label: 'Care', value: 'Cold wash / Dry Flat' }
         ]);
+        // 3. Clear UI feedback
         setSuccess(false);
         setErrorParam(null);
         setStatusMessage("");
+
+        // 4. Pre-warm fresh session token so next submit is ready immediately
+        refreshSessionToken();
+        
+        // Scroll to top automatically
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (isSubmittingRef.current) return;
-        isSubmittingRef.current = true;
+        // 1. Transaction Lock: Prevent double-hits on the server
+        if (isSubmitting.current) return;
+        isSubmitting.current = true;
 
         setErrorParam(null);
         setSuccess(false);
 
+        // Validation checks
         if (!formData.name || !formData.price) {
             setErrorParam("Name and Price are required.");
-            isSubmittingRef.current = false;
+            isSubmitting.current = false;
             return;
         }
 
         if (categories.length > 0 && !formData.category_id) {
             setErrorParam("Please select a category.");
-            isSubmittingRef.current = false;
+            isSubmitting.current = false;
             return;
         }
 
         if (catsLoading) {
             setErrorParam("Please wait for categories to finish loading before saving.");
-            isSubmittingRef.current = false;
+            isSubmitting.current = false;
             return;
         }
-
         setLoading(true);
+        setProgress(0);
+        setElapsedSeconds(0);
+        // Start elapsed-time ticker
+        elapsedTimerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+
         try {
-            console.log("--- Starting Sequential Product Save ---");
+            console.log('--- Starting Sequential Product Save ---');
             const supabase = createClient();
-            const token = sessionTokenRef.current; // Grab cleanly from ref without triggering Safari's slow IDB
+
+            // 2. Auth — 3s timeout, falls back to cached token
+            setStatusMessage('Verifying session...');
+            setProgress(5);
+            const token = await refreshSessionToken();
+            if (!token) console.warn('[Auth] No token — uploads will use anon key');
 
             const finalImageUrls: string[] = [];
             let finalVideoUrl: string | null = null;
 
             if (video?.file) {
-                setStatusMessage("Uploading video...");
+                setStatusMessage('Syncing video...');
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
             }
 
             for (let i = 0; i < images.length; i++) {
                 const img = images[i];
+                const pBase = 10 + (i / images.length) * 70; // 10% → 80% across all images
+
                 setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
+                setProgress(Math.round(pBase));
                 const compressedFile = await compressImage(img.file);
-                
+
+                // 80ms yield: Safari WebKit GC time to free canvas GPU memory
+                await new Promise(r => setTimeout(r, 80));
+
                 setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
+                setProgress(Math.round(pBase + (35 / images.length)));
                 const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile, token);
                 finalImageUrls.push(publicUrl);
             }
 
-            setStatusMessage("Saving product data...");
+            // 4. Register with Server Action
+            setStatusMessage('Saving to database...');
+            setProgress(85);
             const result = await createProductAction({
                 name: formData.name,
                 price: Number(formData.price),
@@ -244,21 +303,28 @@ export default function AddProductPage() {
             });
 
             if (!result.success) throw new Error(result.error);
-            
+            // 5. Success
+            setProgress(100);
             setSuccess(true);
+            
+            // Auto redirect after success like in main
             setTimeout(() => {
                 resetAllState();
                 router.push("/admin/products");
                 router.refresh();
-                isSubmittingRef.current = false;
+                isSubmitting.current = false;
             }, 1000);
+
         } catch (err: any) {
-            console.error("Client: Submission Error", err);
-            setErrorParam(err?.message || "An unexpected error occurred.");
-            isSubmittingRef.current = false;
+            console.error('Submission Failure:', err);
+            setErrorParam(err?.message || 'An unexpected error occurred during the save process.');
+            isSubmitting.current = false;
         } finally {
+            // CRITICAL: always runs — guarantees button never stays stuck on "Saving..."
+            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
             setLoading(false);
-            setStatusMessage("");
+            isSubmitting.current = false;
+            setStatusMessage('');
         }
     };
 
@@ -459,13 +525,49 @@ export default function AddProductPage() {
                     <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                         {errorParam && <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">{errorParam}</div>}
                         {success ? (
-                            <div className="flex items-center gap-3 text-green-700 bg-green-50 p-4 rounded-xl border border-green-100">
-                                <CheckCircle2 size={24} />
-                                <span className="font-medium">Product saved!</span>
+                            <div className="flex flex-col items-center gap-3 bg-green-50 p-6 rounded-xl border border-green-100 text-center">
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <CheckCircle2 size={24} />
+                                    <span className="font-bold text-lg">Product Saved!</span>
+                                </div>
+                                <p className="text-xs text-green-600">The product is now live.</p>
+                                <button type="button" onClick={resetAllState} className="mt-2 w-full bg-black text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-sm">
+                                    Add Another Product
+                                </button>
+                                <Link href="/admin/products" className="text-xs font-medium text-gray-500 underline mt-2 hover:text-black transition">
+                                    Return to Product List
+                                </Link>
+                            </div>
+                        ) : loading ? (
+                            /* ── Progress Card ── */
+                            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                                {/* Header row */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 size={14} className="animate-spin text-black" />
+                                        <span className="text-xs font-semibold text-gray-800 truncate max-w-[160px]">
+                                            {statusMessage || 'Processing...'}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-900 tabular-nums">{progress}%</span>
+                                </div>
+
+                                {/* Progress bar */}
+                                <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-black rounded-full transition-all duration-500 ease-out"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+
+                                {/* Elapsed time */}
+                                <p className="text-[10px] text-gray-400 text-right tabular-nums">
+                                    ⏱ {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')} elapsed
+                                </p>
                             </div>
                         ) : (
-                            <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-70 disabled:cursor-not-allowed transition-all">
-                                {loading ? <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" /> Saving...</> : 'Save Product Data'}
+                            <button type="submit" className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all">
+                                Save Product Data
                             </button>
                         )}
                     </div>

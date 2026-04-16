@@ -47,6 +47,30 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [categories, setCategories] = useState<Category[]>([]);
     const [catsLoading, setCatsLoading] = useState(true);
 
+    // ── Reset ALL form state synchronously whenever productId changes ──────────
+    // Without this, navigating from one edit page to another shows stale data
+    // from the previous product while the new fetch is in-flight.
+    useEffect(() => {
+        setIsFetching(true);
+        setIsLoading(false);
+        setStatusMessage("");
+        setSuccess(false);
+        setError("");
+        setName("");
+        setSlug("");
+        setDescription("");
+        setPrice("");
+        setOriginalPrice("");
+        setStock("0");
+        setCategoryId("");
+        setIsActive(true);
+        setIsTrending(false);
+        setImages([]);
+        setVideo(null);
+        setVariants([]);
+        setDetails([]);
+    }, [productId]);
+
     useEffect(() => {
         let isMounted = true;
         const loadInitialData = async () => {
@@ -69,8 +93,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
                 // 2. Load product
                 const res = await fetch(`/api/products/${productId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch product`);
                 const data = await res.json();
-                
+
+                if (!isMounted) return; // navigated away mid-fetch
+
                 if (data.product) {
                     const p = data.product;
                     setName(p.name);
@@ -93,10 +120,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                         setDetails(detailArr);
                     }
 
-                    // Variants - fetch separately since maybeSingle might not include them in simple API
-                    const { data: variantsData } = await createClient().from('product_variants').select('*').eq('product_id', productId);
-                    if (variantsData) {
-                        setVariants(variantsData.map((v: any) => ({
+                    // Variants
+                    if (p.product_variants && Array.isArray(p.product_variants)) {
+                        setVariants(p.product_variants.map((v: any) => ({
                             id: v.id.toString(),
                             size: v.size || "",
                             color: v.color || "",
@@ -105,12 +131,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                         })));
                     }
 
-                    // Images - fetch from product_images table
-                    const { data: imagesData } = await createClient().from('product_images').select('*').eq('product_id', productId).order('display_order');
-                    if (imagesData && imagesData.length > 0) {
-                        setImages(imagesData.map((img: any) => ({ url: img.image_url })));
+                    // Images
+                    if (p.product_images && Array.isArray(p.product_images) && p.product_images.length > 0) {
+                        const sortedImages = p.product_images.sort((a: any, b: any) => a.display_order - b.display_order);
+                        setImages(sortedImages.map((img: any) => ({ url: img.image_url })));
                     } else if (p.media_url) {
-                        // Fallback to main media_url if no product_images entry
                         setImages([{ url: p.media_url }]);
                     }
 
@@ -122,14 +147,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     setError("Product not found");
                 }
             } catch (err: any) {
+                if (!isMounted) return;
                 console.error("Fetch error:", err);
                 setError(err.message || "Failed to load product");
             } finally {
-                setIsFetching(false);
+                if (isMounted) setIsFetching(false);
             }
         };
 
         loadInitialData();
+
+        return () => { isMounted = false; };
     }, [productId]);
 
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,10 +289,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             if (!result.success) throw new Error(result.error);
 
             setSuccess(true);
+            // Push FIRST so the navigation intent is registered, then refresh
+            // to invalidate the server cache. Reversed order caused router.refresh()
+            // to sometimes cancel the pending push on slow connections.
             setTimeout(() => {
                 router.push("/admin/products");
-                router.refresh();
-            }, 1000);
+                // Small delay so push commits before refresh fires
+                setTimeout(() => router.refresh(), 200);
+            }, 800);
 
         } catch (err: any) {
             console.error("Save error:", err);
