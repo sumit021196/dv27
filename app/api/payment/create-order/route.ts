@@ -161,6 +161,8 @@ export async function POST(req: Request) {
       quantity: item.qty || 1,
       price: dbProductMap.get(item.id.toString())?.price || 0, // DB Trusted Price
       image_url: item.image,
+      size: item.size || null,
+      color: item.color || null,
     }));
     
     const { error: itemsError } = await supabaseAdmin.from('order_items').insert(itemsToInsert);

@@ -81,7 +81,15 @@ export async function POST(req: Request) {
             order: orderDbId,
             payment_mode: 'Prepaid',
             total_amount: orderData.total_amount,
-            products_desc: items.map((item: any) => `${item.product_name} (x${item.quantity})`).join(', ')
+            products_desc: items.map((item: any) => {
+              let desc = `${item.product_name}`;
+              const variants = [];
+              if (item.size) variants.push(`Size: ${item.size}`);
+              if (item.color) variants.push(`Color: ${item.color}`);
+              if (variants.length > 0) desc += ` (${variants.join(', ')})`;
+              desc += ` (x${item.quantity})`;
+              return desc;
+            }).join(', ')
           };
 
           console.log(`[Verify] Attempting Delhivery shipment for Order: ${orderDbId}`);
