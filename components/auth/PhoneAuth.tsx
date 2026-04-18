@@ -38,7 +38,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
         if (typeof window !== 'undefined' && !recaptchaRef.current) {
             try {
                 const verifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-                    size: "normal", // Using 'normal' (visible) to help debug domain errors
+                    size: "invisible",
                     callback: () => {
                         // reCAPTCHA solved
                     },
@@ -133,6 +133,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
 
     return (
         <div className="space-y-4">
+            <div id="recaptcha-container"></div>
             {error && (
                 <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 flex gap-2 items-start animate-in fade-in slide-in-from-top-2 duration-300">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -177,11 +178,6 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
                             />
                         </div>
                     </div>
-
-                    <div className="flex justify-center py-2">
-                        <div id="recaptcha-container"></div>
-                    </div>
-
                     <button
                         onClick={handleSendOtp}
                         disabled={loading || phoneNumber.length < 10 || (mode === 'signup' && !fullName)}
