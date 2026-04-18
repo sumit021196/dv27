@@ -55,6 +55,17 @@ export async function POST(req: Request) {
         throw new Error("Failed to finalize order in database");
     }
 
+    // 2b. If coupon was applied, record usage
+    if (orderData.applied_coupon_id) {
+        await supabase.from('coupon_usages').insert({
+            order_id: orderDbId,
+            coupon_id: orderData.applied_coupon_id,
+            user_id: orderData.user_id,
+            guest_phone: orderData.customer_phone,
+            used_at: new Date().toISOString()
+        });
+    }
+
     // 3. Fetch related data for Delhivery Tracking (now that it's paid)
     const { data: shipping } = await supabase.from('shipping_details').select('*').eq('order_id', orderDbId).single();
     const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderDbId);

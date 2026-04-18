@@ -16,17 +16,49 @@ export async function GET() {
                     min_order_value NUMERIC DEFAULT 0,
                     active BOOLEAN DEFAULT TRUE,
                     max_uses_per_user INT DEFAULT 1,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    expiry_date TIMESTAMPTZ,
+                    min_quantity INT DEFAULT 0
                 );
 
-                CREATE TABLE IF NOT EXISTS user_coupons (
+                -- Migration: add columns if they don't exist
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='coupons' AND column_name='expiry_date') THEN
+                        ALTER TABLE coupons ADD COLUMN expiry_date TIMESTAMPTZ;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='coupons' AND column_name='min_quantity') THEN
+                        ALTER TABLE coupons ADD COLUMN min_quantity INT DEFAULT 0;
+                    END IF;
+                END $$;
+
+                CREATE TABLE IF NOT EXISTS coupon_usages (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+                    guest_phone TEXT,
                     coupon_id UUID REFERENCES coupons(id) ON DELETE CASCADE,
                     used_at TIMESTAMPTZ DEFAULT NOW(),
                     order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
                     UNIQUE(user_id, coupon_id)
                 );
+
+                -- Migration: add guest_phone to coupon_usages
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='coupon_usages' AND column_name='guest_phone') THEN
+                        ALTER TABLE coupon_usages ADD COLUMN guest_phone TEXT;
+                    END IF;
+                END $$;
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_coupon_usages_phone_coupon ON coupon_usages (guest_phone, coupon_id) WHERE guest_phone IS NOT NULL;
+
+                -- Migration: add applied_coupon_id to orders
+                DO $$ 
+                BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='applied_coupon_id') THEN
+                        ALTER TABLE orders ADD COLUMN applied_coupon_id UUID REFERENCES coupons(id) ON DELETE SET NULL;
+                    END IF;
+                END $$;
 
                 -- Insert initial BDAY500 coupon
                 INSERT INTO coupons (code, discount_value, discount_type, min_order_value)
