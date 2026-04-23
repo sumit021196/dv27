@@ -57,7 +57,7 @@ function SuccessContent() {
                 {/* Actions */}
                 <div className="space-y-3">
                     <Link 
-                        href={`/profile?tab=orders`}
+                        href={`/track?id=${orderId}`}
                         className="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white rounded-2xl px-6 py-4 font-bold hover:bg-zinc-800 transition-all shadow-xl shadow-zinc-200"
                     >
                         <Package size={18} />
