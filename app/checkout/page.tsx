@@ -7,6 +7,7 @@ import { ArrowLeft, ShieldCheck, Loader2, AlertCircle, MapPin, Truck } from "luc
 import Link from "next/link";
 import Script from "next/script";
 import type { ServiceabilityResponse } from "@/services/deliveryone.service";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const cart = useCart();
@@ -105,6 +106,7 @@ export default function CheckoutPage() {
 
       if (paymentMethod === 'cod') {
         cart.clear();
+        toast.success("Order Placed Successfully!");
         router.push(`/checkout/success?order_id=${data.orderDbId}`);
         return;
       }
@@ -133,13 +135,16 @@ export default function CheckoutPage() {
             
             if (verifyData.success) {
               cart.clear();
+              toast.success("Payment Successful! Order Placed.");
               router.push(`/checkout/success?order_id=${verifyData.orderId}`);
             } else {
               setError("Payment verification failed. Please contact support.");
+              toast.error("Payment verification failed.");
             }
           } catch (err) {
             console.error(err);
             setError("Error verifying payment.");
+            toast.error("Error verifying payment.");
           }
         },
         prefill: {

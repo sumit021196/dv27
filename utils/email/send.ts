@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export async function sendOrderConfirmationEmail(toEmail: string, orderDetails: any) {
+export async function sendOrderConfirmationEmail(toEmail: string, orderDetails: { id: string, total_amount: number | string, payment_method: string }) {
   try {
     // Note: For a real application, you should configure this with actual SMTP credentials.
     // For now, we will create a mock transport or just log if env vars aren't available.
