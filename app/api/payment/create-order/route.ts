@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { createClient } from '@/utils/supabase/server';
+import { sendOrderConfirmationEmail } from '@/utils/email/send';
+import { delhiveryService } from '@/services/delhivery.service';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+const getRazorpay = () => {
+    return new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID || 'mock_key',
+        key_secret: process.env.RAZORPAY_KEY_SECRET || 'mock_secret',
+    });
+};
 
 export async function POST(req: Request) {
   try {
@@ -132,6 +136,7 @@ export async function POST(req: Request) {
         user_id: user ? user.id : null,
         customer_name: orderDetails.customerName || 'Guest User',
         customer_phone: orderDetails.customerPhone || null,
+        customer_email: orderDetails.customerEmail || null,
         total_amount: verifiedAmount,
         subtotal: computedSubtotal,
         shipping_fee: shippingCost,
@@ -198,6 +203,64 @@ export async function POST(req: Request) {
     }
 
     if (paymentMethod === 'cod') {
+        if (orderDetails.customerEmail) {
+            // Send order confirmation async
+            // In a real Vercel/Next.js environment, consider using next/server waitUntil to ensure completion
+            // or background jobs. For now, await is safest to ensure it completes before response.
+            await sendOrderConfirmationEmail(orderDetails.customerEmail, {
+                id: orderDbId,
+                total_amount: verifiedAmount,
+                payment_method: 'Cash on Delivery'
+            });
+        }
+
+        // Trigger Delhivery shipment creation for COD
+        try {
+            const shipmentData = {
+                name: orderDetails.customerName,
+                add: orderDetails.shipping?.address || '',
+                pin: orderDetails.shipping?.pincode || '',
+                phone: orderDetails.customerPhone ? orderDetails.customerPhone.replace(/\D/g, '').slice(-10) : '',
+                order: orderDbId,
+                payment_mode: 'COD',
+                cod_amount: verifiedAmount,
+                total_amount: verifiedAmount,
+                products_desc: items.map((item: any) => {
+                    let desc = `${item.name}`;
+                    const variants = [];
+                    if (item.size) variants.push(`Size: ${item.size}`);
+                    if (item.color) variants.push(`Color: ${item.color}`);
+                    if (variants.length > 0) desc += ` (${variants.join(', ')})`;
+                    desc += ` (x${item.qty || 1})`;
+                    return desc;
+                }).join(', ')
+            };
+
+            console.log(`[Create Order] Attempting Delhivery shipment for COD Order: ${orderDbId}`);
+            const delhiveryResponse = await delhiveryService.createShipment(shipmentData);
+
+            if (delhiveryResponse.packages && delhiveryResponse.packages.length > 0) {
+                const waybill = delhiveryResponse.packages[0].waybill;
+                console.log(`[Create Order] Delhivery Success. Waybill: ${waybill}`);
+                await supabaseAdmin
+                    .from('shipping_details')
+                    .update({
+                        tracking_id: waybill,
+                        shipping_partner: 'delhivery',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('order_id', orderDbId);
+            } else {
+                console.warn("[Create Order] Delhivery responded but no waybill found", delhiveryResponse);
+            }
+        } catch (shipmentErr: any) {
+            console.error("[Create Order] Delhivery shipment creation failed. Admin attention required.", {
+                error: shipmentErr.message,
+                orderId: orderDbId
+            });
+            // Not throwing here to ensure order is still placed
+        }
+
         return NextResponse.json({ 
             success: true, 
             orderDbId, 
@@ -213,6 +276,7 @@ export async function POST(req: Request) {
       receipt: orderDbId.toString().substring(0, 40),
     };
 
+    const razorpay = getRazorpay();
     const rzpOrder = await razorpay.orders.create(options);
 
     // 5. Link Razorpay ID
