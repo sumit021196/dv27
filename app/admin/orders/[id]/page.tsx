@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Package, Truck, MapPin, Receipt, CheckCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Package, Truck, MapPin, Receipt, CheckCircle, Edit } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -14,6 +14,9 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
     const [order, setOrder] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isLogisticsLoading, setIsLogisticsLoading] = useState(false);
+    const [isEditingShipping, setIsEditingShipping] = useState(false);
+    const [editShippingData, setEditShippingData] = useState({ address: '', pincode: '' });
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -26,6 +29,41 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             .catch(err => setError(err.message))
             .finally(() => setIsLoading(false));
     }, [resolvedParams.id]);
+
+    const handleLogisticsAction = async (action: string, payload?: any) => {
+        setIsLogisticsLoading(true);
+        try {
+            const res = await fetch(`/api/orders/${resolvedParams.id}/delhivery`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, payload })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                if (action === 'generate_manifest' && data.manifest_url) {
+                    window.open(data.manifest_url, '_blank');
+                } else if (action === 'request_pickup') {
+                    alert(`Pickup scheduled! ID: ${data.pickup_id}`);
+                }
+
+                if (action === 'edit_shipping') {
+                    setIsEditingShipping(false);
+                }
+
+                // Refresh order data
+                const updatedRes = await fetch(`/api/orders/${resolvedParams.id}`);
+                const updatedData = await updatedRes.json();
+                if (updatedData.order) setOrder(updatedData.order);
+            } else {
+                throw new Error(data.error || "Action failed");
+            }
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setIsLogisticsLoading(false);
+        }
+    };
 
     const handleStatusUpdate = async (newStatus: string) => {
         setIsUpdating(true);
@@ -164,26 +202,120 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
                     {shipping && (
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <MapPin size={20} className="text-gray-500" />
-                                Shipping Details
-                            </h2>
-                            <div className="text-sm space-y-4">
-                                <div>
-                                    <p className="text-gray-500 font-medium mb-1">Customer</p>
-                                    <p className="font-semibold text-gray-900">{order.customer_name}</p>
-                                    <p className="text-gray-600">{order.customer_phone}</p>
-                                </div>
-                                <div className="pt-4 border-t border-gray-100">
-                                    <p className="text-gray-500 font-medium mb-1">Delivery Address</p>
-                                    <p className="text-gray-900">{shipping.address}</p>
-                                    <p className="text-gray-900 font-semibold mt-1">PIN: {shipping.pincode}</p>
-                                </div>
-                                {shipping.tracking_id && (
-                                    <div className="pt-4 border-t border-gray-100">
-                                        <p className="text-gray-500 font-medium mb-1">Tracking ID ({shipping.shipping_partner})</p>
-                                        <p className="text-blue-600 font-mono text-xs">{shipping.tracking_id}</p>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <MapPin size={20} className="text-gray-500" />
+                                    Shipping Details
+                                </h2>
+                                {!isEditingShipping && (
+                                    <button
+                                        onClick={() => {
+                                            setEditShippingData({ address: shipping.address, pincode: shipping.pincode });
+                                            setIsEditingShipping(true);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                                    >
+                                        <Edit size={14} /> Edit
+                                    </button>
+                                )}
+                            </div>
+
+                            {isEditingShipping ? (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                        <textarea
+                                            value={editShippingData.address}
+                                            onChange={(e) => setEditShippingData({...editShippingData, address: e.target.value})}
+                                            className="w-full rounded-md border border-gray-300 p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                            rows={3}
+                                        />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Pincode</label>
+                                        <input
+                                            type="text"
+                                            value={editShippingData.pincode}
+                                            onChange={(e) => setEditShippingData({...editShippingData, pincode: e.target.value})}
+                                            className="w-full rounded-md border border-gray-300 p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <button
+                                            onClick={() => setIsEditingShipping(false)}
+                                            className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => handleLogisticsAction('edit_shipping', editShippingData)}
+                                            disabled={isLogisticsLoading}
+                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            {isLogisticsLoading && <Loader2 size={14} className="animate-spin" />}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-sm space-y-4">
+                                    <div>
+                                        <p className="text-gray-500 font-medium mb-1">Customer</p>
+                                        <p className="font-semibold text-gray-900">{order.customer_name}</p>
+                                        <p className="text-gray-600">{order.customer_phone}</p>
+                                    </div>
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <p className="text-gray-500 font-medium mb-1">Delivery Address</p>
+                                        <p className="text-gray-900">{shipping.address}</p>
+                                        <p className="text-gray-900 font-semibold mt-1">PIN: {shipping.pincode}</p>
+                                    </div>
+                                    {shipping.tracking_id && (
+                                        <div className="pt-4 border-t border-gray-100">
+                                            <p className="text-gray-500 font-medium mb-1">Tracking ID ({shipping.shipping_partner})</p>
+                                            <p className="text-blue-600 font-mono text-xs">{shipping.tracking_id}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Delhivery Logistics Management */}
+                    {shipping && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Truck size={20} className="text-blue-600" />
+                                Delhivery Logistics
+                            </h2>
+                            <div className="flex flex-col gap-3">
+                                {!shipping.tracking_id ? (
+                                     <button
+                                        onClick={() => handleLogisticsAction('generate_awb')}
+                                        disabled={isLogisticsLoading}
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                     >
+                                         {isLogisticsLoading ? <Loader2 size={16} className="animate-spin" /> : <Package size={16} />}
+                                         Generate AWB
+                                     </button>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => handleLogisticsAction('generate_manifest')}
+                                            disabled={isLogisticsLoading}
+                                            className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                        >
+                                            <Receipt size={16} />
+                                            Print Manifest
+                                        </button>
+                                        <button
+                                            onClick={() => handleLogisticsAction('request_pickup')}
+                                            disabled={isLogisticsLoading}
+                                            className="w-full bg-green-50 hover:bg-green-100 text-green-700 font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                                        >
+                                            <Truck size={16} />
+                                            Schedule Pickup
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>

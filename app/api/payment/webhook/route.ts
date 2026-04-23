@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/utils/supabase/server';
 import { delhiveryService } from '@/services/delhivery.service';
+import { sendOrderConfirmationEmail } from '@/utils/email/send';
 
 export async function POST(req: Request) {
   try {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       // 1. Find the order in our DB by razorpay_order_id
       const { data: orderData, error: fetchErr } = await supabase
         .from('orders')
-        .select('id, status, customer_name, customer_phone, total_amount')
+        .select('id, status, customer_name, customer_phone, customer_email, total_amount')
         .eq('razorpay_order_id', orderId)
         .single();
 
@@ -64,6 +65,14 @@ export async function POST(req: Request) {
       if (rpcError) {
         console.error("Webhook Error: handle_payment_success RPC Failed", rpcError);
         return NextResponse.json({ error: 'RPC failed' }, { status: 500 });
+      }
+
+      if (orderData.customer_email) {
+          await sendOrderConfirmationEmail(orderData.customer_email, {
+              id: orderData.id,
+              total_amount: orderData.total_amount,
+              payment_method: 'Prepaid'
+          });
       }
 
       // 4. Trigger Delhivery shipment creation

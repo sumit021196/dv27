@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/utils/supabase/server';
 import { delhiveryService } from '@/services/delhivery.service';
+import { sendOrderConfirmationEmail } from '@/utils/email/send';
 
 export async function POST(req: Request) {
   try {
@@ -63,6 +64,15 @@ export async function POST(req: Request) {
             user_id: orderData.user_id,
             guest_phone: orderData.customer_phone,
             used_at: new Date().toISOString()
+        });
+    }
+
+    if (orderData.customer_email) {
+        // Send order confirmation async
+        await sendOrderConfirmationEmail(orderData.customer_email, {
+            id: orderDbId,
+            total_amount: orderData.total_amount,
+            payment_method: 'Prepaid'
         });
     }
 

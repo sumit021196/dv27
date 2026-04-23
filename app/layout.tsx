@@ -68,6 +68,7 @@ export async function generateMetadata() {
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import AuthFeedback from "@/components/ui/AuthFeedback";
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,
@@ -92,6 +93,7 @@ export default function RootLayout({
               </Suspense>
 
               <WhatsAppButton />
+              <Toaster position="bottom-center" richColors />
             </CartProvider>
           </WishlistProvider>
         </SettingsProvider>
