@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import SizingChartModal from "./ui/SizingChartModal";
 import { couponClientService } from "@/services/coupon.client";
 import ReviewForm from "./ReviewForm";
+import * as fp from "@/utils/fpixel";
 
 type Product = {
   id: string | number;
@@ -140,6 +141,16 @@ export default function ProductDetailClient({ id }: { id: string }) {
     }, quantity);
 
     setIsAdded(true);
+    
+    // Meta Pixel Tracking
+    fp.event("AddToCart", {
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: "product",
+        value: product.price,
+        currency: "INR"
+    });
+
     setTimeout(() => setIsAdded(false), 2000);
   };
 
