@@ -67,18 +67,31 @@ export async function POST(req: Request) {
         });
     }
 
-    if (orderData.customer_email) {
-        // Send order confirmation async
-        await sendOrderConfirmationEmail(orderData.customer_email, {
-            id: orderDbId,
-            total_amount: orderData.total_amount,
-            payment_method: 'Prepaid'
-        });
-    }
-
     // 3. Fetch related data for Delhivery Tracking (now that it's paid)
     const { data: shipping } = await supabase.from('shipping_details').select('*').eq('order_id', orderDbId).single();
     const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderDbId);
+
+    if (orderData.customer_email && shipping && items) {
+        // Send detailed order confirmation
+        await sendOrderConfirmationEmail(orderData.customer_email, {
+            id: orderDbId,
+            customer_name: orderData.customer_name,
+            total_amount: orderData.total_amount,
+            subtotal: orderData.subtotal || orderData.total_amount,
+            shipping_fee: orderData.shipping_fee || 0,
+            discount: orderData.total_amount < (orderData.subtotal || 0) ? (orderData.subtotal - orderData.total_amount + (orderData.shipping_fee || 0)) : 0,
+            payment_method: 'Prepaid (Razorpay)',
+            shipping_address: shipping.address,
+            pincode: shipping.pincode,
+            items: items.map((item: any) => ({
+                name: item.product_name,
+                quantity: item.quantity,
+                price: item.price,
+                size: item.size,
+                color: item.color
+            }))
+        });
+    }
 
     if (shipping && items) {
         // Create Shipment in Delhivery Dashboard

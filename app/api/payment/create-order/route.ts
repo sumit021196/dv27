@@ -204,13 +204,24 @@ export async function POST(req: Request) {
 
     if (paymentMethod === 'cod') {
         if (orderDetails.customerEmail) {
-            // Send order confirmation async
-            // In a real Vercel/Next.js environment, consider using next/server waitUntil to ensure completion
-            // or background jobs. For now, await is safest to ensure it completes before response.
+            // Send detailed order confirmation for COD
             await sendOrderConfirmationEmail(orderDetails.customerEmail, {
                 id: orderDbId,
+                customer_name: orderDetails.customerName,
                 total_amount: verifiedAmount,
-                payment_method: 'Cash on Delivery'
+                subtotal: computedSubtotal,
+                shipping_fee: shippingCost,
+                discount: computedDiscount,
+                payment_method: 'Cash on Delivery',
+                shipping_address: orderDetails.shipping?.address || '',
+                pincode: orderDetails.shipping?.pincode || '',
+                items: items.map((item: any) => ({
+                    name: item.name,
+                    quantity: item.qty || 1,
+                    price: dbProductMap.get(item.id.toString())?.price || 0,
+                    size: item.size,
+                    color: item.color
+                }))
             });
         }
 
