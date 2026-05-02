@@ -5,6 +5,7 @@ import { useCart } from "@/components/cart/CartContext";
 import { FALLBACK_IMG } from "@/utils/images";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShieldCheck, MapPin, Truck, AlertCircle, Loader2 } from "lucide-react";
 import type { ServiceabilityResponse } from "@/services/deliveryone.service";
+import * as fp from "@/utils/fpixel";
 
 
 export default function CartPage() {
@@ -259,6 +260,15 @@ export default function CartPage() {
                       if (!shippingInfo?.serviceable) {
                         e.preventDefault();
                         setPincodeError("Please enter a valid pincode first");
+                      } else {
+                        // Meta Pixel Tracking
+                        fp.event("InitiateCheckout", {
+                          content_ids: cart.items.map(i => i.id),
+                          content_type: "product",
+                          value: Math.max(0, total - cart.discount + (shippingInfo?.shipping_cost || 0)),
+                          currency: "INR",
+                          num_items: cart.items.length
+                        });
                       }
                     }}
                     className={`mt-6 flex items-center justify-center gap-3 w-full rounded-2xl px-6 py-4 font-bold transition-all shadow-xl ${
@@ -308,6 +318,15 @@ export default function CartPage() {
               if (!shippingInfo?.serviceable) {
                 e.preventDefault();
                 setPincodeError("Please enter a valid pincode first");
+              } else {
+                // Meta Pixel Tracking
+                fp.event("InitiateCheckout", {
+                  content_ids: cart.items.map(i => i.id),
+                  content_type: "product",
+                  value: Math.max(0, total - cart.discount + (shippingInfo?.shipping_cost || 0)),
+                  currency: "INR",
+                  num_items: cart.items.length
+                });
               }
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-sm shadow-xl transition-all ${

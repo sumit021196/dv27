@@ -4,17 +4,33 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Package, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from 'react';
+import { Suspense, useRef } from 'react';
+import * as fp from "@/utils/fpixel";
 
 function SuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [orderId, setOrderId] = useState<string | null>(null);
+    const trackedRef = useRef(false);
 
     useEffect(() => {
         const id = searchParams.get('order_id');
         if (id) {
             setOrderId(id);
+            
+            // Meta Pixel Purchase Tracking
+            if (!trackedRef.current) {
+                const total = sessionStorage.getItem('last_order_total');
+                fp.event("Purchase", {
+                    value: total ? parseFloat(total) : 0,
+                    currency: "INR",
+                    content_ids: [id],
+                    content_type: "product"
+                });
+                trackedRef.current = true;
+                // Optional: clear it
+                // sessionStorage.removeItem('last_order_total');
+            }
         } else {
             // Unlikely, but if someone navigates here directly without an order ID
             const timeout = setTimeout(() => router.push('/products'), 3000);
