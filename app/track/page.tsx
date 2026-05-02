@@ -1,24 +1,35 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from 'react';
 import { Search, Package, Truck, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/utils/cn";
 
-export default function TrackOrderPage() {
-    const [query, setQuery] = useState("");
+function TrackOrderContent() {
+    const searchParams = useSearchParams();
+    const idParam = searchParams.get('id');
+    const [query, setQuery] = useState(idParam || "");
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [error, setError] = useState("");
 
-    const handleTrack = async () => {
-        if (!query.trim()) return;
+    useEffect(() => {
+        if (idParam) {
+            handleTrack(idParam);
+        }
+    }, [idParam]);
+
+    const handleTrack = async (trackId?: string) => {
+        const idToTrack = trackId || query;
+        if (!idToTrack.trim()) return;
         setLoading(true);
         setError("");
         setResult(null);
 
         try {
-            const res = await fetch(`/api/track?id=${encodeURIComponent(query.trim())}`);
+            const res = await fetch(`/api/track?id=${encodeURIComponent(idToTrack.trim())}`);
             const data = await res.json();
             if (data.success) {
                 setResult(data);
@@ -55,7 +66,7 @@ export default function TrackOrderPage() {
                         className="w-full bg-transparent border-b-2 border-foreground/10 py-6 text-2xl md:text-4xl font-black uppercase outline-none focus:border-brand-accent transition-all placeholder:text-foreground/5 text-foreground pr-16"
                     />
                     <button
-                        onClick={handleTrack}
+                        onClick={() => handleTrack()}
                         disabled={loading || !query.trim()}
                         className="absolute right-2 bottom-6 p-4 bg-foreground text-background rounded-2xl hover:bg-brand-accent hover:text-white transition-all disabled:opacity-50 disabled:pointer-events-none"
                     >
@@ -192,5 +203,17 @@ export default function TrackOrderPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function TrackOrderPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background pt-32 pb-20">
+                <Loader2 className="animate-spin text-foreground/20 w-12 h-12" />
+            </div>
+        }>
+            <TrackOrderContent />
+        </Suspense>
     );
 }

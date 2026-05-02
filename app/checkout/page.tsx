@@ -7,6 +7,7 @@ import { ArrowLeft, ShieldCheck, Loader2, AlertCircle, MapPin, Truck } from "luc
 import Link from "next/link";
 import Script from "next/script";
 import type { ServiceabilityResponse } from "@/services/deliveryone.service";
+import { toast } from "sonner";
 import * as fp from "@/utils/fpixel";
 
 export default function CheckoutPage() {
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
   
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [pincode, setPincode] = useState("");
   const [address, setAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'cod'>('online');
@@ -32,7 +34,7 @@ export default function CheckoutPage() {
     setIsMounted(true);
   }, []);
   
-  const canGoToShipping = name.length > 2 && phone.length >= 10;
+  const canGoToShipping = name.length > 2 && phone.length >= 10 && email.includes('@');
   const canGoToReview = pincode.length === 6 && address.length > 5 && shippingInfo?.serviceable;
   const isFormValid = canGoToShipping && canGoToReview;
 
@@ -84,6 +86,7 @@ export default function CheckoutPage() {
           orderDetails: {
             customerName: name,
             customerPhone: phone,
+            customerEmail: email,
             coupon: cart.coupon,
             shipping: { 
               pincode, 
@@ -107,6 +110,7 @@ export default function CheckoutPage() {
         sessionStorage.setItem('last_order_total', finalTotal.toString());
         
         cart.clear();
+        toast.success("Order Placed Successfully!");
         router.push(`/checkout/success?order_id=${data.orderDbId}`);
         return;
       }
@@ -138,13 +142,16 @@ export default function CheckoutPage() {
               sessionStorage.setItem('last_order_total', finalTotal.toString());
 
               cart.clear();
+              toast.success("Payment Successful! Order Placed.");
               router.push(`/checkout/success?order_id=${verifyData.orderId}`);
             } else {
               setError("Payment verification failed. Please contact support.");
+              toast.error("Payment verification failed.");
             }
           } catch (err) {
             console.error(err);
             setError("Error verifying payment.");
+            toast.error("Error verifying payment.");
           }
         },
         prefill: {
@@ -220,6 +227,16 @@ export default function CheckoutPage() {
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                     className="w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 px-4 py-4 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 outline-none transition-all"
                     placeholder="10-digit number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2 ml-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 px-4 py-4 text-sm font-medium focus:ring-2 focus:ring-zinc-900/5 outline-none transition-all"
+                    placeholder="e.g. rahul@example.com"
                   />
                 </div>
               </div>

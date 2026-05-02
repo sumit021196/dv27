@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createClient } from '@/utils/supabase/server';
 import { delhiveryService } from '@/services/delhivery.service';
+import { sendOrderConfirmationEmail } from '@/utils/email/send';
 
 export async function POST(req: Request) {
   try {
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       // 1. Find the order in our DB by razorpay_order_id
       const { data: orderData, error: fetchErr } = await supabase
         .from('orders')
-        .select('id, status, customer_name, customer_phone, total_amount')
+        .select('*')
         .eq('razorpay_order_id', orderId)
         .single();
 
@@ -66,9 +67,30 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'RPC failed' }, { status: 500 });
       }
 
-      // 4. Trigger Delhivery shipment creation
+      // 4. Trigger Delhivery shipment creation & Detailed Email
       const { data: shipping } = await supabase.from('shipping_details').select('*').eq('order_id', orderData.id).single();
       const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderData.id);
+
+      if (orderData.customer_email && shipping && items) {
+          await sendOrderConfirmationEmail(orderData.customer_email, {
+              id: orderData.id,
+              customer_name: orderData.customer_name,
+              total_amount: orderData.total_amount,
+              subtotal: orderData.subtotal || orderData.total_amount,
+              shipping_fee: orderData.shipping_fee || 0,
+              discount: orderData.total_amount < (orderData.subtotal || 0) ? (orderData.subtotal - orderData.total_amount + (orderData.shipping_fee || 0)) : 0,
+              payment_method: 'Prepaid (Razorpay Webhook)',
+              shipping_address: shipping.address,
+              pincode: shipping.pincode,
+              items: items.map((item: any) => ({
+                  name: item.product_name,
+                  quantity: item.quantity,
+                  price: item.price,
+                  size: item.size,
+                  color: item.color
+              }))
+          });
+      }
 
       if (shipping && items) {
         try {

@@ -179,6 +179,12 @@ export default function Navbar() {
                                 >
                                     Sale
                                 </Link>
+                                <Link
+                                    href="/track"
+                                    className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70 hover:text-foreground transition-colors ml-4"
+                                >
+                                    Track Order
+                                </Link>
                             </nav>
 
                             <TapScale>
@@ -435,8 +441,8 @@ export default function Navbar() {
                                                 </div>
 
                                                 <div className="flex-1 min-h-0 flex flex-col">
-                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account</p>
-                                                    <div className="grid grid-cols-2 gap-1.5 shrink-0">
+                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account & Support</p>
+                                                    <div className="grid grid-cols-2 gap-1.5 shrink-0 mb-1.5">
                                                         <TapScale>
                                                             <Link
                                                                 href={user ? (isAdmin ? "/admin" : "/profile") : "/login"}
@@ -457,6 +463,18 @@ export default function Navbar() {
                                                             >
                                                                 <Package size={16} className="text-foreground/40" />
                                                                 <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Orders</span>
+                                                            </Link>
+                                                        </TapScale>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-1.5 shrink-0">
+                                                        <TapScale>
+                                                            <Link
+                                                                href="/track"
+                                                                onClick={() => setMobileMenuOpen(false)}
+                                                                className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
+                                                            >
+                                                                <Package size={16} className="text-foreground/60" />
+                                                                <span className="text-xs font-black uppercase tracking-tight text-foreground/80">Track Order</span>
                                                             </Link>
                                                         </TapScale>
                                                     </div>

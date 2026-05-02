@@ -167,6 +167,48 @@ export class DelhiveryService {
     }
 
     /**
+     * Request a pickup.
+     */
+    async requestPickup(pickupData: any) {
+        try {
+            // Placeholder: Delhivery Pickup API
+            // Usually POST to /fm/request/pbj/
+            console.log("Mocking Delhivery Pickup Request", pickupData);
+            return { pickup_id: `pickup_${Date.now()}` };
+        } catch (error: any) {
+            console.error('Delhivery Pickup Request Error:', error.response?.data || error.message);
+            throw new Error('Failed to request Delhivery pickup');
+        }
+    }
+
+    /**
+     * Edit Shipment (Requires waybill cancellation and re-creation usually in Delhivery, or edit API if available)
+     */
+    async editShipment(waybill: string, newData: any) {
+        try {
+            // Placeholder: Delhivery Edit API
+            console.log(`Mocking Delhivery Edit Shipment for ${waybill}`, newData);
+            return { success: true, waybill };
+        } catch (error: any) {
+             console.error('Delhivery Edit Error:', error.response?.data || error.message);
+             throw new Error('Failed to edit Delhivery shipment');
+        }
+    }
+
+    /**
+     * Generate Manifest/Label.
+     */
+    async generateManifest(waybill: string) {
+        try {
+            // Usually GET /api/p/packingslip?wbns=WAYBILL
+            return `${this.baseUrl}/api/p/packingslip?wbns=${waybill}`;
+        } catch (error: any) {
+             console.error('Delhivery Manifest Error:', error.response?.data || error.message);
+             throw new Error('Failed to generate Delhivery manifest');
+        }
+    }
+
+    /**
      * Track a shipment using waybill number.
      */
     async trackShipment(waybill: string) {
