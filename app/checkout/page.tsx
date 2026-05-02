@@ -7,6 +7,7 @@ import { ArrowLeft, ShieldCheck, Loader2, AlertCircle, MapPin, Truck } from "luc
 import Link from "next/link";
 import Script from "next/script";
 import type { ServiceabilityResponse } from "@/services/deliveryone.service";
+import * as fp from "@/utils/fpixel";
 
 export default function CheckoutPage() {
   const cart = useCart();
@@ -102,6 +103,9 @@ export default function CheckoutPage() {
       }
 
       if (paymentMethod === 'cod') {
+        // Meta Pixel Tracking Preparation
+        sessionStorage.setItem('last_order_total', finalTotal.toString());
+        
         cart.clear();
         router.push(`/checkout/success?order_id=${data.orderDbId}`);
         return;
@@ -130,6 +134,9 @@ export default function CheckoutPage() {
             const verifyData = await verifyRes.json();
             
             if (verifyData.success) {
+              // Meta Pixel Tracking Preparation
+              sessionStorage.setItem('last_order_total', finalTotal.toString());
+
               cart.clear();
               router.push(`/checkout/success?order_id=${verifyData.orderId}`);
             } else {

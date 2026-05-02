@@ -8,6 +8,7 @@ import { WishlistProvider } from "@/components/wishlist/WishlistContext";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import MetaPixel from "@/components/MetaPixel";
 import { SettingsProvider } from "@/components/SettingsContext";
 
 const inter = Inter({
@@ -84,6 +85,9 @@ export default function RootLayout({
           <WishlistProvider>
             <CartProvider>
               <AnalyticsTracker />
+              <Suspense fallback={null}>
+                <MetaPixel />
+              </Suspense>
               <Navbar />
               {children}
               <Footer />

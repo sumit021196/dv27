@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "@/components/SettingsContext";
 import { Truck } from "lucide-react";
 import TapScale from "../ui/TapScale";
+import * as fp from "@/utils/fpixel";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -334,7 +335,17 @@ export default function CartDrawer() {
                                     <TapScale>
                                         <Link
                                             href="/cart"
-                                            onClick={closeCart}
+                                            onClick={() => {
+                                                closeCart();
+                                                // Meta Pixel Tracking
+                                                fp.event("InitiateCheckout", {
+                                                    content_ids: items.map(i => i.id),
+                                                    content_type: "product",
+                                                    value: total,
+                                                    currency: "INR",
+                                                    num_items: items.length
+                                                });
+                                            }}
                                             className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-foreground font-black text-[10px] uppercase tracking-widest text-background hover:bg-brand-accent hover:text-white transition shadow-lg"
                                         >
                                             Checkout

@@ -41,9 +41,16 @@ export const updateSession = async (request: NextRequest) => {
   // supabase.auth.getUser(). A simple mistake can make it very hard to debug
   // auth issues.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+  } catch (error) {
+    // If there's an AuthApiError (e.g. Invalid Refresh Token), we catch it here
+    // to prevent it from crashing the request or flooding the console.
+    // The user will simply be treated as unauthenticated.
+    console.warn("Auth session sync failed (ignoring):", error instanceof Error ? error.message : error);
+  }
 
   // You can add centralized redirect logic here if needed, but for now we'll 
   // just return the refreshed session response.
