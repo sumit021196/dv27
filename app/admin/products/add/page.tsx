@@ -263,24 +263,27 @@ export default function AddProductPage() {
 
             if (video?.file) {
                 setStatusMessage('Syncing video...');
+                setProgress(10);
                 finalVideoUrl = await uploadToSupabase(supabase, 'products', video.file, token);
             }
 
             for (let i = 0; i < images.length; i++) {
                 const img = images[i];
-                const pBase = 10 + (i / images.length) * 70; // 10% → 80% across all images
+                const pBase = 15 + (i / images.length) * 65; // 15% → 80% across all images
 
                 setStatusMessage(`Compressing image ${i + 1}/${images.length}...`);
                 setProgress(Math.round(pBase));
                 const compressedFile = await compressImage(img.file);
 
-                // 80ms yield: Safari WebKit GC time to free canvas GPU memory
-                await new Promise(r => setTimeout(r, 80));
+                // Small delay to let UI catch up
+                await new Promise(r => setTimeout(r, 150));
 
                 setStatusMessage(`Uploading image ${i + 1}/${images.length}...`);
-                setProgress(Math.round(pBase + (35 / images.length)));
+                setProgress(Math.round(pBase + (30 / images.length)));
                 const publicUrl = await uploadToSupabase(supabase, 'products', compressedFile, token);
                 finalImageUrls.push(publicUrl);
+                
+                await new Promise(r => setTimeout(r, 100));
             }
 
             // 4. Register with Server Action
@@ -303,28 +306,34 @@ export default function AddProductPage() {
             });
 
             if (!result.success) throw new Error(result.error);
-            // 5. Success
-            setProgress(100);
-            setSuccess(true);
             
-            // Auto redirect after success like in main
+            // 5. Success
+            setStatusMessage('Finalizing...');
+            setProgress(100);
+            
+            // Artificial delay to show 100% completion
+            await new Promise(r => setTimeout(r, 800));
+            
+            setSuccess(true);
+            setLoading(false); // Stop loading ONLY after success is set
+            
+            // Auto redirect after success
             setTimeout(() => {
                 resetAllState();
                 router.push("/admin/products");
                 router.refresh();
                 isSubmitting.current = false;
-            }, 1000);
+            }, 1500);
 
         } catch (err: any) {
             console.error('Submission Failure:', err);
             setErrorParam(err?.message || 'An unexpected error occurred during the save process.');
-            isSubmitting.current = false;
-        } finally {
-            // CRITICAL: always runs — guarantees button never stays stuck on "Saving..."
-            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
             setLoading(false);
             isSubmitting.current = false;
+        } finally {
+            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
             setStatusMessage('');
+            // Note: loading is handled inside try/catch to maintain visibility on success
         }
     };
 
