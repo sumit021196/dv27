@@ -8,7 +8,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const supabase = await createClient();
         const { data: product, error } = await supabase
             .from('products')
-            .select('*')
+            .select(`
+                *,
+                product_variants (*),
+                product_images (*)
+            `)
             .eq('id', id)
             .maybeSingle();
 
