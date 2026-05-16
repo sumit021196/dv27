@@ -11,15 +11,14 @@ export class ProductService implements IProductService {
     async getProducts(includeInactive = false, supabase?: any): Promise<Product[]> {
         const client = this.getClient(supabase);
         try {
-            // Simplified query to avoid potential join errors while debugging
             let query = client
                 .from("products")
                 .select(`
                     *,
                     categories(name, id, is_active),
-                    product_categories(category_id, categories(name, id, is_active)),
-                    product_variants(*),
-                    product_images(*)
+                    product_categories(categories(name, id, is_active)),
+                    product_images(*),
+                    product_variants(*)
                 `);
             
             if (!includeInactive) {
@@ -29,13 +28,11 @@ export class ProductService implements IProductService {
             const { data, error } = await query.limit(100);
             
             if (error) {
-                console.error("Supabase getProducts Error:", error);
+                console.error("Supabase getProducts Error:", error.message, error.details);
                 return this.mapFallback(fallback);
             }
 
-            if (!data || data.length === 0) {
-                return []; // Return empty instead of fallback if we connected but found nothing
-            }
+            if (!data || data.length === 0) return [];
             return this.mapSupabaseData(data);
         } catch (err) {
             console.error("getProducts Exception:", err);
@@ -50,7 +47,13 @@ export class ProductService implements IProductService {
             
             let query = client
                 .from("products")
-                .select("*, categories(name, id, is_active), product_categories(categories(name, id, is_active)), product_variants(*), product_images(*) ");
+                .select(`
+                    *,
+                    categories(name, id, is_active),
+                    product_categories(categories(name, id, is_active)),
+                    product_images(*),
+                    product_variants(*)
+                `);
             
             if (isNumeric) {
                 query = query.eq("id", idOrSlug);
@@ -64,8 +67,8 @@ export class ProductService implements IProductService {
 
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
-        } catch (error) {
-            console.error("getProductById Error:", error);
+        } catch (err) {
+            console.error("getProductById Error:", err);
             const fallbackItem = fallback.find((i) => String(i.id) === String(idOrSlug) || String(i.slug) === String(idOrSlug));
             return fallbackItem ? this.mapFallback([fallbackItem])[0] : null;
         }
@@ -76,14 +79,14 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id, is_active), product_categories(categories(name, id, is_active))")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
                 .eq("is_trending", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch (error) {
-            console.error("getTrendingProducts Error:", error);
+        } catch (err) {
+            console.error("getTrendingProducts Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -93,14 +96,14 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id, is_active), product_categories(categories(name, id, is_active))")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
                 .order("created_at", { ascending: false })
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch (error) {
-            console.error("getNewArrivals Error:", error);
+        } catch (err) {
+            console.error("getNewArrivals Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -110,13 +113,13 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id, is_active), product_categories(categories(name, id, is_active))")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch (error) {
-            console.error("getProductsForCards Error:", error);
+        } catch (err) {
+            console.error("getProductsForCards Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -130,8 +133,8 @@ export class ProductService implements IProductService {
                 .in("id", ids);
             if (error || !data) return [];
             return this.mapSupabaseData(data);
-        } catch (error) {
-            console.error("getMinimalProducts Error:", error);
+        } catch (err) {
+            console.error("getMinimalProducts Error:", err);
             return [];
         }
     }
@@ -147,16 +150,16 @@ export class ProductService implements IProductService {
                 query = query.eq("is_active", true);
             }
 
-            const { data: catWithProds, error: joinError } = await query;
+            const { data, error } = await query;
 
-            if (joinError) {
-                console.error("Supabase Error fetching categories:", joinError);
-                throw joinError;
+            if (error) {
+                console.error("Supabase Error fetching categories:", error.message);
+                throw error;
             }
 
-            if (!catWithProds) return [];
+            if (!data) return [];
 
-            return catWithProds.map((c: any) => ({
+            return data.map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 slug: c.slug,
@@ -164,7 +167,7 @@ export class ProductService implements IProductService {
             }));
         } catch (error) {
             console.error("Failed to fetch categories:", error);
-            throw error; // Throw error instead of silently returning [] so UI can catch and retry
+            throw error;
         }
     }
 
@@ -218,17 +221,16 @@ export class ProductService implements IProductService {
         try {
             let query;
             if (options.category && options.category !== 'all') {
-                // Filter products that are associated with the category slug via the product_categories junction table
                 query = client
                     .from("products")
-                    .select("*, product_categories!inner(categories!inner(name, slug, is_active)), product_variants(*), product_images(*)")
+                    .select("*, product_categories!inner(categories!inner(name, slug, is_active)), product_images(*), product_variants(*)")
                     .eq("is_active", true)
                     .eq("product_categories.categories.slug", options.category)
                     .eq("product_categories.categories.is_active", true);
             } else {
                 query = client
                     .from("products")
-                    .select("*, categories(name, id, is_active), product_categories(categories(name, id, is_active)), product_variants(*), product_images(*)")
+                    .select("*, categories(name, id, is_active), product_categories(categories(name, id, is_active)), product_images(*), product_variants(*)")
                     .eq("is_active", true);
             }
 
@@ -245,7 +247,7 @@ export class ProductService implements IProductService {
 
             const { data, error } = await query;
             if (error) {
-                console.error("getFilteredProducts Query Error:", error);
+                console.error("getFilteredProducts Query Error:", error.message);
                 return [];
             }
             if (!data) return [];
@@ -266,8 +268,8 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch (error) {
-            console.error("getCategoryBySlug Error:", error);
+        } catch (err) {
+            console.error("getCategoryBySlug Error:", err);
             return null;
         }
     }
@@ -295,15 +297,14 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch (error) {
-            console.error("createCategory Error:", error);
+        } catch (err) {
+            console.error("createCategory Error:", err);
             return null;
         }
     }
 
     private mapSupabaseData(data: any[]): Product[] {
         return data.map(d => {
-            // Consolidate categories from both the main category_id and the junction table
             const junctionCategories = d.product_categories?.map((pc: any) => pc.categories).filter(Boolean) || [];
             const primaryCategoryName = d.categories?.name || (junctionCategories.length > 0 ? junctionCategories[0].name : d.category);
 
