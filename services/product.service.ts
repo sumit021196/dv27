@@ -11,9 +11,16 @@ export class ProductService implements IProductService {
     async getProducts(includeInactive = false, supabase?: any): Promise<Product[]> {
         const client = this.getClient(supabase);
         try {
+            // Simplified query to avoid potential join errors while debugging
             let query = client
                 .from("products")
-                .select("*, categories(name, id, is_active), product_categories(categories(name, id, is_active)), product_variants(*), product_images(*)");
+                .select(`
+                    *,
+                    categories(name, id, is_active),
+                    product_categories(category_id, categories(name, id, is_active)),
+                    product_variants(*),
+                    product_images(*)
+                `);
             
             if (!includeInactive) {
                 query = query.eq("is_active", true);
@@ -21,11 +28,17 @@ export class ProductService implements IProductService {
             
             const { data, error } = await query.limit(100);
             
-            if (error || !data || data.length === 0) {
+            if (error) {
+                console.error("Supabase getProducts Error:", error);
                 return this.mapFallback(fallback);
             }
+
+            if (!data || data.length === 0) {
+                return []; // Return empty instead of fallback if we connected but found nothing
+            }
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getProducts Exception:", err);
             return this.mapFallback(fallback);
         }
     }
@@ -51,7 +64,8 @@ export class ProductService implements IProductService {
 
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
-        } catch {
+        } catch (error) {
+            console.error("getProductById Error:", error);
             const fallbackItem = fallback.find((i) => String(i.id) === String(idOrSlug) || String(i.slug) === String(idOrSlug));
             return fallbackItem ? this.mapFallback([fallbackItem])[0] : null;
         }
@@ -68,7 +82,8 @@ export class ProductService implements IProductService {
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (error) {
+            console.error("getTrendingProducts Error:", error);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -84,7 +99,8 @@ export class ProductService implements IProductService {
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (error) {
+            console.error("getNewArrivals Error:", error);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -99,7 +115,8 @@ export class ProductService implements IProductService {
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (error) {
+            console.error("getProductsForCards Error:", error);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -113,7 +130,8 @@ export class ProductService implements IProductService {
                 .in("id", ids);
             if (error || !data) return [];
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (error) {
+            console.error("getMinimalProducts Error:", error);
             return [];
         }
     }
@@ -226,7 +244,11 @@ export class ProductService implements IProductService {
                 .range(offset, offset + limit - 1);
 
             const { data, error } = await query;
-            if (error || !data) return [];
+            if (error) {
+                console.error("getFilteredProducts Query Error:", error);
+                return [];
+            }
+            if (!data) return [];
             return this.mapSupabaseData(data);
         } catch (err) {
             console.error("Filter error:", err);
@@ -244,7 +266,8 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch {
+        } catch (error) {
+            console.error("getCategoryBySlug Error:", error);
             return null;
         }
     }
@@ -272,7 +295,8 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch {
+        } catch (error) {
+            console.error("createCategory Error:", error);
             return null;
         }
     }
