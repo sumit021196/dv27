@@ -8,8 +8,7 @@ export async function createProductAction(formData: {
     price: number;
     original_price?: number;
     description?: string | null;
-    category?: string | null;
-    category_id?: string | null;
+    category_ids?: string[];
     imageUrls?: string[];
     videoUrl?: string | null;
     variants?: string | null; // JSON string of { size, color, stock, sku }
@@ -38,7 +37,7 @@ export async function createProductAction(formData: {
                 price: formData.price,
                 original_price: formData.original_price || null,
                 description: formData.description || null,
-                category_id: formData.category_id || null,
+                category_id: formData.category_ids && formData.category_ids.length > 0 ? formData.category_ids[0] : null,
                 media_url: mainMediaUrl,
                 video_url: finalVideoUrl,
                 stock: 10,
@@ -57,7 +56,17 @@ export async function createProductAction(formData: {
         const productId = productData.id;
         console.log("Product Inserted with ID:", productId);
 
-        // 4. Insert extra images into product_images
+        // 4. Link product to categories
+        if (formData.category_ids && formData.category_ids.length > 0) {
+            const categoryInserts = formData.category_ids.map(catId => ({
+                product_id: productId,
+                category_id: catId
+            }));
+            const { error: catError } = await supabase.from('product_categories').insert(categoryInserts);
+            if (catError) console.error("Error linking categories:", catError);
+        }
+
+        // 5. Insert extra images into product_images
         if (finalImageUrls.length > 0) {
             const imageInserts = finalImageUrls.map((url, idx) => ({
                 product_id: productId,
@@ -68,7 +77,7 @@ export async function createProductAction(formData: {
             if (imgError) console.error("Error inserting multiple images (Logged and continuing):", imgError);
         }
 
-        // 5. Insert Variants
+        // 6. Insert Variants
         if (formData.variants) {
             try {
                 const parsedVariants = JSON.parse(formData.variants);

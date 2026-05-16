@@ -13,21 +13,29 @@ export class ProductService implements IProductService {
         try {
             let query = client
                 .from("products")
-                .select("*, categories(name, id, is_active), product_variants(*), product_images(*)");
+                .select(`
+                    *,
+                    categories(name, id, is_active),
+                    product_categories(categories(name, id, is_active)),
+                    product_images(*),
+                    product_variants(*)
+                `);
             
             if (!includeInactive) {
-                query = query
-                    .eq("is_active", true)
-                    .eq("categories.is_active", true);
+                query = query.eq("is_active", true);
             }
             
             const { data, error } = await query.limit(100);
             
-            if (error || !data || data.length === 0) {
+            if (error) {
+                console.error("Supabase getProducts Error:", error.message, error.details);
                 return this.mapFallback(fallback);
             }
+
+            if (!data || data.length === 0) return [];
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getProducts Exception:", err);
             return this.mapFallback(fallback);
         }
     }
@@ -39,7 +47,13 @@ export class ProductService implements IProductService {
             
             let query = client
                 .from("products")
-                .select("*, categories(name, is_active), product_variants(*), product_images(*) ");
+                .select(`
+                    *,
+                    categories(name, id, is_active),
+                    product_categories(categories(name, id, is_active)),
+                    product_images(*),
+                    product_variants(*)
+                `);
             
             if (isNumeric) {
                 query = query.eq("id", idOrSlug);
@@ -53,7 +67,8 @@ export class ProductService implements IProductService {
 
             if (error || !data) throw error;
             return this.mapSupabaseData([data])[0];
-        } catch {
+        } catch (err) {
+            console.error("getProductById Error:", err);
             const fallbackItem = fallback.find((i) => String(i.id) === String(idOrSlug) || String(i.slug) === String(idOrSlug));
             return fallbackItem ? this.mapFallback([fallbackItem])[0] : null;
         }
@@ -64,14 +79,14 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
                 .eq("is_trending", true)
-                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getTrendingProducts Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -81,14 +96,14 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
-                .eq("categories.is_active", true)
                 .order("created_at", { ascending: false })
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getNewArrivals Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -98,13 +113,13 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories(name, id), product_categories(categories(name, id))")
                 .eq("is_active", true)
-                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getProductsForCards Error:", err);
             return this.mapFallback(fallback.slice(0, limit));
         }
     }
@@ -118,7 +133,8 @@ export class ProductService implements IProductService {
                 .in("id", ids);
             if (error || !data) return [];
             return this.mapSupabaseData(data);
-        } catch {
+        } catch (err) {
+            console.error("getMinimalProducts Error:", err);
             return [];
         }
     }
@@ -134,16 +150,16 @@ export class ProductService implements IProductService {
                 query = query.eq("is_active", true);
             }
 
-            const { data: catWithProds, error: joinError } = await query;
+            const { data, error } = await query;
 
-            if (joinError) {
-                console.error("Supabase Error fetching categories:", joinError);
-                throw joinError;
+            if (error) {
+                console.error("Supabase Error fetching categories:", error.message);
+                throw error;
             }
 
-            if (!catWithProds) return [];
+            if (!data) return [];
 
-            return catWithProds.map((c: any) => ({
+            return data.map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 slug: c.slug,
@@ -151,7 +167,7 @@ export class ProductService implements IProductService {
             }));
         } catch (error) {
             console.error("Failed to fetch categories:", error);
-            throw error; // Throw error instead of silently returning [] so UI can catch and retry
+            throw error;
         }
     }
 
@@ -203,14 +219,19 @@ export class ProductService implements IProductService {
     }, supabase?: any): Promise<Product[]> {
         const client = this.getClient(supabase);
         try {
-            let query = client
-                .from("products")
-                .select("*, categories!inner(name, slug, is_active), product_variants(*), product_images(*)")
-                .eq("is_active", true)
-                .eq("categories.is_active", true);
-
+            let query;
             if (options.category && options.category !== 'all') {
-                query = query.eq("categories.slug", options.category);
+                query = client
+                    .from("products")
+                    .select("*, product_categories!inner(categories!inner(name, slug, is_active)), product_images(*), product_variants(*)")
+                    .eq("is_active", true)
+                    .eq("product_categories.categories.slug", options.category)
+                    .eq("product_categories.categories.is_active", true);
+            } else {
+                query = client
+                    .from("products")
+                    .select("*, categories(name, id, is_active), product_categories(categories(name, id, is_active)), product_images(*), product_variants(*)")
+                    .eq("is_active", true);
             }
 
             if (options.search) {
@@ -225,7 +246,11 @@ export class ProductService implements IProductService {
                 .range(offset, offset + limit - 1);
 
             const { data, error } = await query;
-            if (error || !data) return [];
+            if (error) {
+                console.error("getFilteredProducts Query Error:", error.message);
+                return [];
+            }
+            if (!data) return [];
             return this.mapSupabaseData(data);
         } catch (err) {
             console.error("Filter error:", err);
@@ -243,7 +268,8 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch {
+        } catch (err) {
+            console.error("getCategoryBySlug Error:", err);
             return null;
         }
     }
@@ -271,37 +297,43 @@ export class ProductService implements IProductService {
                 .single();
             if (error || !data) return null;
             return data as Category;
-        } catch {
+        } catch (err) {
+            console.error("createCategory Error:", err);
             return null;
         }
     }
 
     private mapSupabaseData(data: any[]): Product[] {
-        return data.map(d => ({
-            id: d.id,
-            name: d.name,
-            price: d.price,
-            original_price: d.original_price,
-            media_url: d.media_url || d.image_url || undefined,
-            video_url: d.video_url || undefined,
-            created_at: d.created_at || undefined,
-            size: d.size || undefined,
-            rating: d.rating || 4,
-            slug: d.slug || d.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `p-${d.id}`,
-            is_active: d.is_active ?? true,
-            is_trending: d.is_trending ?? false,
-            category_id: d.category_id || undefined,
-            category_name: d.categories?.name || d.category || undefined,
-            description: d.description || undefined,
-            details: d.details || undefined,
-            variants: d.product_variants || [],
-            product_variants: d.product_variants || [],
-            images: d.product_images
-                ? d.product_images
-                    .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
-                    .map((img: any) => img.image_url)
-                : []
-        }));
+        return data.map(d => {
+            const junctionCategories = d.product_categories?.map((pc: any) => pc.categories).filter(Boolean) || [];
+            const primaryCategoryName = d.categories?.name || (junctionCategories.length > 0 ? junctionCategories[0].name : d.category);
+
+            return {
+                id: d.id,
+                name: d.name,
+                price: d.price,
+                original_price: d.original_price,
+                media_url: d.media_url || d.image_url || undefined,
+                video_url: d.video_url || undefined,
+                created_at: d.created_at || undefined,
+                size: d.size || undefined,
+                rating: d.rating || 4,
+                slug: d.slug || d.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `p-${d.id}`,
+                is_active: d.is_active ?? true,
+                is_trending: d.is_trending ?? false,
+                category_id: d.category_id || undefined,
+                category_name: primaryCategoryName || undefined,
+                description: d.description || undefined,
+                details: d.details || undefined,
+                variants: d.product_variants || [],
+                product_variants: d.product_variants || [],
+                images: d.product_images
+                    ? d.product_images
+                        .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+                        .map((img: any) => img.image_url)
+                    : []
+            };
+        });
     }
 
     private mapFallback(data: any[]): Product[] {
