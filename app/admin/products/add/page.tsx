@@ -35,6 +35,7 @@ export default function AddProductPage() {
     const [errorParam, setErrorParam] = useState<string | null>(null);
 
     const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
     const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
     // Advanced Media & Variants State
@@ -117,16 +118,15 @@ export default function AddProductPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "category_id") {
-            const selectedCat = categories.find(c => c.id === value);
-            setFormData(prev => ({
-                ...prev,
-                category_id: value,
-                category: selectedCat ? selectedCat.name : ""
-            }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
-        }
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const toggleCategory = (categoryId: string) => {
+        setSelectedCategoryIds(prev =>
+            prev.includes(categoryId)
+                ? prev.filter(id => id !== categoryId)
+                : [...prev, categoryId]
+        );
     };
 
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,6 +195,7 @@ export default function AddProductPage() {
         
         // 2. Reset basic form states
         setFormData(INITIAL_FORM_DATA);
+        setSelectedCategoryIds([]);
         setImages([]);
         setVideo(null);
         setVariants([]);
@@ -231,8 +232,8 @@ export default function AddProductPage() {
             return;
         }
 
-        if (categories.length > 0 && !formData.category_id) {
-            setErrorParam("Please select a category.");
+        if (categories.length > 0 && selectedCategoryIds.length === 0) {
+            setErrorParam("Please select at least one category.");
             isSubmitting.current = false;
             return;
         }
@@ -294,8 +295,7 @@ export default function AddProductPage() {
                 price: Number(formData.price),
                 original_price: formData.original_price ? Number(formData.original_price) : undefined,
                 description: formData.description,
-                category: formData.category,
-                category_id: formData.category_id || null,
+                category_ids: selectedCategoryIds,
                 imageUrls: finalImageUrls,
                 videoUrl: finalVideoUrl,
                 variants: JSON.stringify(variants.map(v => ({ size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku }))),
@@ -387,12 +387,25 @@ export default function AddProductPage() {
                                 <input type="number" name="original_price" min="0" step="0.01" value={formData.original_price} onChange={handleInputChange} className="w-full pl-8 border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="0.00" />
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
-                            <select name="category_id" disabled={catsLoading} value={formData.category_id} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border disabled:bg-gray-50">
-                                <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
-                                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                            </select>
+                        <div className="col-span-1 sm:col-span-2">
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">Categories {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => toggleCategory(cat.id)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                            selectedCategoryIds.includes(cat.id)
+                                                ? "bg-black text-white border-black"
+                                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                                        }`}
+                                    >
+                                        {cat.name}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-2 italic">* Select multiple categories. The first one selected will be the main category.</p>
                         </div>
                     </div>
 

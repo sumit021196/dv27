@@ -14,7 +14,7 @@ export async function updateProductAction(productId: string | number, formData: 
     price: number;
     original_price?: number | null;
     description?: string | null;
-    category_id?: string | null;
+    category_ids?: string[];
     imageUrls?: string[];
     videoUrl?: string | null;
     isActive?: boolean;
@@ -78,7 +78,7 @@ export async function updateProductAction(productId: string | number, formData: 
                 price: formData.price,
                 original_price: formData.original_price === undefined ? null : formData.original_price,
                 description: formData.description || null,
-                category_id: formData.category_id || null,
+                category_id: formData.category_ids && formData.category_ids.length > 0 ? formData.category_ids[0] : null,
                 media_url: mainMediaUrl,
                 video_url: newVideoUrl,
                 stock: formData.stock ?? 0,
@@ -91,7 +91,21 @@ export async function updateProductAction(productId: string | number, formData: 
 
         if (dbError) throw dbError;
 
-        // 4. Sync product_images table
+        // 4. Sync product_categories table
+        // Delete all old category links
+        await supabase.from('product_categories').delete().eq('product_id', productId);
+
+        // Insert new category links
+        if (formData.category_ids && formData.category_ids.length > 0) {
+            const categoryInserts = formData.category_ids.map(catId => ({
+                product_id: productId,
+                category_id: catId
+            }));
+            const { error: catError } = await supabase.from('product_categories').insert(categoryInserts);
+            if (catError) console.error("Error syncing categories:", catError);
+        }
+
+        // 5. Sync product_images table
         // Delete all old images for this product
         await supabase.from('product_images').delete().eq('product_id', productId);
         
@@ -106,7 +120,7 @@ export async function updateProductAction(productId: string | number, formData: 
             if (imgError) console.error("Error syncing images:", imgError);
         }
 
-        // 5. Sync product_variants table
+        // 6. Sync product_variants table
         if (formData.variants) {
             try {
                 const parsedVariants = JSON.parse(formData.variants);

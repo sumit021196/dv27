@@ -31,9 +31,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [price, setPrice] = useState("");
     const [originalPrice, setOriginalPrice] = useState("");
     const [stock, setStock] = useState("0");
-    const [categoryId, setCategoryId] = useState("");
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
     const [isActive, setIsActive] = useState(true);
     const [isTrending, setIsTrending] = useState(false);
+
+    const toggleCategory = (categoryId: string) => {
+        setSelectedCategoryIds(prev =>
+            prev.includes(categoryId)
+                ? prev.filter(id => id !== categoryId)
+                : [...prev, categoryId]
+        );
+    };
     
     // Media State
     // We store images as an array of objects that can either have a URL (existing) or a File (new)
@@ -62,7 +70,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setPrice("");
         setOriginalPrice("");
         setStock("0");
-        setCategoryId("");
+        setSelectedCategoryIds([]);
         setIsActive(true);
         setIsTrending(false);
         setImages([]);
@@ -106,7 +114,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     setPrice(p.price.toString());
                     setOriginalPrice(p.original_price?.toString() || "");
                     setStock(p.stock.toString());
-                    setCategoryId(p.category_id || "");
+
+                    // Handle multi-categories from product_categories
+                    const catIds = p.product_categories?.map((pc: any) => pc.categories?.id).filter(Boolean) || [];
+                    if (p.category_id && !catIds.includes(p.category_id)) {
+                        catIds.unshift(p.category_id);
+                    }
+                    setSelectedCategoryIds(catIds);
+
                     setIsActive(p.is_active);
                     setIsTrending(p.is_trending);
 
@@ -222,8 +237,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (categories.length > 0 && !categoryId) {
-            setError("Please select a category.");
+        if (categories.length > 0 && selectedCategoryIds.length === 0) {
+            setError("Please select at least one category.");
             return;
         }
 
@@ -274,7 +289,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 price: parseFloat(price),
                 original_price: originalPrice ? parseFloat(originalPrice) : null,
                 stock: parseInt(stock, 10),
-                category_id: categoryId || null,
+                category_ids: selectedCategoryIds,
                 imageUrls: finalImageUrls,
                 videoUrl: finalVideoUrl,
                 isActive,
@@ -468,11 +483,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                         {/* Status & Category */}
                         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
-                                <select disabled={catsLoading} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full border-gray-200 rounded-xl text-sm p-3 border disabled:bg-gray-50">
-                                    <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
-                                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                                </select>
+                                <label className="block text-xs font-medium text-gray-700 mb-2">Categories {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => toggleCategory(cat.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-medium border transition-colors ${
+                                                selectedCategoryIds.includes(cat.id)
+                                                    ? "bg-black text-white border-black"
+                                                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+                                            }`}
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-2 italic">* Select multiple categories.</p>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium">Active</span>
