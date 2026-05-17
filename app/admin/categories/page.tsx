@@ -8,7 +8,7 @@ export default async function AdminCategoriesPage() {
     const supabase = await createClient();
     const { data: categories } = await supabase
         .from('categories')
-        .select('*')
+        .select('*, product_categories(count)')
         .order('created_at', { ascending: false });
 
     return (
@@ -20,7 +20,7 @@ export default async function AdminCategoriesPage() {
                         <LayoutGrid className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Categories
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500 uppercase tracking-wider">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700 uppercase tracking-wider">
                         {categories?.length || 0} collections defined
                     </p>
                 </div>
@@ -62,10 +62,14 @@ export default async function AdminCategoriesPage() {
                                         <h3 className="text-sm md:text-xl font-bold uppercase truncate leading-tight">
                                             {category.name}
                                         </h3>
-                                        <p className="hidden md:block text-[9px] font-medium text-white/60 truncate mt-1">/ {category.slug}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="hidden md:block text-[9px] font-medium text-white/60 truncate">/ {category.slug}</p>
+                                            <span className="hidden md:inline-block w-1 h-1 rounded-full bg-white/30"></span>
+                                            <p className="text-[10px] font-bold text-blue-300 uppercase">{category.product_categories?.[0]?.count || 0} Products</p>
+                                        </div>
                                     </div>
 
-                                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex gap-2 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex gap-2 translate-y-0 md:translate-y-2 opacity-100 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-300">
                                         <Link 
                                             href={`/admin/categories/${category.id}`} 
                                             className="p-1.5 md:p-2.5 bg-white text-gray-900 hover:bg-blue-600 hover:text-white rounded-lg md:rounded-xl shadow-xl shadow-black/10 transition-all"
@@ -83,7 +87,7 @@ export default async function AdminCategoriesPage() {
                             <LayoutGrid className="text-gray-200" size={32} />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 uppercase">Start organizing</h3>
-                        <p className="text-xs font-medium text-gray-400 mt-2 max-w-sm mx-auto uppercase tracking-wide">Create your first category to group related products.</p>
+                        <p className="text-xs font-medium text-gray-600 mt-2 max-w-sm mx-auto uppercase tracking-wide">Create your first category to group related products.</p>
                     </div>
                 )}
             </div>

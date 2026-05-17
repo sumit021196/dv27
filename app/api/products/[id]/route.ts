@@ -11,7 +11,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             .select(`
                 *,
                 product_variants (*),
-                product_images (*)
+                product_images (*),
+                product_categories (category_id)
             `)
             .eq('id', id)
             .maybeSingle();

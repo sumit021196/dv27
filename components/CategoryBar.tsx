@@ -19,7 +19,7 @@ export default function CategoryBar({ categories }: { categories: Category[] }) 
     };
 
     return (
-        <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-md border-b border-foreground/5 shadow-sm">
+        <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-md border-b border-foreground/12 shadow-sm">
             <div className="mx-auto max-w-7xl px-4">
                 <div className="no-scrollbar overflow-x-auto py-4">
                     <div className="flex gap-2.5">
@@ -27,7 +27,7 @@ export default function CategoryBar({ categories }: { categories: Category[] }) 
                             onClick={() => setCategory("all")}
                             className={`whitespace-nowrap flex-shrink-0 rounded-full px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${activeCat === "all"
                                 ? "bg-foreground text-background shadow-lg shadow-foreground/10 hover:-translate-y-0.5"
-                                : "bg-muted text-foreground/40 border border-foreground/5 hover:border-foreground/10 hover:text-foreground hover:bg-background"
+                                : "bg-muted text-foreground/60 border border-foreground/12 hover:border-foreground/18 hover:text-foreground hover:bg-background"
                                 }`}
                         >
                             All Pieces
@@ -38,7 +38,7 @@ export default function CategoryBar({ categories }: { categories: Category[] }) 
                                 onClick={() => setCategory(c.slug)}
                                 className={`whitespace-nowrap flex-shrink-0 rounded-full px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${activeCat === c.slug
                                     ? "bg-foreground text-background shadow-lg shadow-foreground/10 hover:-translate-y-0.5"
-                                    : "bg-muted text-foreground/40 border border-foreground/5 hover:border-foreground/10 hover:text-foreground hover:bg-background"
+                                    : "bg-muted text-foreground/60 border border-foreground/12 hover:border-foreground/18 hover:text-foreground hover:bg-background"
                                     }`}
                             >
                                 {c.name}

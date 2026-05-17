@@ -36,7 +36,7 @@ export default function LoginPage() {
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900">
                         Welcome back
                     </h2>
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-gray-700">
                         Log in to your DV27 account.
                     </p>
                 </div>
@@ -44,14 +44,14 @@ export default function LoginPage() {
                 <div className="flex p-1 bg-gray-100 rounded-2xl mb-8">
                     <button 
                         onClick={() => setAuthMethod("email")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'email' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'email' ? 'bg-white shadow-sm text-black' : 'text-gray-700 hover:text-gray-700'}`}
                     >
                         <Mail className="h-4 w-4" />
                         Email
                     </button>
                     <button 
                         onClick={() => setAuthMethod("phone")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'phone' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${authMethod === 'phone' ? 'bg-white shadow-sm text-black' : 'text-gray-700 hover:text-gray-700'}`}
                     >
                         <Smartphone className="h-4 w-4" />
                         Mobile
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
                         <div className="flex items-center justify-end">
                             <div className="text-sm">
-                                <Link href="#" className="font-medium text-gray-500 hover:text-black">
+                                <Link href="#" className="font-medium text-gray-700 hover:text-black">
                                     Forgot your password?
                                 </Link>
                             </div>
@@ -126,7 +126,7 @@ export default function LoginPage() {
                 )}
 
                 <div className="text-center text-sm mt-8">
-                    <span className="text-gray-500">New around here? </span>
+                    <span className="text-gray-700">New around here? </span>
                     <Link href="/signup" className="font-bold text-black hover:underline underline-offset-4">
                         Create an account
                     </Link>

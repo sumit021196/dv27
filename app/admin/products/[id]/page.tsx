@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Plus, Trash2, UploadCloud, Video, CheckCircle2, Save } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
+    const createdUrlsRef = useRef<string[]>([]);
     const resolvedParams = use(params);
     const productId = resolvedParams.id;
 
@@ -31,7 +32,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [price, setPrice] = useState("");
     const [originalPrice, setOriginalPrice] = useState("");
     const [stock, setStock] = useState("0");
-    const [categoryId, setCategoryId] = useState("");
+    const [categoryIds, setCategoryIds] = useState<string[]>([]);
     const [isActive, setIsActive] = useState(true);
     const [isTrending, setIsTrending] = useState(false);
     
@@ -62,7 +63,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setPrice("");
         setOriginalPrice("");
         setStock("0");
-        setCategoryId("");
+        setCategoryIds([]);
         setIsActive(true);
         setIsTrending(false);
         setImages([]);
@@ -70,6 +71,13 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setVariants([]);
         setDetails([]);
     }, [productId]);
+
+    // Clean up all generated preview object URLs on component unmount
+    useEffect(() => {
+        return () => {
+            createdUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
@@ -106,7 +114,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                     setPrice(p.price.toString());
                     setOriginalPrice(p.original_price?.toString() || "");
                     setStock(p.stock.toString());
-                    setCategoryId(p.category_id || "");
+                    const fetchedCatIds = p.product_categories ? p.product_categories.map((c: any) => c.category_id) : [];
+                    if (p.category_id && !fetchedCatIds.includes(p.category_id)) fetchedCatIds.push(p.category_id);
+                    setCategoryIds(fetchedCatIds);
                     setIsActive(p.is_active);
                     setIsTrending(p.is_trending);
 
@@ -163,10 +173,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            const newImages = files.map(file => ({
-                file,
-                url: URL.createObjectURL(file)
-            }));
+            const newImages = files.map(file => {
+                const url = URL.createObjectURL(file);
+                createdUrlsRef.current.push(url);
+                return { file, url };
+            });
             setImages(prev => [...prev, ...newImages]);
         }
     };
@@ -175,7 +186,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setImages(prev => {
             const newArr = [...prev];
             if (newArr[index].file) {
-                URL.revokeObjectURL(newArr[index].url);
+                const url = newArr[index].url;
+                URL.revokeObjectURL(url);
+                createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== url);
             }
             newArr.splice(index, 1);
             return newArr;
@@ -185,13 +198,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (video?.file) URL.revokeObjectURL(video.url);
-            setVideo({ file, url: URL.createObjectURL(file) });
+            if (video?.file) {
+                URL.revokeObjectURL(video.url);
+                createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== video.url);
+            }
+            const url = URL.createObjectURL(file);
+            createdUrlsRef.current.push(url);
+            setVideo({ file, url });
         }
     };
 
     const removeVideo = () => {
-        if (video?.file) URL.revokeObjectURL(video.url);
+        if (video?.file) {
+            URL.revokeObjectURL(video.url);
+            createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== video.url);
+        }
         setVideo(null);
     };
 
@@ -222,8 +243,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (categories.length > 0 && !categoryId) {
-            setError("Please select a category.");
+        if (categories.length > 0 && categoryIds.length === 0) {
+            setError("Please select at least one category.");
             return;
         }
 
@@ -274,7 +295,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 price: parseFloat(price),
                 original_price: originalPrice ? parseFloat(originalPrice) : null,
                 stock: parseInt(stock, 10),
-                category_id: categoryId || null,
+                categoryIds: categoryIds,
                 imageUrls: finalImageUrls,
                 videoUrl: finalVideoUrl,
                 isActive,
@@ -312,12 +333,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             {/* Header */}
             <div className="flex-shrink-0 mb-4 px-1">
                 <div className="flex items-center gap-3">
-                    <Link href="/admin/products" className="p-2 hover:bg-white/80 bg-gray-100 rounded-full transition-colors text-gray-500">
+                    <Link href="/admin/products" className="p-2 hover:bg-white/80 bg-gray-100 rounded-full transition-colors text-gray-700">
                         <ArrowLeft size={18} />
                     </Link>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Edit Product</h1>
-                        <p className="text-[10px] md:text-sm text-gray-500">Modify details, variants, and gallery.</p>
+                        <p className="text-[10px] md:text-sm text-gray-700">Modify details, variants, and gallery.</p>
                     </div>
                 </div>
             </div>
@@ -423,7 +444,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                             <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Media Gallery</h2>
                             <div className="mt-2 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition cursor-pointer relative group">
                                 <div className="text-center">
-                                    <UploadCloud className="mx-auto h-8 w-8 text-gray-400 group-hover:text-black transition" />
+                                    <UploadCloud className="mx-auto h-8 w-8 text-gray-600 group-hover:text-black transition" />
                                     <div className="mt-2 text-xs text-gray-600">
                                         <label className="cursor-pointer font-medium text-black">
                                             <span>Upload images</span>
@@ -449,7 +470,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                                 <h3 className="text-xs font-semibold text-gray-700 mb-2">Video</h3>
                                 <div className="flex justify-center p-4 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition relative group">
                                     <div className="text-center">
-                                        <Video className="mx-auto h-6 w-6 text-gray-400 group-hover:text-black" />
+                                        <Video className="mx-auto h-6 w-6 text-gray-600 group-hover:text-black" />
                                         <label className="cursor-pointer text-[10px] font-medium text-black block mt-1">
                                             <span>{video ? "Change Video" : "Upload Video"}</span>
                                             <input type="file" className="sr-only" accept="video/mp4,video/webm" onChange={handleVideoChange} />
@@ -468,11 +489,28 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                         {/* Status & Category */}
                         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
-                                <select disabled={catsLoading} value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full border-gray-200 rounded-xl text-sm p-3 border disabled:bg-gray-50">
-                                    <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
-                                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                                </select>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Categories {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                                <div className="flex flex-wrap gap-2 p-3 border border-gray-200 rounded-xl max-h-40 overflow-y-auto bg-white">
+                                    {catsLoading ? <span className="text-sm text-gray-700">Loading...</span> : categories.length === 0 ? <span className="text-sm text-gray-700">No categories found</span> : (
+                                        categories.map(cat => (
+                                            <label key={cat.id} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 cursor-pointer transition-colors">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="rounded border-gray-300 text-black focus:ring-black h-4 w-4"
+                                                    checked={categoryIds.includes(cat.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setCategoryIds(prev => [...prev, cat.id]);
+                                                        } else {
+                                                            setCategoryIds(prev => prev.filter(id => id !== cat.id));
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="text-xs font-medium text-gray-700">{cat.name}</span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium">Active</span>

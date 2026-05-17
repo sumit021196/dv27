@@ -85,7 +85,7 @@ export default function AdminReviewsPage() {
                         <MessageSquare className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Reviews Moderation
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {reviews.length} total customer reviews
                     </p>
                 </div>
@@ -97,11 +97,11 @@ export default function AdminReviewsPage() {
                     {loading ? (
                         <div className="h-full flex flex-col justify-center items-center p-12 text-center">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
-                            <span className="text-gray-500 font-medium tracking-wide text-xs uppercase">Fetching feedback...</span>
+                            <span className="text-gray-700 font-medium tracking-wide text-xs uppercase">Fetching feedback...</span>
                         </div>
                     ) : reviews.length === 0 ? (
-                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-500">
-                            <MessageSquare size={48} className="mx-auto text-gray-300 mb-4" />
+                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-700">
+                            <MessageSquare size={48} className="mx-auto text-gray-700 mb-4" />
                             <p className="text-lg font-medium text-gray-900 uppercase">No reviews found</p>
                         </div>
                     ) : (
@@ -111,10 +111,10 @@ export default function AdminReviewsPage() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0 z-10">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Product & User</th>
-                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Review</th>
-                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Rating</th>
-                                            <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Product & User</th>
+                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Review</th>
+                                            <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Rating</th>
+                                            <th className="px-6 py-3 text-right text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -124,7 +124,7 @@ export default function AdminReviewsPage() {
                                                     <div className="text-sm font-bold text-gray-900 mb-1 leading-tight">
                                                         {review.products?.name || "Unknown Product"}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <div className="text-xs text-gray-700 flex items-center gap-1">
                                                         By <span className="font-semibold text-gray-700">
                                                             {review.profiles?.full_name || review.guest_name || "Anonymous User"}
                                                         </span>
@@ -153,7 +153,7 @@ export default function AdminReviewsPage() {
                                                             ))}
                                                         </div>
                                                     )}
-                                                    <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                    <div className="text-[10px] text-gray-600 flex items-center gap-1">
                                                         <Clock size={10} />
                                                         {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                                                     </div>
@@ -175,7 +175,7 @@ export default function AdminReviewsPage() {
                                                         )}
                                                         <button 
                                                             onClick={() => handleDelete(review.id)} 
-                                                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all"
+                                                            className="text-gray-600 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-all"
                                                             title="Delete Review"
                                                         >
                                                             <Trash2 size={18} />
@@ -195,7 +195,7 @@ export default function AdminReviewsPage() {
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="text-sm font-bold text-gray-900 truncate">{review.products?.name || "Unknown Product"}</h3>
-                                                <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                                <p className="text-[10px] text-gray-700 flex items-center gap-1 mt-0.5">
                                                     <User size={10} /> {review.profiles?.full_name || review.guest_name || "Anonymous"}
                                                 </p>
                                                 <div className="mt-1">{getStatusBadge(review.status)}</div>
@@ -225,7 +225,7 @@ export default function AdminReviewsPage() {
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <p className="text-[9px] text-gray-400 flex items-center gap-1 uppercase tracking-widest">
+                                            <p className="text-[9px] text-gray-600 flex items-center gap-1 uppercase tracking-widest">
                                                 <Clock size={10} /> {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
                                             </p>
                                             <div className="flex items-center gap-2">

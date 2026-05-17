@@ -11,7 +11,7 @@ export default function EditProductLoading() {
         <div className="flex flex-1 justify-center items-center min-h-[60vh]">
             <div className="flex flex-col items-center gap-3">
                 <Loader2 className="animate-spin text-blue-600" size={32} />
-                <p className="text-xs text-gray-400 font-medium">Loading product…</p>
+                <p className="text-xs text-gray-600 font-medium">Loading product…</p>
             </div>
         </div>
     );

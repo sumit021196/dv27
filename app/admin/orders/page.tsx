@@ -40,7 +40,7 @@ export default function AdminOrdersPage() {
                         <ShoppingCart className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Orders Management
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {orders.length} total orders found
                     </p>
                 </div>
@@ -52,15 +52,15 @@ export default function AdminOrdersPage() {
                     {loading ? (
                         <div className="h-full flex flex-col justify-center items-center p-12">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
-                            <span className="text-gray-500 font-medium">Loading orders...</span>
+                            <span className="text-gray-700 font-medium">Loading orders...</span>
                         </div>
                     ) : orders.length === 0 ? (
-                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-500">
+                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-700">
                             <div className="mx-auto w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
                                 <ShoppingCart size={32} />
                             </div>
                             <h2 className="text-xl font-semibold text-gray-900">No Orders Yet</h2>
-                            <p className="text-gray-500 mt-2 max-w-md mx-auto">
+                            <p className="text-gray-700 mt-2 max-w-md mx-auto">
                                 When customers place orders, they will appear here.
                             </p>
                         </div>
@@ -71,11 +71,11 @@ export default function AdminOrdersPage() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0 z-10">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID & Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Order ID & Date</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Customer</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Total</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -85,7 +85,7 @@ export default function AdminOrdersPage() {
                                                     <div className="text-sm font-medium text-gray-900 truncate max-w-[150px]" title={order.id}>
                                                         #{order.id.split('-')[0]}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <div className="text-xs text-gray-700 flex items-center gap-1">
                                                         <Clock size={12} />
                                                         {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
                                                     </div>
@@ -121,14 +121,14 @@ export default function AdminOrdersPage() {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h3 className="text-sm font-bold text-gray-900">Order #{order.id.split('-')[0]}</h3>
-                                                <p className="text-xs text-gray-500 mt-0.5">{order.customer_name}</p>
+                                                <p className="text-xs text-gray-700 mt-0.5">{order.customer_name}</p>
                                             </div>
                                             <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full border uppercase tracking-wider ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center text-xs">
-                                            <div className="flex items-center gap-1.5 text-gray-500">
+                                            <div className="flex items-center gap-1.5 text-gray-700">
                                                 <Clock size={12} />
                                                 {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
                                             </div>

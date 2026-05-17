@@ -203,6 +203,12 @@ export async function POST(req: Request) {
     }
 
     if (paymentMethod === 'cod') {
+        // Atomic stock decrement for COD
+        await supabaseAdmin.rpc('manage_order_stock', {
+            p_order_id: orderDbId,
+            p_action: 'decrement'
+        });
+
         if (orderDetails.customerEmail) {
             // Send detailed order confirmation for COD
             await sendOrderConfirmationEmail(orderDetails.customerEmail, {

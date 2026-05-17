@@ -27,7 +27,7 @@ export default function TrustBar() {
       ];
 
   return (
-    <section className="py-4 md:py-8 bg-background border-y border-foreground/5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+    <section className="py-4 md:py-8 bg-background border-y border-foreground/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
       <div className="max-w-[1440px] mx-auto px-2 md:px-12">
         <div className="grid grid-cols-4 md:grid-cols-4 gap-2 md:gap-8 auto-rows-max">
           {signals.map((signal, idx) => {
@@ -49,7 +49,7 @@ export default function TrustBar() {
                         </>
                     ) : signal.title}
                   </h4>
-                  <p className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-foreground/40 leading-tight">
+                  <p className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-foreground/60 leading-tight">
                     {signal.description}
                   </p>
                 </div>

@@ -47,7 +47,7 @@ export default async function AdminVisitorsPage() {
                     </div>
                     Visitors & Analytics
                 </h1>
-                <p className="mt-2 text-sm text-gray-500 font-medium">
+                <p className="mt-2 text-sm text-gray-700 font-medium">
                     Real-time insights into user behavior and site traffic.
                 </p>
             </div>
@@ -88,14 +88,14 @@ export default async function AdminVisitorsPage() {
                 {/* ── Top Pages ── */}
                 <div className="lg:col-span-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex items-center gap-3">
-                        <BarChart3 size={20} className="text-gray-400" />
+                        <BarChart3 size={20} className="text-gray-600" />
                         <h2 className="font-bold text-gray-900">Top Pages</h2>
                     </div>
                     <div className="p-4 space-y-1">
                         {sortedPages.map(([path, count], i) => (
                             <div key={path} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-bold text-gray-300 w-4">{i + 1}</span>
+                                    <span className="text-xs font-bold text-gray-700 w-4">{i + 1}</span>
                                     <span className="text-sm font-medium text-gray-700 truncate max-w-[150px]">{path}</span>
                                 </div>
                                 <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -110,7 +110,7 @@ export default async function AdminVisitorsPage() {
                 <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex items-center justify-between">
                         <h2 className="font-bold text-gray-900 flex items-center gap-3">
-                            <Clock size={20} className="text-gray-400" />
+                            <Clock size={20} className="text-gray-600" />
                             Recent Activity
                         </h2>
                         <button className="text-xs font-bold text-blue-600 hover:underline">Refresh</button>
@@ -119,15 +119,15 @@ export default async function AdminVisitorsPage() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50">
-                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Time</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Page Path</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Session</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Time</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Page Path</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Session</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {recentVisits?.map((visit) => (
                                     <tr key={visit.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
+                                        <td className="px-6 py-4 text-xs text-gray-700 whitespace-nowrap">
                                             {new Date(visit.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </td>
                                         <td className="px-6 py-4">
@@ -138,7 +138,7 @@ export default async function AdminVisitorsPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-green-400" />
-                                                <span className="text-[10px] font-mono text-gray-400">
+                                                <span className="text-[10px] font-mono text-gray-600">
                                                     {visit.session_id.substring(0, 8)}...
                                                 </span>
                                             </div>
@@ -167,10 +167,10 @@ function StatCard({ icon: Icon, label, value, sub, color }: any) {
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${colors[color]}`}>
                 <Icon size={24} />
             </div>
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider">{label}</p>
+            <p className="text-sm font-bold text-gray-600 uppercase tracking-wider">{label}</p>
             <div className="flex items-baseline gap-2 mt-1">
                 <h3 className="text-2xl font-black text-gray-900">{value}</h3>
-                <span className="text-[10px] font-bold text-gray-400">{sub}</span>
+                <span className="text-[10px] font-bold text-gray-600">{sub}</span>
             </div>
         </div>
     );

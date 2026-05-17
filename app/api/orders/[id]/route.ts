@@ -43,14 +43,32 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const body = await req.json();
         const { status } = body;
 
+        // 1. Get current status to detect change to cancelled
+        const { data: currentOrder } = await supabase
+            .from('orders')
+            .select('status')
+            .eq('id', id)
+            .single();
+
+        // 2. Update order status
         const { data, error } = await supabase
             .from('orders')
-            .update({ status })
+            .update({ status, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
             .single();
 
         if (error) throw error;
+
+        // 3. Robust Inventory: If status changed to 'cancelled', replenish stock
+        if (status === 'cancelled' && currentOrder?.status !== 'cancelled') {
+            console.log(`[Inventory] Replenishing stock for cancelled order: ${id}`);
+            await supabase.rpc('manage_order_stock', {
+                p_order_id: id,
+                p_action: 'increment'
+            });
+        }
+
         return NextResponse.json({ order: data, success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

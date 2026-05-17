@@ -54,7 +54,7 @@ export default function HeroSection({ banners = [] }: { banners?: any[] }) {
     if (activeBanners.length === 0) {
         // Fallback if no banners defined
         return (
-            <section className="h-[65vh] lg:h-[95vh] flex items-center justify-center bg-background border-b border-foreground/5">
+            <section className="h-[65vh] lg:h-[95vh] flex items-center justify-center bg-background border-b border-foreground/12">
                 <div className="text-center space-y-8 px-6 w-full h-full flex flex-col justify-end pb-16 sm:justify-center sm:pb-0">
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase tracking-tighter text-foreground leading-none animate-in fade-in zoom-in duration-1000">
                         THE DROP

@@ -145,10 +145,10 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-background pb-24">
             {/* ── Compact Header ── */}
-            <div className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-20 border-b border-foreground/5">
+            <div className="px-6 pt-10 pb-6 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-20 border-b border-foreground/12">
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center overflow-hidden border border-foreground/5">
+                        <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center overflow-hidden border border-foreground/12">
                             {profile?.avatar_url ? (
                                 <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -199,7 +199,7 @@ export default function ProfilePage() {
                     </div>
                     
                     {orders.length === 0 ? (
-                         <div className="bg-muted border border-foreground/5 border-dashed rounded-3xl p-8 text-center flex flex-col items-center">
+                         <div className="bg-muted border border-foreground/12 border-dashed rounded-3xl p-8 text-center flex flex-col items-center">
                             <Package className="text-muted-foreground/30 w-10 h-10 mb-3" />
                             <p className="text-sm font-bold text-muted-foreground">No orders yet</p>
                             <Link href="/products" className="text-xs font-bold text-brand-accent mt-2">Start shopping</Link>
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                                 <Link 
                                     href={`/profile/orders/${order.id}`} 
                                     key={order.id} 
-                                    className="bg-background border border-foreground/5 hover:border-foreground/10 rounded-3xl p-5 flex items-center justify-between shadow-sm transition-colors block"
+                                    className="bg-background border border-foreground/12 hover:border-foreground/18 rounded-3xl p-5 flex items-center justify-between shadow-sm transition-colors block"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${

@@ -73,11 +73,11 @@ export function AdminBottomNav() {
                                 "flex flex-col items-center justify-center min-w-[70px] py-1 px-2 rounded-xl transition-all duration-300 flex-shrink-0",
                                 isActive 
                                     ? "bg-blue-600 text-white shadow-sm" 
-                                    : "text-gray-500 hover:bg-gray-50"
+                                    : "text-gray-700 hover:bg-gray-50"
                             )}
                         >
-                            <Icon size={18} className={cn("mb-1", isActive ? "text-white" : "text-gray-400")} />
-                            <span className={cn("text-[10px] font-medium whitespace-nowrap", isActive ? "text-white" : "text-gray-500")}>
+                            <Icon size={18} className={cn("mb-1", isActive ? "text-white" : "text-gray-600")} />
+                            <span className={cn("text-[10px] font-medium whitespace-nowrap", isActive ? "text-white" : "text-gray-700")}>
                                 {item.name}
                             </span>
                         </Link>

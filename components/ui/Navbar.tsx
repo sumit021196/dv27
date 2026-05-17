@@ -46,6 +46,11 @@ export default function Navbar() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedQuery, setDebouncedQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Product[]>([]);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [recentProducts, setRecentProducts] = useState<Product[]>([]);
     const [menuStep, setMenuStep] = useState<'main' | 'categories'>('main');
@@ -130,6 +135,120 @@ export default function Navbar() {
         };
     }, [profileOpen]);
 
+    // Prevent background scrolling when search or mobile menu is open
+    useEffect(() => {
+        if (searchOpen || mobileMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [searchOpen, mobileMenuOpen]);
+
+    // Close mobile menu and search overlay on route changes
+    useEffect(() => {
+        setMobileMenuOpen(false);
+        setSearchOpen(false);
+    }, [pathname]);
+
+    // Sync Recent Searches from LocalStorage
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("recentSearches");
+            if (stored) {
+                try {
+                    setRecentSearches(JSON.parse(stored));
+                } catch (e) {
+                    console.error("Failed to parse recent searches", e);
+                }
+            }
+        }
+    }, [searchOpen]);
+
+    const addRecentSearch = (query: string) => {
+        const trimmed = query.trim();
+        if (!trimmed) return;
+        
+        const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, 5);
+        setRecentSearches(updated);
+        localStorage.setItem("recentSearches", JSON.stringify(updated));
+    };
+
+    const removeRecentSearch = (query: string) => {
+        const updated = recentSearches.filter(s => s !== query);
+        setRecentSearches(updated);
+        localStorage.setItem("recentSearches", JSON.stringify(updated));
+    };
+
+    const clearAllRecent = () => {
+        setRecentSearches([]);
+        localStorage.removeItem("recentSearches");
+    };
+
+    // Debounce searchQuery input
+    useEffect(() => {
+        const trimmed = searchQuery.trim();
+        if (!trimmed) {
+            setDebouncedQuery("");
+            setSearchResults([]);
+            setSuggestions([]);
+            return;
+        }
+        
+        // Only show skeleton loader if the search term has actually changed
+        if (trimmed !== debouncedQuery) {
+            setIsLoading(true);
+        }
+
+        const timer = setTimeout(() => {
+            setDebouncedQuery(trimmed);
+        }, 250); // fast 250ms debounce for premium UX feel
+        return () => clearTimeout(timer);
+    }, [searchQuery, debouncedQuery]);
+
+    // Fetch live search results and suggestions when debouncedQuery changes
+    useEffect(() => {
+        if (!debouncedQuery) {
+            setIsLoading(false);
+            return;
+        }
+
+        const fetchResults = async () => {
+            try {
+                // Fetch up to 6 matching products for the live results drawer
+                const results = await productService.getFilteredProducts({
+                    search: debouncedQuery,
+                    limit: 6
+                }) || [];
+                setSearchResults(results);
+
+                const queryLower = debouncedQuery.toLowerCase();
+
+                // Auto-generate smart suggestions (matching categories + product names) safely
+                const matchingCategories = (Array.isArray(categories) ? categories : [])
+                    .filter(c => c && typeof c.name === 'string' && c.name.toLowerCase().includes(queryLower))
+                    .map(c => c.name);
+
+                const nameMatches = (Array.isArray(results) ? results : [])
+                    .filter(p => p && typeof p.name === 'string')
+                    .map(p => p.name)
+                    .filter(name => name.toLowerCase().includes(queryLower))
+                    .slice(0, 3);
+
+                const combined = Array.from(new Set([...matchingCategories, ...nameMatches])).slice(0, 4);
+                setSuggestions(combined);
+            } catch (err) {
+                console.error("Real-time search fetch error:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchResults();
+    }, [debouncedQuery, categories]);
+
     if (pathname.startsWith('/admin')) return null;
     const totalItems = cart.items.reduce((acc, current) => acc + current.qty, 0);
 
@@ -138,7 +257,7 @@ export default function Navbar() {
             <div className="fixed inset-x-0 top-0 z-[60]">
                 <Ticker />
                 <header
-                    className={`transition-all duration-300 bg-background/80 backdrop-blur-xl border-b border-foreground/5 ${isScrolled ? "h-14" : "h-16"}`}
+                    className={`transition-all duration-300 bg-background/80 backdrop-blur-xl border-b border-foreground/12 ${isScrolled ? "h-14" : "h-16"}`}
                 >
                     <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-12">
 
@@ -225,9 +344,9 @@ export default function Navbar() {
 
                                         {/* Profile Dropdown */}
                                         {profileOpen && (
-                                            <div className="absolute right-0 top-full mt-2 w-48 bg-background/95 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in duration-200 overflow-hidden z-[100]">
-                                                <div className="px-4 py-3 border-b border-foreground/5 mb-1">
-                                                    <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest truncate">
+                                            <div className="absolute right-0 top-full mt-2 w-48 bg-background/95 backdrop-blur-xl border border-foreground/18 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in duration-200 overflow-hidden z-[100]">
+                                                <div className="px-4 py-3 border-b border-foreground/12 mb-1">
+                                                    <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest truncate">
                                                         {user.email}
                                                     </p>
                                                 </div>
@@ -313,16 +432,13 @@ export default function Navbar() {
 
             {/* Search Modal */}
             {searchOpen && (
-                <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-3xl animate-in fade-in duration-300">
-                    <div className="flex flex-col h-full px-6 pt-24 pb-12 items-center">
-                        <button
-                            onClick={() => setSearchOpen(false)}
-                            className="absolute top-6 right-6 p-3 text-foreground/50 hover:text-foreground transition-colors"
-                        >
-                            <X size={32} />
-                        </button>
-
-                        <div className="w-full max-w-2xl text-center">
+                <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-3xl animate-in fade-in duration-300 overflow-y-auto no-scrollbar flex flex-col justify-start">
+                    {/* Search Container */}
+                    <div className="w-full max-w-4xl mx-auto flex flex-col h-full px-4 sm:px-8 py-6 sm:py-10">
+                        
+                        {/* Search Input Bar (Sticky / Header) */}
+                        <div className="flex items-center gap-3 sm:gap-4 border-b border-foreground/18 pb-4 sm:pb-6 shrink-0 relative">
+                            <Search size={22} className="text-foreground/60 shrink-0" />
                             <input
                                 autoFocus
                                 type="text"
@@ -330,16 +446,319 @@ export default function Navbar() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && searchQuery.trim()) {
+                                        addRecentSearch(searchQuery);
                                         router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
                                         setSearchOpen(false);
                                     }
                                 }}
-                                placeholder="Search products..."
-                                className="w-full bg-transparent border-b-2 border-foreground/20 pb-4 text-4xl sm:text-6xl font-black uppercase placeholder:text-foreground/10 outline-none focus:border-foreground transition-colors text-center"
+                                placeholder="Search items, caps, denims..."
+                                className="flex-1 bg-transparent text-xl sm:text-3xl font-black uppercase placeholder:text-foreground/45 outline-none focus:placeholder:text-foreground/25 text-foreground transition-all duration-300"
                             />
-                            <p className="mt-8 text-[10px] font-bold text-foreground/30 uppercase tracking-[0.3em] animate-pulse">
-                                Press Enter to search
-                            </p>
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="p-1 hover:bg-foreground/5 rounded-full text-foreground/60 hover:text-foreground transition-all shrink-0"
+                                    title="Clear input"
+                                >
+                                    <X size={18} />
+                                </button>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setSearchOpen(false);
+                                }}
+                                className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-foreground/60 hover:text-foreground hover:bg-foreground/5 px-3 py-1.5 rounded-lg transition-all shrink-0 ml-1 sm:ml-2"
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        {/* Scrollable Results Pane */}
+                        <div className="flex-1 overflow-y-auto no-scrollbar py-6 sm:py-8 min-h-0">
+                            
+                            {/* Loading State */}
+                            {isLoading ? (
+                                <div className="space-y-6 animate-pulse">
+                                    <div className="h-6 w-32 bg-foreground/5 rounded-lg" />
+                                    <div className="space-y-3">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="h-4 w-3/4 bg-foreground/5 rounded-lg" />
+                                        ))}
+                                    </div>
+                                    <div className="h-px bg-foreground/5 my-8" />
+                                    <div className="h-6 w-24 bg-foreground/5 rounded-lg" />
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <div key={i} className="flex gap-3 items-center">
+                                                <div className="w-12 h-14 bg-foreground/5 rounded-lg" />
+                                                <div className="space-y-2 flex-1">
+                                                    <div className="h-4 w-32 bg-foreground/5 rounded-lg" />
+                                                    <div className="h-3 w-16 bg-foreground/5 rounded-lg" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : !searchQuery.trim() ? (
+                                /* Default Empty Query Panel */
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
+                                    
+                                    {/* Left Panel: Recent & Popular */}
+                                    <div className="space-y-8 md:col-span-1">
+                                        {/* Recent Searches */}
+                                        {recentSearches.length > 0 && (
+                                            <div>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50">Recent Searches</p>
+                                                    <button 
+                                                        onClick={clearAllRecent}
+                                                        className="text-[8px] font-bold uppercase tracking-widest text-brand-red hover:underline"
+                                                    >
+                                                        Clear All
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {recentSearches.map((term, i) => (
+                                                        <div key={i} className="flex items-center justify-between group">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSearchQuery(term);
+                                                                    addRecentSearch(term);
+                                                                }}
+                                                                className="text-left text-xs font-bold text-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
+                                                            >
+                                                                <span className="w-1.5 h-1.5 bg-foreground/10 group-hover:bg-brand-accent rounded-full transition-colors" />
+                                                                {term}
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => removeRecentSearch(term)}
+                                                                className="text-[10px] text-foreground/45 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 px-2"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Popular Categories */}
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50 mb-4">Popular Categories</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {categories.slice(0, 6).map((cat) => (
+                                                    <button
+                                                        key={cat.id}
+                                                        onClick={() => {
+                                                            router.push(`/products?category=${cat.slug}`);
+                                                            setSearchOpen(false);
+                                                        }}
+                                                        className="px-3.5 py-2 rounded-xl bg-foreground/[0.03] border border-foreground/[0.02] hover:bg-foreground/[0.06] text-[10px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground transition-all duration-300"
+                                                    >
+                                                        {cat.name}
+                                                    </button>
+                                                ))}
+                                                {categories.length === 0 && ["Outerwear", "Tops", "Accessories", "Bottoms", "Knitwear", "Sale"].map((catName) => (
+                                                    <button
+                                                        key={catName}
+                                                        onClick={() => {
+                                                            router.push(`/products?category=${catName.toLowerCase()}`);
+                                                            setSearchOpen(false);
+                                                        }}
+                                                        className="px-3.5 py-2 rounded-xl bg-foreground/[0.03] border border-foreground/[0.02] hover:bg-foreground/[0.06] text-[10px] font-black uppercase tracking-widest text-foreground/70 hover:text-foreground transition-all duration-300"
+                                                    >
+                                                        {catName}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Panel: Trending Drops (takes 2 cols on md screens) */}
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50">Trending Drops</p>
+                                            <Link 
+                                                href="/products" 
+                                                onClick={() => setSearchOpen(false)}
+                                                className="text-[8px] font-black uppercase tracking-widest text-brand-accent hover:underline"
+                                            >
+                                                Shop All
+                                            </Link>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {recentProducts.slice(0, 4).map((product) => (
+                                                <Link
+                                                    key={product.id}
+                                                    href={`/product/${product.slug || product.id}`}
+                                                    onClick={() => {
+                                                        addRecentSearch(product.name);
+                                                        setSearchOpen(false);
+                                                    }}
+                                                    className="flex items-center gap-4 p-3 rounded-2xl bg-foreground/[0.01] hover:bg-foreground/[0.04] border border-foreground/[0.02] transition-all group"
+                                                >
+                                                    <div className="relative aspect-[3/4] w-12 sm:w-16 rounded-xl bg-foreground/5 overflow-hidden shrink-0 border border-foreground/[0.02]">
+                                                        {product.media_url ? (
+                                                            <Image
+                                                                src={product.media_url}
+                                                                alt={product.name}
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-foreground/45">N/A</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-xs font-black uppercase tracking-tight text-foreground/80 group-hover:text-foreground transition-colors truncate">
+                                                            {product.name}
+                                                        </h4>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-foreground/50 mt-0.5">
+                                                            {product.category_name || "Piece"}
+                                                        </p>
+                                                        <p className="text-xs font-black text-brand-accent mt-1">
+                                                            ₹{(product.price || 0).toLocaleString("en-IN")}
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight size={14} className="text-foreground/35 group-hover:text-foreground/45 transition-colors shrink-0 mr-1" />
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : searchResults.length === 0 ? (
+                                /* No results state */
+                                <div className="text-center py-16 sm:py-24 max-w-md mx-auto flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-foreground/[0.02] border border-foreground/[0.05] rounded-2xl flex items-center justify-center mb-6 text-foreground/50">
+                                        <Search size={28} />
+                                    </div>
+                                    <h3 className="text-lg font-black uppercase tracking-tight text-foreground">No Pieces Found</h3>
+                                    <p className="mt-2 text-[10px] font-bold text-foreground/60 uppercase tracking-[0.2em] leading-relaxed">
+                                        We couldn't find any results for "{searchQuery}". Double-check spelling or explore other categories.
+                                    </p>
+                                    <div className="mt-8 flex flex-wrap gap-2 justify-center">
+                                        {categories.slice(0, 4).map((cat) => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => {
+                                                    router.push(`/products?category=${cat.slug}`);
+                                                    setSearchOpen(false);
+                                                }}
+                                                className="px-3 py-1.5 rounded-lg bg-foreground/[0.03] text-[9px] font-bold uppercase tracking-widest text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-colors"
+                                            >
+                                                {cat.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Active results display */
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
+                                    
+                                    {/* Left Panel: Autocomplete Suggestions */}
+                                    <div className="md:col-span-1 space-y-6">
+                                        {suggestions.length > 0 && (
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50 mb-4">Suggestions</p>
+                                                <div className="space-y-1">
+                                                    {suggestions.map((sug, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => {
+                                                                setSearchQuery(sug);
+                                                                addRecentSearch(sug);
+                                                            }}
+                                                            className="w-full text-left p-2.5 rounded-xl hover:bg-foreground/[0.03] text-xs font-bold text-foreground/75 hover:text-foreground transition-all duration-300 flex items-center gap-2.5 group"
+                                                        >
+                                                            <Search size={12} className="text-foreground/45 group-hover:text-brand-accent transition-colors" />
+                                                            <span>
+                                                                {/* Highlight match */}
+                                                                {sug.toLowerCase().startsWith(searchQuery.toLowerCase()) ? (
+                                                                    <>
+                                                                        <span className="font-black text-foreground">{sug.slice(0, searchQuery.length)}</span>
+                                                                        <span className="text-foreground/50">{sug.slice(searchQuery.length)}</span>
+                                                                    </>
+                                                                ) : (
+                                                                    sug
+                                                                )}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50 mb-3">Refine Search</p>
+                                            <p className="text-[10px] text-foreground/60 font-bold uppercase tracking-[0.2em] leading-relaxed">
+                                                Press <kbd className="px-1.5 py-0.5 rounded bg-foreground/5 font-black text-[9px]">Enter</kbd> to see all matching clothing drops.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Panel: Product Results */}
+                                    <div className="md:col-span-2 space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/50">
+                                                Matching Products ({searchResults.length})
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {searchResults.map((product) => (
+                                                <Link
+                                                    key={product.id}
+                                                    href={`/product/${product.slug || product.id}`}
+                                                    onClick={() => {
+                                                        addRecentSearch(product.name);
+                                                        setSearchOpen(false);
+                                                    }}
+                                                    className="flex items-center gap-4 p-3 rounded-2xl bg-foreground/[0.01] hover:bg-foreground/[0.04] border border-foreground/[0.02] transition-all group"
+                                                >
+                                                    <div className="relative aspect-[3/4] w-14 rounded-xl bg-foreground/5 overflow-hidden shrink-0 border border-foreground/[0.02]">
+                                                        {product.media_url ? (
+                                                            <Image
+                                                                src={product.media_url}
+                                                                alt={product.name}
+                                                                fill
+                                                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-foreground/45">N/A</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-xs font-black uppercase tracking-tight text-foreground/80 group-hover:text-foreground transition-colors truncate">
+                                                            {product.name}
+                                                        </h4>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-foreground/50 mt-0.5">
+                                                            {product.category_name || "Piece"}
+                                                        </p>
+                                                        <p className="text-xs font-black text-brand-accent mt-1">
+                                                            ₹{(product.price || 0).toLocaleString("en-IN")}
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight size={14} className="text-foreground/35 group-hover:text-foreground/45 transition-colors shrink-0 mr-1" />
+                                                </Link>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                addRecentSearch(searchQuery);
+                                                router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                                                setSearchOpen(false);
+                                            }}
+                                            className="w-full py-4 rounded-2xl bg-foreground text-background hover:bg-brand-accent hover:text-white text-[10px] font-black uppercase tracking-[0.25em] transition-all duration-300 text-center flex items-center justify-center gap-2.5 shadow-xl shadow-foreground/5 hover:scale-[1.01]"
+                                        >
+                                            View All Results for "{searchQuery}"
+                                            <ChevronRight size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 </div>
@@ -361,7 +780,7 @@ export default function Navbar() {
                         <div className="flex flex-col h-full relative overflow-hidden">
                             
                             {/* Header */}
-                            <div className="px-4 py-3 flex items-center justify-between border-b border-foreground/5 bg-background sticky top-0 z-10 shrink-0">
+                            <div className="px-4 py-3 flex items-center justify-between border-b border-foreground/12 bg-background sticky top-0 z-10 shrink-0">
                                 <div className="flex items-center gap-2">
                                     <AnimatePresence mode="wait">
                                         {menuStep !== 'main' && (
@@ -402,7 +821,7 @@ export default function Navbar() {
                                                 className="flex flex-col gap-1.5 flex-1"
                                             >
                                                 <div className="mb-2 shrink-0">
-                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Navigation</p>
+                                                    <p className="text-[8.5px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-2">Navigation</p>
                                                     <div className="grid gap-1.5">
                                                         <TapScale>
                                                             <Link
@@ -411,7 +830,7 @@ export default function Navbar() {
                                                                 className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02]"
                                                             >
                                                                 <span className="text-sm font-black uppercase tracking-tight text-foreground">Explore All</span>
-                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                                <ChevronRight size={16} className="text-foreground/45" />
                                                             </Link>
                                                         </TapScale>
                                                         
@@ -421,7 +840,7 @@ export default function Navbar() {
                                                                 className="group flex items-center justify-between p-3 bg-foreground/[0.02] active:bg-foreground/[0.05] rounded-xl transition-all border border-foreground/[0.02] text-left w-full"
                                                             >
                                                                 <span className="text-sm font-black uppercase tracking-tight text-foreground">Categories</span>
-                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                                <ChevronRight size={16} className="text-foreground/45" />
                                                             </button>
                                                         </TapScale>
                                                         <TapScale>
@@ -434,14 +853,14 @@ export default function Navbar() {
                                                                     <span className="text-sm font-black uppercase tracking-tight text-foreground">Archive Sale</span>
                                                                     <span className="px-1.5 py-0.5 bg-brand-red text-[6.5px] font-black text-white rounded-full uppercase tracking-widest">Sale</span>
                                                                 </div>
-                                                                <ChevronRight size={16} className="text-foreground/20" />
+                                                                <ChevronRight size={16} className="text-foreground/45" />
                                                             </Link>
                                                         </TapScale>
                                                     </div>
                                                 </div>
 
                                                 <div className="flex-1 min-h-0 flex flex-col">
-                                                    <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2">Account & Support</p>
+                                                    <p className="text-[8.5px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-2">Account & Support</p>
                                                     <div className="grid grid-cols-2 gap-1.5 shrink-0 mb-1.5">
                                                         <TapScale>
                                                             <Link
@@ -449,7 +868,7 @@ export default function Navbar() {
                                                                 onClick={() => setMobileMenuOpen(false)}
                                                                 className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
                                                             >
-                                                                <User size={16} className="text-foreground/40" />
+                                                                <User size={16} className="text-foreground/60" />
                                                                 <span className="text-[9px] font-black uppercase tracking-widest text-foreground">
                                                                     {user ? (isAdmin ? "Admin" : "Profile") : "Login"}
                                                                 </span>
@@ -461,7 +880,7 @@ export default function Navbar() {
                                                                 onClick={() => setMobileMenuOpen(false)}
                                                                 className="flex items-center gap-2.5 p-3 bg-foreground/[0.02] rounded-xl active:bg-foreground/[0.05] transition-all border border-foreground/[0.02]"
                                                             >
-                                                                <Package size={16} className="text-foreground/40" />
+                                                                <Package size={16} className="text-foreground/60" />
                                                                 <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Orders</span>
                                                             </Link>
                                                         </TapScale>
@@ -492,7 +911,7 @@ export default function Navbar() {
                                                 transition={{ duration: 0.3 }}
                                                 className="flex flex-col gap-1.5 h-full"
                                             >
-                                                <p className="text-[8.5px] font-black text-foreground/30 uppercase tracking-[0.2em] mb-2 text-center">Select Category</p>
+                                                <p className="text-[8.5px] font-black text-foreground/50 uppercase tracking-[0.2em] mb-2 text-center">Select Category</p>
                                                 <div className="grid gap-1.5 overflow-y-auto pr-1 no-scrollbar flex-1">
                                                     {categories
                                                         .filter(cat => cat.name.toLowerCase() !== 'sale')
@@ -504,10 +923,10 @@ export default function Navbar() {
                                                                         setMobileMenuOpen(false);
                                                                         setMenuStep('main');
                                                                     }}
-                                                                    className="flex items-center justify-between p-3.5 border border-foreground/5 active:border-foreground/20 rounded-xl transition-all group text-left w-full"
+                                                                    className="flex items-center justify-between p-3.5 border border-foreground/12 active:border-foreground/20 rounded-xl transition-all group text-left w-full"
                                                                 >
                                                                     <span className="text-xs font-bold text-foreground/70 uppercase tracking-tight">{cat.name}</span>
-                                                                    <ChevronRight size={14} className="text-foreground/10" />
+                                                                    <ChevronRight size={14} className="text-foreground/25" />
                                                                 </button>
                                                             </TapScale>
                                                         ))}
@@ -519,9 +938,9 @@ export default function Navbar() {
                             </div>
 
                             {/* Footer (Recent + Logout) */}
-                            <div className="shrink-0 bg-foreground/[0.01] border-t border-foreground/5 p-4 py-3">
+                            <div className="shrink-0 bg-foreground/[0.01] border-t border-foreground/12 p-4 py-3">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-[8.5px] font-black uppercase tracking-[0.3em] text-foreground/40">Recently Added</h3>
+                                    <h3 className="text-[8.5px] font-black uppercase tracking-[0.3em] text-foreground/60">Recently Added</h3>
                                     <Link 
                                         href="/products" 
                                         onClick={() => setMobileMenuOpen(false)}
@@ -548,7 +967,7 @@ export default function Navbar() {
                                                         className="object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-foreground/10">N/A</div>
+                                                    <div className="w-full h-full flex items-center justify-center text-[7px] font-black text-foreground/25">N/A</div>
                                                 )}
                                             </div>
                                             <p className="text-[8px] font-bold text-foreground/70 truncate uppercase tracking-tight leading-none mb-0.5">{product.name}</p>

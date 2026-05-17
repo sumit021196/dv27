@@ -28,7 +28,7 @@ export default function AdminUsersPage() {
                         <Users className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Customers & Users
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {users.length} registered accounts
                     </p>
                 </div>
@@ -40,11 +40,11 @@ export default function AdminUsersPage() {
                     {loading ? (
                         <div className="h-full flex flex-col justify-center items-center p-12">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
-                            <span className="text-gray-500 font-medium">Loading user directory...</span>
+                            <span className="text-gray-700 font-medium">Loading user directory...</span>
                         </div>
                     ) : users.length === 0 ? (
-                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-500">
-                            <Users size={48} className="mx-auto text-gray-300 mb-4" />
+                        <div className="h-full flex flex-col justify-center items-center p-12 text-center text-gray-700">
+                            <Users size={48} className="mx-auto text-gray-700 mb-4" />
                             <p className="text-lg font-medium text-gray-900">No users found</p>
                         </div>
                     ) : (
@@ -54,10 +54,10 @@ export default function AdminUsersPage() {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0 z-10">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Contact</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Joined</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -75,12 +75,12 @@ export default function AdminUsersPage() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm text-gray-900 flex items-center gap-2">
-                                                        <Mail size={14} className="text-gray-400" />
+                                                        <Mail size={14} className="text-gray-600" />
                                                         {u.email || "No email"}
                                                     </div>
                                                     {u.phone && (
-                                                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                                                            <Phone size={12} className="text-gray-300" />
+                                                        <div className="text-xs text-gray-700 mt-1 flex items-center gap-2">
+                                                            <Phone size={12} className="text-gray-700" />
                                                             {u.phone}
                                                         </div>
                                                     )}
@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
                                                         {u.is_admin ? 'Admin' : 'Customer'}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 flex items-center gap-1.5 pt-7">
+                                                <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-700 flex items-center gap-1.5 pt-7">
                                                     <Clock size={12} />
                                                     {u.created_at ? formatDistanceToNow(new Date(u.created_at), { addSuffix: true }) : 'Unknown'}
                                                 </td>
@@ -120,11 +120,11 @@ export default function AdminUsersPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1.5">
-                                                <Mail size={12} className="text-gray-400" /> {u.email}
+                                            <p className="text-xs text-gray-700 truncate mt-0.5 flex items-center gap-1.5">
+                                                <Mail size={12} className="text-gray-600" /> {u.email}
                                             </p>
                                             <div className="flex items-center justify-between mt-2">
-                                                <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                                                <p className="text-[10px] text-gray-600 flex items-center gap-1">
                                                     <Clock size={10} /> {u.created_at ? formatDistanceToNow(new Date(u.created_at), { addSuffix: true }) : 'N/A'}
                                                 </p>
                                                 {u.phone && <p className="text-[10px] text-blue-600 font-bold">{u.phone}</p>}

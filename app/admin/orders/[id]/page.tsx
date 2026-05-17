@@ -87,7 +87,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         }
     };
 
-    if (isLoading) return <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-gray-400" /></div>;
+    if (isLoading) return <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-gray-600" /></div>;
     if (error || !order) return <div className="p-12 text-center text-red-500">{error || "Not found"}</div>;
 
     const shipping = order.shipping_details?.[0]; // Assuming one shipping detail per order
@@ -96,7 +96,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link href="/admin/orders" className="p-2 -ml-2 text-gray-400 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100">
+                    <Link href="/admin/orders" className="p-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100">
                         <ArrowLeft size={20} />
                     </Link>
                     <div>
@@ -110,7 +110,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                 {order.status}
                             </span>
                         </h1>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-700 mt-1">
                             Placed on {format(new Date(order.created_at), 'MMMM dd, yyyy - hh:mm a')}
                         </p>
                     </div>
@@ -142,7 +142,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
-                            <Package className="text-gray-500" size={20} />
+                            <Package className="text-gray-700" size={20} />
                             <h2 className="text-lg font-semibold text-gray-900">Order Items</h2>
                         </div>
                         <ul className="divide-y divide-gray-200">
@@ -153,12 +153,12 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                             {item.image_url ? (
                                                 <img src={item.image_url} alt="" className="h-full w-full object-cover" />
                                             ) : (
-                                                <Package className="h-full w-full p-4 text-gray-300" />
+                                                <Package className="h-full w-full p-4 text-gray-700" />
                                             )}
                                         </div>
                                         <div>
                                             <h3 className="text-sm font-bold text-gray-900">{item.product_name}</h3>
-                                            <p className="text-sm text-gray-500 mt-1">₹{item.price} x {item.quantity}</p>
+                                            <p className="text-sm text-gray-700 mt-1">₹{item.price} x {item.quantity}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -175,15 +175,15 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                     
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <Receipt size={20} className="text-gray-500" />
+                            <Receipt size={20} className="text-gray-700" />
                             Payment Summary
                         </h2>
                         <div className="space-y-3 text-sm">
-                            <div className="flex justify-between text-gray-500">
+                            <div className="flex justify-between text-gray-700">
                                 <span>Subtotal</span>
                                 <span className="text-gray-900">₹{order.subtotal}</span>
                             </div>
-                            <div className="flex justify-between text-gray-500">
+                            <div className="flex justify-between text-gray-700">
                                 <span>Shipping</span>
                                 <span className="text-gray-900">₹{order.shipping_fee}</span>
                             </div>
@@ -193,7 +193,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                             </div>
                             {order.razorpay_payment_id && (
                                 <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                    <p className="text-xs text-gray-500 mb-1">Razorpay TXN</p>
+                                    <p className="text-xs text-gray-700 mb-1">Razorpay TXN</p>
                                     <p className="font-mono text-xs text-gray-900 break-all">{order.razorpay_payment_id}</p>
                                 </div>
                             )}
@@ -204,7 +204,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                                    <MapPin size={20} className="text-gray-500" />
+                                    <MapPin size={20} className="text-gray-700" />
                                     Shipping Details
                                 </h2>
                                 {!isEditingShipping && (
@@ -260,18 +260,18 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                             ) : (
                                 <div className="text-sm space-y-4">
                                     <div>
-                                        <p className="text-gray-500 font-medium mb-1">Customer</p>
+                                        <p className="text-gray-700 font-medium mb-1">Customer</p>
                                         <p className="font-semibold text-gray-900">{order.customer_name}</p>
                                         <p className="text-gray-600">{order.customer_phone}</p>
                                     </div>
                                     <div className="pt-4 border-t border-gray-100">
-                                        <p className="text-gray-500 font-medium mb-1">Delivery Address</p>
+                                        <p className="text-gray-700 font-medium mb-1">Delivery Address</p>
                                         <p className="text-gray-900">{shipping.address}</p>
                                         <p className="text-gray-900 font-semibold mt-1">PIN: {shipping.pincode}</p>
                                     </div>
                                     {shipping.tracking_id && (
                                         <div className="pt-4 border-t border-gray-100">
-                                            <p className="text-gray-500 font-medium mb-1">Tracking ID ({shipping.shipping_partner})</p>
+                                            <p className="text-gray-700 font-medium mb-1">Tracking ID ({shipping.shipping_partner})</p>
                                             <p className="text-blue-600 font-mono text-xs">{shipping.tracking_id}</p>
                                         </div>
                                     )}

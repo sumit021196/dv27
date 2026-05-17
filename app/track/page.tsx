@@ -50,7 +50,7 @@ function TrackOrderContent() {
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.5em] text-brand-accent mb-4">Post-Purchase</p>
                         <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-foreground">
-                            Track <span className="text-foreground/10">Order</span>
+                            Track <span className="text-foreground/25">Order</span>
                         </h1>
                     </div>
                 </div>
@@ -63,7 +63,7 @@ function TrackOrderContent() {
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleTrack()}
                         placeholder="Order ID / AWB #"
-                        className="w-full bg-transparent border-b-2 border-foreground/10 py-6 text-2xl md:text-4xl font-black uppercase outline-none focus:border-brand-accent transition-all placeholder:text-foreground/5 text-foreground pr-16"
+                        className="w-full bg-transparent border-b-2 border-foreground/18 py-6 text-2xl md:text-4xl font-black uppercase outline-none focus:border-brand-accent transition-all placeholder:text-foreground/5 text-foreground pr-16"
                     />
                     <button
                         onClick={() => handleTrack()}
@@ -72,7 +72,7 @@ function TrackOrderContent() {
                     >
                         {loading ? <Loader2 size={24} className="animate-spin" /> : <ArrowRight size={24} />}
                     </button>
-                    <p className="mt-4 text-[10px] font-bold text-foreground/20 uppercase tracking-[0.2em]">
+                    <p className="mt-4 text-[10px] font-bold text-foreground/45 uppercase tracking-[0.2em]">
                         Check your confirmation email for the tracking ID.
                     </p>
                 </div>
@@ -89,11 +89,11 @@ function TrackOrderContent() {
                     {result && (
                         <div className="grid gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                             {/* Order Summary Card */}
-                            <div className="bg-muted/30 rounded-[3rem] p-8 md:p-12 border border-foreground/5 relative overflow-hidden">
+                            <div className="bg-muted/30 rounded-[3rem] p-8 md:p-12 border border-foreground/12 relative overflow-hidden">
                                 <div className="flex flex-col md:flex-row justify-between gap-8 relative z-10">
                                     <div className="space-y-6">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-2">Order Status</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60 mb-2">Order Status</p>
                                             <div className="flex items-center gap-3">
                                                 <span className={cn(
                                                     "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
@@ -104,17 +104,17 @@ function TrackOrderContent() {
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1">Customer</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60 mb-1">Customer</p>
                                             <p className="text-xl font-black uppercase text-foreground">{result.order.customer_name}</p>
                                         </div>
                                     </div>
                                     <div className="md:text-right space-y-6">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1">Order Date</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60 mb-1">Order Date</p>
                                             <p className="text-lg font-bold text-foreground">{format(new Date(result.order.created_at), 'PPP')}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-1">Total Amount</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60 mb-1">Total Amount</p>
                                             <p className="text-3xl font-black tracking-tighter text-foreground">₹{result.order.total_amount.toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -125,7 +125,7 @@ function TrackOrderContent() {
                             </div>
 
                             {/* Shipment Info */}
-                            <div className="bg-background rounded-[3rem] p-8 md:p-12 border border-foreground/5 shadow-2xl shadow-foreground/[0.02]">
+                            <div className="bg-background rounded-[3rem] p-8 md:p-12 border border-foreground/12 shadow-2xl shadow-foreground/[0.02]">
                                 <div className="flex items-center gap-4 mb-10">
                                     <div className="p-4 bg-foreground text-background rounded-2xl shadow-xl shadow-foreground/10">
                                         <Truck size={24} />
@@ -135,7 +135,7 @@ function TrackOrderContent() {
                                             {result.shipping?.tracking_id ? "Shipment Live" : "Preparing Shipment"}
                                         </h2>
                                         {result.shipping?.tracking_id && (
-                                            <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest mt-1">
+                                            <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest mt-1">
                                                 {result.shipping.partner} • AWB: {result.shipping.tracking_id}
                                             </p>
                                         )}
@@ -180,12 +180,12 @@ function TrackOrderContent() {
                                         </div>
                                     ) : (
                                         <div className="flex gap-6 items-start">
-                                            <div className="z-10 bg-foreground/10 text-foreground/30 rounded-full p-1.5">
+                                            <div className="z-10 bg-foreground/10 text-foreground/50 rounded-full p-1.5">
                                                 <Package size={12} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black text-foreground/30 uppercase tracking-widest mb-1">Pending Dispatch</p>
-                                                <p className="text-sm font-bold text-foreground/20">Awaiting label generation</p>
+                                                <p className="text-[10px] font-black text-foreground/50 uppercase tracking-widest mb-1">Pending Dispatch</p>
+                                                <p className="text-sm font-bold text-foreground/45">Awaiting label generation</p>
                                             </div>
                                         </div>
                                     )}
@@ -210,7 +210,7 @@ export default function TrackOrderPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center bg-background pt-32 pb-20">
-                <Loader2 className="animate-spin text-foreground/20 w-12 h-12" />
+                <Loader2 className="animate-spin text-foreground/45 w-12 h-12" />
             </div>
         }>
             <TrackOrderContent />

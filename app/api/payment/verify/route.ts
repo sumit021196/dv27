@@ -56,6 +56,13 @@ export async function POST(req: Request) {
         throw new Error("Failed to finalize order in database");
     }
 
+    // 2.1. Ensure stock is decremented (Robust Inventory System)
+    // This uses our new idempotent stock management function
+    await supabase.rpc('manage_order_stock', {
+        p_order_id: orderDbId,
+        p_action: 'decrement'
+    });
+
     // 2b. If coupon was applied, record usage
     if (orderData.applied_coupon_id) {
         await supabase.from('coupon_usages').insert({

@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/admin/Sidebar";
 import { AdminBottomNav } from "@/components/admin/BottomNav";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 import { ReactNode } from "react";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
@@ -31,6 +32,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <AdminSidebar />
 
             <main className="flex-1 flex flex-col min-h-screen w-full transition-all duration-300 md:ml-64 relative bg-gray-50 pb-20 md:pb-0">
+                {/* Sticky Admin Header */}
+                <AdminHeader />
+
                 {/* Content Area - Natural Scroll */}
                 <div className="flex-1 flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full">
                     {children}

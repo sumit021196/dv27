@@ -23,7 +23,7 @@ export default async function CategoryGrid() {
             <h2 className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tighter uppercase text-foreground leading-none">
               discover the latest
             </h2>
-            <p className="mt-3 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-foreground/40">
+            <p className="mt-3 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-foreground/60">
               Curated categories for Every occasion
             </p>
           </div>
@@ -33,7 +33,7 @@ export default async function CategoryGrid() {
             <Link 
               key={category.id} 
               href={`/products?category=${category.slug}`}
-              className="group relative aspect-square overflow-hidden rounded-lg bg-muted border border-foreground/5 shadow-sm"
+              className="group relative aspect-square overflow-hidden rounded-lg bg-muted border border-foreground/12 shadow-sm"
             >
               <Image
                 src={category.image_url || "/placeholder-category.png"}

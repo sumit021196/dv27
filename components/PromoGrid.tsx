@@ -31,7 +31,7 @@ export default function PromoGrid({ banners = [] }: { banners: any[] }) {
             <Link 
               key={banner.id || idx}
               href={banner.link_url || "/products"}
-              className="group relative overflow-hidden rounded-[2.5rem] bg-muted aspect-[16/9] md:aspect-[21/9] border border-foreground/5 shadow-2xl"
+              className="group relative overflow-hidden rounded-[2.5rem] bg-muted aspect-[16/9] md:aspect-[21/9] border border-foreground/12 shadow-2xl"
             >
               {banner.style_type === 'video' || banner.image_url?.match(/\.(mp4|webm|ogg|mov)$|^https:\/\/res\.cloudinary\.com\/.*\/video\/upload\//) ? (
                 <video 

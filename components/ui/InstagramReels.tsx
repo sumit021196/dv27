@@ -86,14 +86,14 @@ export default function InstagramReels() {
         return (
             <div className="py-24 bg-background flex flex-col items-center justify-center">
                 <Loader2 className="w-10 h-10 animate-spin text-brand-accent mb-4" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Loading Reels...</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/50">Loading Reels...</p>
             </div>
         );
     }
 
     if (displayReels.length === 0) {
         return (
-            <div className="py-12 md:py-24 bg-muted/30 border-y border-foreground/5 relative overflow-hidden">
+            <div className="py-12 md:py-24 bg-muted/30 border-y border-foreground/12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-grid-black opacity-10" />
                 <div className="max-w-[1440px] mx-auto px-6 lg:px-12 relative z-10 text-center">
                     <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-foreground mb-6">
@@ -140,14 +140,14 @@ export default function InstagramReels() {
                 {/* Horizontal Scroll Buttons */}
                 <button
                     onClick={() => scroll('left')}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 md:w-10 md:h-10 rounded-full bg-background/80 md:bg-background/20 backdrop-blur-md flex items-center justify-center text-foreground border border-foreground/10 hover:bg-brand-accent hover:text-white transition-all shadow-lg md:opacity-0 md:group-hover:opacity-100"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 md:w-10 md:h-10 rounded-full bg-background/80 md:bg-background/20 backdrop-blur-md flex items-center justify-center text-foreground border border-foreground/18 hover:bg-brand-accent hover:text-white transition-all shadow-lg md:opacity-0 md:group-hover:opacity-100"
                     aria-label="Scroll left"
                 >
                     <ChevronLeft size={18} className="md:w-5 md:h-5" />
                 </button>
                 <button
                     onClick={() => scroll('right')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 md:w-10 md:h-10 rounded-full bg-background/80 md:bg-background/20 backdrop-blur-md flex items-center justify-center text-foreground border border-foreground/10 hover:bg-brand-accent hover:text-white transition-all shadow-lg md:opacity-0 md:group-hover:opacity-100"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-30 w-8 h-8 md:w-10 md:h-10 rounded-full bg-background/80 md:bg-background/20 backdrop-blur-md flex items-center justify-center text-foreground border border-foreground/18 hover:bg-brand-accent hover:text-white transition-all shadow-lg md:opacity-0 md:group-hover:opacity-100"
                     aria-label="Scroll right"
                 >
                     <ChevronRight size={18} className="md:w-5 md:h-5" />

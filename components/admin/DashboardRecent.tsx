@@ -27,21 +27,21 @@ export async function DashboardRecent() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
                     Recent Orders
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                 </h2>
                 <div className="space-y-3">
                     {recentOrders?.length ? recentOrders.map((order) => (
                         <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
                             <div className="min-w-0">
                                 <p className="text-sm font-semibold text-gray-900 truncate">{order.customer_name}</p>
-                                <p className="text-xs text-gray-500 capitalize">{order.status}</p>
+                                <p className="text-xs text-gray-700 capitalize">{order.status}</p>
                             </div>
                             <div className="text-right ml-3">
                                 <p className="text-sm font-bold text-gray-900">₹{order.total_amount}</p>
-                                <p className="text-[10px] text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
+                                <p className="text-[10px] text-gray-600">{new Date(order.created_at).toLocaleDateString()}</p>
                             </div>
                         </div>
-                    )) : <p className="text-sm text-gray-500 py-4 text-center">No recent orders</p>}
+                    )) : <p className="text-sm text-gray-700 py-4 text-center">No recent orders</p>}
                 </div>
             </div>
 
@@ -49,7 +49,7 @@ export async function DashboardRecent() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
                     Recently Added
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                 </h2>
                 <div className="space-y-3">
                     {recentProducts?.length ? recentProducts.map((product) => (
@@ -69,7 +69,7 @@ export async function DashboardRecent() {
                                 <p className="text-sm font-bold text-gray-900">₹{product.price}</p>
                             </div>
                         </div>
-                    )) : <p className="text-sm text-gray-500 py-4 text-center">No recent products</p>}
+                    )) : <p className="text-sm text-gray-700 py-4 text-center">No recent products</p>}
                 </div>
             </div>
         </div>

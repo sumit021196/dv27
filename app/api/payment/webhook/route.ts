@@ -67,6 +67,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'RPC failed' }, { status: 500 });
       }
 
+      // 3.1. Ensure stock is decremented (Robust Inventory System)
+      await supabase.rpc('manage_order_stock', {
+        p_order_id: orderData.id,
+        p_action: 'decrement'
+      });
+
       // 4. Trigger Delhivery shipment creation & Detailed Email
       const { data: shipping } = await supabase.from('shipping_details').select('*').eq('order_id', orderData.id).single();
       const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderData.id);

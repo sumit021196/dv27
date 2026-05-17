@@ -14,7 +14,7 @@ export async function updateProductAction(productId: string | number, formData: 
     price: number;
     original_price?: number | null;
     description?: string | null;
-    category_id?: string | null;
+    categoryIds?: string[];
     imageUrls?: string[];
     videoUrl?: string | null;
     isActive?: boolean;
@@ -78,7 +78,7 @@ export async function updateProductAction(productId: string | number, formData: 
                 price: formData.price,
                 original_price: formData.original_price === undefined ? null : formData.original_price,
                 description: formData.description || null,
-                category_id: formData.category_id || null,
+                category_id: formData.categoryIds?.[0] || null,
                 media_url: mainMediaUrl,
                 video_url: newVideoUrl,
                 stock: formData.stock ?? 0,
@@ -104,6 +104,17 @@ export async function updateProductAction(productId: string | number, formData: 
             }));
             const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
             if (imgError) console.error("Error syncing images:", imgError);
+        }
+
+        // 4b. Sync product_categories table
+        await supabase.from('product_categories').delete().eq('product_id', productId);
+        if (formData.categoryIds && formData.categoryIds.length > 0) {
+            const catInserts = formData.categoryIds.map(cId => ({
+                product_id: productId,
+                category_id: cId
+            }));
+            const { error: catError } = await supabase.from('product_categories').insert(catInserts);
+            if (catError) console.error("Error syncing categories:", catError);
         }
 
         // 5. Sync product_variants table

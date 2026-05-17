@@ -31,6 +31,7 @@ export interface Product {
     rating?: number;
     category_id?: string;
     category_name?: string;
+    all_categories?: Category[];
     variants?: ProductVariant[];
     product_variants?: ProductVariant[];
     images?: string[];

@@ -29,11 +29,11 @@ const RatingStars = ({ rating }: { rating: number }) => {
           size={10} 
           className={cn(
             "transition-colors duration-300",
-            i < fullStars ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/10"
+            i < fullStars ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/25"
           )} 
         />
       ))}
-      <span className="text-[10px] font-bold text-foreground/40 ml-1">{Number(rating).toFixed(1)}</span>
+      <span className="text-[10px] font-bold text-foreground/60 ml-1">{Number(rating).toFixed(1)}</span>
     </div>
   );
 };
@@ -68,7 +68,7 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Brand Label/Badge (Optional WTFlex Style) */}
         {(product.name.toLowerCase().includes('cap') || product.name.toLowerCase().includes('v1')) && (
           <div className="absolute top-4 left-4 z-10">
-              <span className="px-2 py-1 bg-foreground text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-md border border-foreground/10">
+              <span className="px-2 py-1 bg-foreground text-[8px] font-black uppercase tracking-widest text-background backdrop-blur-md border border-foreground/18">
                   NEW DROP
               </span>
           </div>
@@ -89,7 +89,7 @@ export default function ProductCard({ product }: { product: Product }) {
             }}
             className={`flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md transition-all duration-300 border ${wished
                 ? "bg-white border-brand-red text-brand-red shadow-[0_0_15px_rgba(255,45,85,0.4)]"
-                : "bg-background/40 border-foreground/10 text-foreground hover:bg-foreground hover:text-background"
+                : "bg-background/40 border-foreground/18 text-foreground hover:bg-foreground hover:text-background"
               }`}
           >
             <AnimatePresence mode="wait">
@@ -133,7 +133,7 @@ export default function ProductCard({ product }: { product: Product }) {
                 ₹{product.price.toLocaleString("en-IN")}
               </span>
               {showOriginalPrice && (
-                <span className="text-[10px] font-bold text-foreground/20 line-through">
+                <span className="text-[10px] font-bold text-foreground/45 line-through">
                   ₹{product.original_price?.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                 </span>
               )}
@@ -145,7 +145,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <TapScale>
              <Link 
                 href={`/product/${product.slug || product.id}`}
-                className="flex items-center justify-center w-full py-3 border border-foreground/10 text-[10px] font-semibold tracking-tight text-foreground transition-all"
+                className="flex items-center justify-center w-full py-3 border border-foreground/18 text-[10px] font-semibold tracking-tight text-foreground transition-all"
              >
                 View
              </Link>

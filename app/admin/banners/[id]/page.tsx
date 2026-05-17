@@ -107,14 +107,14 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-12">
             <div className="flex items-center gap-4">
-                <Link href="/admin/banners" className="p-2 -ml-2 text-gray-400 hover:text-blue-600 transition-colors rounded-full hover:bg-gray-100">
+                <Link href="/admin/banners" className="p-2 -ml-2 text-gray-600 hover:text-blue-600 transition-colors rounded-full hover:bg-gray-100">
                     <ArrowLeft size={24} />
                 </Link>
                 <div>
                     <h1 className="text-3xl font-black tracking-tighter text-gray-900 uppercase">
                         {isNew ? "Create Banner" : "Edit Banner"}
                     </h1>
-                    <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Configure your hero section & promo spots</p>
+                    <p className="text-sm font-bold text-gray-600 uppercase tracking-widest">Configure your hero section & promo spots</p>
                 </div>
             </div>
 
@@ -135,7 +135,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Banner Asset</label>
+                                <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Banner Asset</label>
                                 
                                 <div className="space-y-4">
                                     {/* Native Upload Option */}
@@ -165,8 +165,8 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                             }}
                                         />
                                         <div className="flex flex-col items-center gap-2">
-                                            <UploadCloud className="mx-auto h-8 w-8 text-gray-400 group-hover:text-blue-600 transition-all" />
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Click or drag banner image</p>
+                                            <UploadCloud className="mx-auto h-8 w-8 text-gray-600 group-hover:text-blue-600 transition-all" />
+                                            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Click or drag banner image</p>
                                         </div>
                                     </div>
 
@@ -184,7 +184,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Position</label>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Position</label>
                                     <select
                                         value={position}
                                         onChange={(e) => setPosition(e.target.value)}
@@ -196,7 +196,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Style Preset</label>
+                                    <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Style Preset</label>
                                     <select
                                         value={styleType}
                                         onChange={(e) => setStyleType(e.target.value)}
@@ -221,7 +221,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Main Heading</label>
+                                <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Main Heading</label>
                                 <input
                                     type="text"
                                     value={title}
@@ -231,7 +231,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sub-heading / Description</label>
+                                <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Sub-heading / Description</label>
                                 <textarea
                                     value={subtitle}
                                     onChange={(e) => setSubtitle(e.target.value)}
@@ -254,7 +254,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Button Text</label>
+                                <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Button Text</label>
                                 <input
                                     type="text"
                                     value={ctaText}
@@ -263,7 +263,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Target URL</label>
+                                <label className="block text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Target URL</label>
                                 <input
                                     type="text"
                                     value={linkUrl}
@@ -283,7 +283,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                     />
                                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                                 </label>
-                                <span className="text-xs font-black uppercase tracking-widest text-gray-500">Banner Visibility</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-gray-700">Banner Visibility</span>
                             </div>
                         </div>
                     </div>
@@ -323,7 +323,7 @@ export default function BannerFormPage({ params }: { params: Promise<{ id: strin
                                     <h3 className="text-white text-2xl font-bold">
                                         {title || "Untitled Banner"}
                                     </h3>
-                                    <p className="text-gray-300 text-sm mt-1 max-w-[80%] mx-auto">
+                                    <p className="text-gray-700 text-sm mt-1 max-w-[80%] mx-auto">
                                         {subtitle || "Preview of your banner content..."}
                                     </p>
                                     <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-bold">

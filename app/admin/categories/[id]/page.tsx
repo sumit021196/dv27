@@ -94,7 +94,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
                 <Loader2 className="animate-spin text-blue-600 h-10 w-10" />
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading category details...</p>
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Loading category details...</p>
             </div>
         );
     }
@@ -104,7 +104,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
             <div className="flex items-center gap-4">
                 <Link 
                     href="/admin/categories" 
-                    className="p-3 text-gray-400 hover:text-gray-900 bg-white border border-gray-100 rounded-2xl shadow-sm transition-all hover:scale-110 active:scale-95"
+                    className="p-3 text-gray-600 hover:text-gray-900 bg-white border border-gray-100 rounded-2xl shadow-sm transition-all hover:scale-110 active:scale-95"
                 >
                     <ArrowLeft size={20} />
                 </Link>
@@ -112,7 +112,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                     <h1 className="text-3xl font-black tracking-tighter text-gray-900 uppercase">
                         {isNew ? "Create Category" : "Edit Category"}
                     </h1>
-                    <p className="mt-1 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <p className="mt-1 text-[10px] font-black text-gray-600 uppercase tracking-widest">
                         Organize your products with bold visual headers
                     </p>
                 </div>
@@ -130,7 +130,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
 
                         <div className="space-y-6">
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">
                                     <Type size={14} /> Category Name
                                 </label>
                                 <input
@@ -138,13 +138,13 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                     required
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
+                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-700"
                                     placeholder="e.g., OVERSIZED TS"
                                 />
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">
                                     <LinkIcon size={14} /> URL Slug
                                 </label>
                                 <input
@@ -152,13 +152,13 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                     required
                                     value={slug}
                                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300"
+                                    className="w-full bg-gray-50 rounded-2xl border-none px-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-700"
                                     placeholder="e.g., oversized-ts"
                                 />
                             </div>
 
                             <div>
-                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">
                                     <ImageIcon size={14} /> Hero Image
                                 </label>
                                 
@@ -178,7 +178,8 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                                         setStatusMessage("Compressing...");
                                                         const compressed = await compressImage(file);
                                                         setStatusMessage("Uploading...");
-                                                        const url = await uploadToSupabase(supabase, 'categories', compressed);
+                                                        const { data: { session } } = await supabase.auth.getSession();
+                                                        const url = await uploadToSupabase(supabase, 'categories', compressed, session?.access_token);
                                                         setImageUrl(url);
                                                     } catch (err: any) {
                                                         setError("Upload failed: " + err.message);
@@ -190,21 +191,21 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                             }}
                                         />
                                         <div className="flex flex-col items-center gap-2">
-                                            <UploadCloud className="text-gray-400 group-hover:text-blue-600 transition-colors" size={32} />
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Click or drag image to upload</p>
+                                            <UploadCloud className="text-gray-600 group-hover:text-blue-600 transition-colors" size={32} />
+                                            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Click or drag image to upload</p>
                                         </div>
                                     </div>
 
                                     {/* URL Input (Optional fallback) */}
                                     <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-600">
                                             <LinkIcon size={14} />
                                         </div>
                                         <input
                                             type="url"
                                             value={imageUrl}
                                             onChange={(e) => setImageUrl(e.target.value)}
-                                            className="w-full bg-gray-50 rounded-2xl border-none pl-12 pr-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-300 text-xs"
+                                            className="w-full bg-gray-50 rounded-2xl border-none pl-12 pr-6 py-4 text-gray-900 font-bold focus:ring-2 focus:ring-blue-600 outline-none transition-all placeholder:text-gray-700 text-xs"
                                             placeholder="...or paste a direct image URL"
                                         />
                                     </div>
@@ -227,7 +228,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                                     {isActive ? 'Published' : 'Hidden'}
                                 </span>
                              </div>
-                             <div className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase">
+                             <div className="flex items-center gap-2 text-[10px] font-black text-gray-700 uppercase">
                                 <CheckCircle2 size={12} /> Live Preview Ready
                              </div>
                         </div>
@@ -278,7 +279,7 @@ export default function CategoryFormPage({ params }: { params: Promise<{ id: str
                     </div>
 
                     <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">
+                        <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-4">
                             Editing Guidelines
                         </h4>
                         <ul className="space-y-3">

@@ -21,7 +21,7 @@ export default async function AdminProductsPage() {
                     <Package className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                     Product Catalog
                 </h1>
-                <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                <p className="mt-1 text-xs sm:text-sm text-gray-700">
                     Manage your items, pricing, and visibility.
                 </p>
             </div>

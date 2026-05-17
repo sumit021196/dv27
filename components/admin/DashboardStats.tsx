@@ -43,16 +43,16 @@ export async function DashboardStats() {
                 <div key={i} className="bg-white p-4 lg:p-5 rounded-xl lg:rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
                     <div className="flex items-start justify-between">
                         <div className="min-w-0">
-                            <p className="text-[11px] lg:text-sm font-medium text-gray-500 truncate">{stat.title}</p>
+                            <p className="text-[11px] lg:text-sm font-medium text-gray-700 truncate">{stat.title}</p>
                             <div className="mt-1 flex items-baseline">
                                 <p className="text-base lg:text-2xl font-bold text-gray-900 truncate">{stat.value}</p>
                             </div>
                         </div>
                         <div className="bg-gray-50 p-1.5 lg:p-3 rounded-lg flex-shrink-0">
-                            <stat.icon className="h-5 w-5 lg:h-6 lg:w-6 text-gray-400" />
+                            <stat.icon className="h-5 w-5 lg:h-6 lg:w-6 text-gray-600" />
                         </div>
                     </div>
-                    <div className="mt-1 lg:mt-4 text-[10px] lg:text-sm text-gray-500 font-medium">
+                    <div className="mt-1 lg:mt-4 text-[10px] lg:text-sm text-gray-700 font-medium">
                         {stat.trend}
                     </div>
                 </div>

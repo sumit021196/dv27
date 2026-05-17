@@ -147,7 +147,7 @@ export default function CouponsPage() {
                         <Ticket className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Coupons Management
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {coupons.length} active promotional codes
                     </p>
                 </div>
@@ -176,13 +176,13 @@ export default function CouponsPage() {
                 {loading ? (
                     <div className="h-full flex flex-col items-center justify-center p-12">
                         <Loader2 className="animate-spin text-blue-600 h-8 w-8 mb-4" />
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading...</span>
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Loading...</span>
                     </div>
                 ) : coupons.length === 0 ? (
                     <div className="h-full bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
                         <Ticket size={48} className="text-gray-200 mb-4" />
-                        <p className="font-bold text-gray-400 uppercase tracking-widest text-sm">No coupons found</p>
-                        <p className="text-xs text-gray-400 mt-1 uppercase tracking-wide">Start by creating your first promotional code</p>
+                        <p className="font-bold text-gray-600 uppercase tracking-widest text-sm">No coupons found</p>
+                        <p className="text-xs text-gray-600 mt-1 uppercase tracking-wide">Start by creating your first promotional code</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -191,13 +191,13 @@ export default function CouponsPage() {
                                 <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
                                     <button 
                                         onClick={() => handleEdit(c)}
-                                        className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                                        className="p-2 text-gray-600 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
                                     >
                                         <Edit3 size={16} />
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(c.id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
+                                        className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -220,7 +220,7 @@ export default function CouponsPage() {
                                             onClick={() => handleToggleActive(c.id, c.active)}
                                             className={cn(
                                                 "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border transition-all mt-1 flex items-center gap-1",
-                                                c.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-50 text-gray-400 border-gray-100'
+                                                c.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-50 text-gray-600 border-gray-100'
                                             )}
                                         >
                                             {c.active ? <CheckCircle2 size={8} /> : <XCircle size={8} />}
@@ -233,7 +233,7 @@ export default function CouponsPage() {
                                     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100/50">
                                         <div className="flex items-center gap-1.5 mb-1">
                                             <TrendingDown size={10} className="text-blue-600" />
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Benefit</p>
+                                            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wider">Benefit</p>
                                         </div>
                                         <p className="text-base font-black text-blue-600">
                                             {c.discount_type === 'fixed' ? `₹${c.discount_value}` : `${c.discount_value}%`}
@@ -241,12 +241,12 @@ export default function CouponsPage() {
                                     </div>
                                     <div className="bg-gray-50 rounded-xl p-3 border border-gray-100/50">
                                         <div className="flex items-center gap-1.5 mb-1">
-                                            <ShoppingBag size={10} className="text-gray-400" />
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Conditions</p>
+                                            <ShoppingBag size={10} className="text-gray-600" />
+                                            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wider">Conditions</p>
                                         </div>
                                         <div className="flex flex-col">
                                             <p className="text-xs font-bold text-gray-900">₹{c.min_order_value}+</p>
-                                            {c.min_quantity > 0 && <p className="text-[9px] font-bold text-gray-500">{c.min_quantity} Items+</p>}
+                                            {c.min_quantity > 0 && <p className="text-[9px] font-bold text-gray-700">{c.min_quantity} Items+</p>}
                                         </div>
                                     </div>
                                 </div>
@@ -255,16 +255,16 @@ export default function CouponsPage() {
                                     <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-2 gap-2">
                                         {c.expiry_date && (
                                             <div className="flex items-center gap-1.5 overflow-hidden">
-                                                <Calendar size={12} className="text-gray-400 shrink-0" />
-                                                <p className="text-[10px] font-bold text-gray-500 truncate">
+                                                <Calendar size={12} className="text-gray-600 shrink-0" />
+                                                <p className="text-[10px] font-bold text-gray-700 truncate">
                                                     {new Date(c.expiry_date).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         )}
                                         {c.max_uses_per_user > 0 && (
                                             <div className="flex items-center gap-1.5">
-                                                <Users size={12} className="text-gray-400 shrink-0" />
-                                                <p className="text-[10px] font-bold text-gray-500">Limit: {c.max_uses_per_user}</p>
+                                                <Users size={12} className="text-gray-600 shrink-0" />
+                                                <p className="text-[10px] font-bold text-gray-700">Limit: {c.max_uses_per_user}</p>
                                             </div>
                                         )}
                                     </div>
@@ -288,7 +288,7 @@ export default function CouponsPage() {
                                     setShowModal(false);
                                     setEditingId(null);
                                 }}
-                                className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-all"
+                                className="p-2 text-gray-600 hover:bg-gray-50 rounded-full transition-all"
                             >
                                 <X size={20} />
                             </button>
@@ -297,11 +297,11 @@ export default function CouponsPage() {
                         <div className="p-6 overflow-y-auto custom-scrollbar">
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div>
-                                    <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Coupon Code</label>
+                                    <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Coupon Code</label>
                                     <input 
                                         required
                                         autoFocus
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all uppercase"
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all uppercase"
                                         placeholder="E.G. FLASH20"
                                         value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
@@ -310,7 +310,7 @@ export default function CouponsPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Type</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Type</label>
                                         <select 
                                             className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all appearance-none"
                                             value={formData.discount_type}
@@ -321,11 +321,11 @@ export default function CouponsPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Value</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Value</label>
                                         <input 
                                             required
                                             type="number"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
                                             placeholder="500"
                                             value={formData.discount_value}
                                             onChange={(e) => setFormData({...formData, discount_value: e.target.value})}
@@ -335,20 +335,20 @@ export default function CouponsPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Min Order Value (₹)</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Min Order Value (₹)</label>
                                         <input 
                                             type="number"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
                                             placeholder="1000"
                                             value={formData.min_order_value}
                                             onChange={(e) => setFormData({...formData, min_order_value: e.target.value})}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Min Item Quantity</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Min Item Quantity</label>
                                         <input 
                                             type="number"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
                                             placeholder="2"
                                             value={formData.min_quantity}
                                             onChange={(e) => setFormData({...formData, min_quantity: e.target.value})}
@@ -358,19 +358,19 @@ export default function CouponsPage() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Expiry Date</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Expiry Date</label>
                                         <input 
                                             type="date"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
                                             value={formData.expiry_date}
                                             onChange={(e) => setFormData({...formData, expiry_date: e.target.value})}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Max Uses Per User</label>
+                                        <label className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2 ml-1">Max Uses Per User</label>
                                         <input 
                                             type="number"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-300 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3.5 text-sm font-bold placeholder:text-gray-700 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 outline-none transition-all"
                                             placeholder="1"
                                             value={formData.max_uses_per_user}
                                             onChange={(e) => setFormData({...formData, max_uses_per_user: e.target.value})}
@@ -385,7 +385,7 @@ export default function CouponsPage() {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-900 leading-none mb-1">Auto Apply</p>
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">Apply automatically if conditions met</p>
+                                            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-tight">Apply automatically if conditions met</p>
                                         </div>
                                     </div>
                                     <button 

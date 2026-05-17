@@ -48,7 +48,7 @@ export default function AdminBannersPage() {
                         <ImageIcon className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Banners & Hero
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {banners.length} visual assets active
                     </p>
                 </div>
@@ -66,7 +66,7 @@ export default function AdminBannersPage() {
                 {loading ? (
                     <div className="h-full flex flex-col items-center justify-center p-12">
                         <Loader2 className="animate-spin text-blue-600 h-10 w-10 mb-4" />
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest text-[10px]">Fetching assets...</p>
+                        <p className="text-sm font-bold text-gray-600 uppercase tracking-widest text-[10px]">Fetching assets...</p>
                     </div>
                 ) : banners.length === 0 ? (
                     <div className="h-full bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
@@ -74,7 +74,7 @@ export default function AdminBannersPage() {
                             <ImageIcon className="text-gray-200" size={40} />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 uppercase">Your storefront is empty</h3>
-                        <p className="text-xs font-medium text-gray-400 mt-2 max-w-sm mx-auto uppercase tracking-wide">Add bold banners to grab your customers attention and drive sales.</p>
+                        <p className="text-xs font-medium text-gray-600 mt-2 max-w-sm mx-auto uppercase tracking-wide">Add bold banners to grab your customers attention and drive sales.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-8">
@@ -117,21 +117,21 @@ export default function AdminBannersPage() {
 
                                 <div className="p-3 md:p-4 flex items-center justify-between bg-white border-t border-gray-50">
                                     <div className="flex items-center gap-1.5">
-                                        <Layout size={12} className="text-gray-400" />
-                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                        <Layout size={12} className="text-gray-600" />
+                                        <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">
                                             {banner.style_type || 'default'}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Link 
                                             href={`/admin/banners/${banner.id}`} 
-                                            className="p-2 bg-gray-50 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                            className="p-2 bg-gray-50 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                         >
                                             <Pencil size={16} />
                                         </Link>
                                         <button 
                                             onClick={() => handleDelete(banner.id)} 
-                                            className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                            className="p-2 bg-gray-50 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                         >
                                             <Trash2 size={16} />
                                         </button>

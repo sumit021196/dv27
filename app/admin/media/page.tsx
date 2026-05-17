@@ -65,7 +65,7 @@ export default function AdminMediaPage() {
                         <ImageIcon className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                         Media Manager
                     </h1>
-                    <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-700">
                         {files.length} assets in storage
                     </p>
                 </div>
@@ -82,7 +82,7 @@ export default function AdminMediaPage() {
                                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                                 filter === opt 
                                     ? "bg-blue-600 text-white shadow-md shadow-blue-100" 
-                                    : "text-gray-400 hover:bg-gray-50"
+                                    : "text-gray-600 hover:bg-gray-50"
                             )}
                         >
                             {opt === 'all' ? 'All Assets' : opt}
@@ -96,7 +96,7 @@ export default function AdminMediaPage() {
                 {loading ? (
                     <div className="h-full flex flex-col items-center justify-center p-12">
                         <Loader2 className="animate-spin text-blue-600 h-10 w-10 mb-4" />
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Scanning storage...</p>
+                        <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Scanning storage...</p>
                     </div>
                 ) : filteredFiles.length === 0 ? (
                     <div className="h-full bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
@@ -104,7 +104,7 @@ export default function AdminMediaPage() {
                             <ImageIcon className="text-gray-200" size={32} />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 uppercase">No media found</h3>
-                        <p className="text-xs text-gray-400 mt-2 uppercase">Try switching filters or upload new content.</p>
+                        <p className="text-xs text-gray-600 mt-2 uppercase">Try switching filters or upload new content.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-6">
@@ -155,11 +155,11 @@ export default function AdminMediaPage() {
                                 <div className="p-2.5 bg-white space-y-1">
                                     <p className="text-[9px] font-bold text-gray-900 truncate uppercase tracking-tight" title={file.name}>{file.name}</p>
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1 text-[8px] font-black text-gray-400">
+                                        <div className="flex items-center gap-1 text-[8px] font-black text-gray-600">
                                             <HardDrive size={8} />
                                             {(file.metadata?.size / 1024).toFixed(0)}KB
                                         </div>
-                                        <div className="flex items-center gap-1 text-[8px] font-black text-gray-400">
+                                        <div className="flex items-center gap-1 text-[8px] font-black text-gray-600">
                                             <Clock size={8} />
                                             {formatDistanceToNow(new Date(file.created_at), { addSuffix: false })}
                                         </div>

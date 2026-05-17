@@ -148,7 +148,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
                                 Full Name
                             </label>
                             <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-black transition-colors" />
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-600 group-focus-within:text-black transition-colors" />
                                 <input
                                     type="text"
                                     value={fullName}
@@ -164,7 +164,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
                             Mobile Number
                         </label>
                         <div className="relative group">
-                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 text-sm font-medium">
+                            <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-700 text-sm font-medium">
                                 +91
                             </span>
                             <input
@@ -203,7 +203,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
             ) : (
                 <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 text-center">
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                             Sent verification code to <span className="font-bold text-black">+91 {phoneNumber}</span>
                         </p>
                     </div>
@@ -214,7 +214,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
                             </label>
                             <button 
                                 onClick={() => setStep("phone")}
-                                className="text-xs font-bold text-gray-400 hover:text-black transition-colors underline underline-offset-4"
+                                className="text-xs font-bold text-gray-600 hover:text-black transition-colors underline underline-offset-4"
                             >
                                 Change Number
                             </button>
@@ -238,7 +238,7 @@ export default function PhoneAuth({ mode = "login" }: PhoneAuthProps) {
 
                     <div className="text-center pt-2">
                         {resendTimer > 0 ? (
-                            <p className="text-xs text-gray-400 font-medium tracking-wide uppercase">
+                            <p className="text-xs text-gray-600 font-medium tracking-wide uppercase">
                                 Resend in <span className="text-black">{resendTimer}s</span>
                             </p>
                         ) : (

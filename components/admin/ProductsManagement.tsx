@@ -64,7 +64,7 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="relative w-full sm:max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 h-4 w-4" />
                     <input
                         type="text"
                         placeholder="Search catalog..."
@@ -87,11 +87,11 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
                     <table className="min-w-full divide-y divide-gray-200 text-left">
                         <thead className="bg-gray-50/50">
                             <tr>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Product</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Pricing</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Active</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Trending</th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest">Product</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest">Pricing</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest text-center">Active</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest text-center">Trending</th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase tracking-widest text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -102,18 +102,18 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
                                             <div className="h-12 w-12 rounded-xl bg-gray-100 overflow-hidden relative border border-gray-100">
                                                 {product.media_url ? (
                                                     <img src={product.media_url} className="object-cover w-full h-full" alt={product.name} />
-                                                ) : <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={20} /></div>}
+                                                ) : <div className="w-full h-full flex items-center justify-center text-gray-700"><Package size={20} /></div>}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-bold text-gray-900 truncate max-w-[240px]">{product.name}</p>
-                                                <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{product.category_name || "No Category"}</p>
+                                                <p className="text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">{product.category_name || "No Category"}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <p className="text-sm font-bold text-gray-900">₹{product.price}</p>
                                         {product.original_price && product.original_price > product.price && (
-                                            <p className="text-[10px] text-gray-400 line-through">₹{product.original_price}</p>
+                                            <p className="text-[10px] text-gray-600 line-through">₹{product.original_price}</p>
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-center">
@@ -146,10 +146,10 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            <Link href={`/admin/products/${product.id}`} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                            <Link href={`/admin/products/${product.id}`} className="p-2 text-gray-600 hover:text-blue-600 transition-colors">
                                                 <Pencil size={18} />
                                             </Link>
-                                            <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                            <button onClick={() => handleDelete(product.id)} className="p-2 text-gray-600 hover:text-red-600 transition-colors">
                                                 {isDeleting === String(product.id) ? <Loader2 className="animate-spin" size={18} /> : <Trash2 size={18} />}
                                             </button>
                                         </div>
@@ -170,8 +170,8 @@ export function ProductsManagement({ initialProducts }: { initialProducts: Produ
                                     <p className="text-xs text-blue-600 font-bold mt-1">₹{product.price}</p>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <Link href={`/admin/products/${product.id}`} className="p-2 bg-gray-50 rounded-lg text-gray-400"><Pencil size={16} /></Link>
-                                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-gray-50 rounded-lg text-gray-400"><Trash2 size={16} /></button>
+                                    <Link href={`/admin/products/${product.id}`} className="p-2 bg-gray-50 rounded-lg text-gray-600"><Pencil size={16} /></Link>
+                                    <button onClick={() => handleDelete(product.id)} className="p-2 bg-gray-50 rounded-lg text-gray-600"><Trash2 size={16} /></button>
                                 </div>
                             </div>
                         </div>

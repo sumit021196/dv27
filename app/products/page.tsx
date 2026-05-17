@@ -4,6 +4,7 @@ import CategoryBar from "@/components/CategoryBar";
 import { getStaticClient } from "@/utils/supabase/static";
 import Link from "next/link";
 import { Search, PackageOpen } from "lucide-react";
+import ProductToolbar from "@/components/ProductToolbar";
 
 export const revalidate = 600; // Cache for 10 minutes
 
@@ -12,6 +13,9 @@ interface PageProps {
     category?: string;
     search?: string;
     page?: string;
+    sort?: string;
+    min_price?: string;
+    max_price?: string;
   }>;
 }
 
@@ -20,6 +24,9 @@ export default async function ProductList({ searchParams }: PageProps) {
   const category = params.category || "all";
   const search = params.search || "";
   const page = parseInt(params.page || "1");
+  const sort = params.sort;
+  const minPrice = params.min_price ? parseInt(params.min_price) : undefined;
+  const maxPrice = params.max_price ? parseInt(params.max_price) : undefined;
   const pageSize = 12;
 
   const supabase = getStaticClient();
@@ -32,7 +39,10 @@ export default async function ProductList({ searchParams }: PageProps) {
     category,
     search,
     limit: page * pageSize,
-    offset: 0
+    offset: 0,
+    sortBy: sort,
+    minPrice,
+    maxPrice
   }, supabase);
 
   // 3. Create active category display name
@@ -47,18 +57,20 @@ export default async function ProductList({ searchParams }: PageProps) {
 
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Collection Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 border-b border-foreground/5 pb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4 border-b border-foreground/12 pb-8">
             <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-accent mb-2">Collection</p>
                 <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight text-foreground">{activeCategory}</h1>
             </div>
             {search && (
                  <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
-                    <Search size={14} className="text-foreground/40" />
+                    <Search size={14} className="text-foreground/60" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/60">Results for: {search}</span>
                  </div>
             )}
         </div>
+
+        <ProductToolbar />
 
         <section>
           {products.length > 0 ? (
@@ -96,8 +108,8 @@ export default async function ProductList({ searchParams }: PageProps) {
               )}
             </>
           ) : (
-            <div className="mt-20 text-center flex flex-col items-center justify-center p-12 bg-background rounded-[40px] border border-foreground/5 shadow-2xl max-w-lg mx-auto">
-                <div className="w-20 h-20 bg-muted text-foreground/20 rounded-3xl flex items-center justify-center mb-8 rotate-12">
+            <div className="mt-20 text-center flex flex-col items-center justify-center p-12 bg-background rounded-[40px] border border-foreground/12 shadow-2xl max-w-lg mx-auto">
+                <div className="w-20 h-20 bg-muted text-foreground/45 rounded-3xl flex items-center justify-center mb-8 rotate-12">
                     <PackageOpen size={40} />
                 </div>
                 <h3 className="text-xl font-black uppercase tracking-tighter text-foreground">Collection Empty</h3>

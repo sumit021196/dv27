@@ -72,7 +72,7 @@ export default function AdminSettingsPage() {
         return (
             <div className="flex flex-col items-center justify-center h-full">
                 <Loader2 className="animate-spin text-blue-600 h-10 w-10 mb-4" />
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading configurations...</p>
+                <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Loading configurations...</p>
             </div>
         );
     }
@@ -85,7 +85,7 @@ export default function AdminSettingsPage() {
                     <Settings className="text-blue-600 h-6 w-6 lg:h-8 lg:w-8" />
                     Global Settings
                 </h1>
-                <p className="mt-1 text-xs sm:text-sm text-gray-500">
+                <p className="mt-1 text-xs sm:text-sm text-gray-700">
                     Configure your entire storefront from one place.
                 </p>
             </div>
@@ -100,7 +100,7 @@ export default function AdminSettingsPage() {
                             "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
                             activeSection === s.id 
                                 ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100" 
-                                : "bg-white text-gray-500 border-gray-100"
+                                : "bg-white text-gray-700 border-gray-100"
                         )}
                     >
                         {s.icon}
@@ -130,7 +130,7 @@ export default function AdminSettingsPage() {
                         >
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Site Name</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Site Name</label>
                                     <input 
                                         type="text" 
                                         value={settings.site_name || ""} 
@@ -139,7 +139,7 @@ export default function AdminSettingsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-2">
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-2">
                                         <MessageCircle className="h-3 w-3" /> WhatsApp Number (with country code)
                                     </label>
                                     <input 
@@ -165,7 +165,7 @@ export default function AdminSettingsPage() {
                             isSuccess={success === 'ticker_text'}
                         >
                             <div className="space-y-2">
-                                <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ticker Text</label>
+                                <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Ticker Text</label>
                                 <textarea 
                                     value={settings.ticker_text || ""} 
                                     onChange={(e) => setSettings({...settings, ticker_text: e.target.value})}
@@ -189,7 +189,7 @@ export default function AdminSettingsPage() {
                         >
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Primary Color</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Primary Color</label>
                                     <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-100">
                                         <input 
                                             type="color" 
@@ -205,7 +205,7 @@ export default function AdminSettingsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Accent Color</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Accent Color</label>
                                     <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-100">
                                         <input 
                                             type="color" 
@@ -237,7 +237,7 @@ export default function AdminSettingsPage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Support Email</label>
+                                        <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Support Email</label>
                                         <input 
                                             type="email" 
                                             value={settings.contact_info?.email || ""} 
@@ -250,7 +250,7 @@ export default function AdminSettingsPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Support Phone</label>
+                                        <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Support Phone</label>
                                         <input 
                                             type="text" 
                                             value={settings.contact_info?.phone || ""} 
@@ -264,7 +264,7 @@ export default function AdminSettingsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Store Address</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Store Address</label>
                                     <input 
                                         type="text" 
                                         value={settings.contact_info?.address || ""} 
@@ -293,7 +293,7 @@ export default function AdminSettingsPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {['instagram', 'youtube', 'facebook', 'twitter'].map((platform) => (
                                     <div key={platform}>
-                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 capitalize">{platform}</label>
+                                        <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1 capitalize">{platform}</label>
                                         <input 
                                             type="text" 
                                             value={settings.social_links?.[platform] || ""} 
@@ -328,7 +328,7 @@ export default function AdminSettingsPage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                                        <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Status</label>
                                         <select 
                                             value={settings.store_status || "open"}
                                             onChange={(e) => setSettings({...settings, store_status: e.target.value})}
@@ -339,7 +339,7 @@ export default function AdminSettingsPage() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Maintenance</label>
+                                        <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Maintenance</label>
                                         <select 
                                             value={settings.maintenance_mode || "false"}
                                             onChange={(e) => setSettings({...settings, maintenance_mode: e.target.value})}
@@ -351,7 +351,7 @@ export default function AdminSettingsPage() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-2">
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1 flex items-center gap-2">
                                         <Truck className="h-3 w-3" /> Free Shipping Threshold (₹)
                                     </label>
                                     <input 
@@ -378,7 +378,7 @@ export default function AdminSettingsPage() {
                         >
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Meta Description</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Meta Description</label>
                                     <textarea 
                                         value={settings.seo_meta?.description || ""} 
                                         onChange={(e) => {
@@ -391,7 +391,7 @@ export default function AdminSettingsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Keywords</label>
+                                    <label className="block text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Keywords</label>
                                     <input 
                                         type="text" 
                                         value={settings.seo_meta?.keywords || ""} 
@@ -428,7 +428,7 @@ export default function AdminSettingsPage() {
                                     <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Icon Type</label>
+                                                <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Icon Type</label>
                                                 <select 
                                                     value={signal.icon}
                                                     onChange={(e) => {
@@ -447,7 +447,7 @@ export default function AdminSettingsPage() {
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Title</label>
+                                                <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Title</label>
                                                 <input 
                                                     type="text" 
                                                     value={signal.title} 
@@ -461,7 +461,7 @@ export default function AdminSettingsPage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Description</label>
+                                            <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Description</label>
                                             <input 
                                                 type="text" 
                                                 value={signal.description} 
@@ -470,7 +470,7 @@ export default function AdminSettingsPage() {
                                                     newSignals[idx] = { ...signal, description: e.target.value };
                                                     setSettings({...settings, trust_signals: newSignals});
                                                 }}
-                                                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-[10px] text-gray-500"
+                                                className="w-full px-4 py-2 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-[10px] text-gray-700"
                                             />
                                         </div>
                                     </div>
@@ -499,7 +499,7 @@ export default function AdminSettingsPage() {
                                     <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">New Arrivals Section</h4>
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Title</label>
+                                            <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Section Title</label>
                                             <input 
                                                 type="text" 
                                                 value={settings.section_new_drops_title || ""} 
@@ -508,12 +508,12 @@ export default function AdminSettingsPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
+                                            <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
                                             <input 
                                                 type="text" 
                                                 value={settings.section_new_drops_subtitle || ""} 
                                                 onChange={(e) => setSettings({...settings, section_new_drops_subtitle: e.target.value})}
-                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-500"
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-700"
                                             />
                                         </div>
                                     </div>
@@ -523,7 +523,7 @@ export default function AdminSettingsPage() {
                                     <h4 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Trending Section</h4>
                                     <div className="space-y-3">
                                         <div>
-                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Title</label>
+                                            <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Section Title</label>
                                             <input 
                                                 type="text" 
                                                 value={settings.section_trending_title || ""} 
@@ -532,12 +532,12 @@ export default function AdminSettingsPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
+                                            <label className="block text-[8px] font-black text-gray-600 uppercase tracking-widest mb-1 ml-1">Section Subtitle</label>
                                             <input 
                                                 type="text" 
                                                 value={settings.section_trending_subtitle || ""} 
                                                 onChange={(e) => setSettings({...settings, section_trending_subtitle: e.target.value})}
-                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-500"
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl focus:border-blue-600 outline-none transition-all font-medium text-xs text-gray-700"
                                             />
                                         </div>
                                     </div>
@@ -567,7 +567,7 @@ function SettingCard({ title, icon, description, children, onSave, isSaving, isS
                             {title}
                             {isSuccess && <span className="text-[8px] text-green-500 font-black tracking-widest px-1.5 py-0.5 bg-green-50 rounded-full border border-green-100 animate-pulse">SAVED</span>}
                         </h3>
-                        <p className="text-[10px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">{description}</p>
+                        <p className="text-[10px] text-gray-600 font-bold mt-0.5 uppercase tracking-widest">{description}</p>
                     </div>
                 </div>
                 <button 

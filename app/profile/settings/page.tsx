@@ -85,7 +85,7 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* ── Dynamic Header ── */}
-            <div className="px-6 pt-10 pb-6 flex items-center gap-4 bg-background sticky top-0 z-20 border-b border-foreground/5">
+            <div className="px-6 pt-10 pb-6 flex items-center gap-4 bg-background sticky top-0 z-20 border-b border-foreground/12">
                 <Link href="/profile" className="w-10 h-10 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-600 active:scale-90 transition-transform">
                     <ArrowLeft size={20} />
                 </Link>
@@ -97,7 +97,7 @@ export default function SettingsPage() {
                     
                     {/* ── Avatar Section ── */}
                     <div className="flex flex-col items-center gap-4 py-4">
-                        <div className="w-24 h-24 bg-zinc-50 rounded-3xl flex items-center justify-center overflow-hidden border border-foreground/10 relative">
+                        <div className="w-24 h-24 bg-zinc-50 rounded-3xl flex items-center justify-center overflow-hidden border border-foreground/18 relative">
                             {profile.avatar_url ? (
                                 <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                                     value={profile.full_name}
                                     onChange={(e) => setProfile({...profile, full_name: e.target.value})}
                                     placeholder="Enter your full name"
-                                    className="w-full bg-zinc-50 border border-foreground/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
+                                    className="w-full bg-zinc-50 border border-foreground/12 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
                                 />
                             </div>
                         </div>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                                     value={profile.phone_number}
                                     onChange={(e) => setProfile({...profile, phone_number: e.target.value})}
                                     placeholder="+91-XXXXX-XXXXX"
-                                    className="w-full bg-zinc-50 border border-foreground/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
+                                    className="w-full bg-zinc-50 border border-foreground/12 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
                                 />
                             </div>
                         </div>
@@ -147,7 +147,7 @@ export default function SettingsPage() {
                                         value={profile.default_address}
                                         onChange={(e) => setProfile({...profile, default_address: e.target.value})}
                                         placeholder="Flat, House no, Building, Company, Apartment"
-                                        className="w-full bg-zinc-50 border border-foreground/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all resize-none"
+                                        className="w-full bg-zinc-50 border border-foreground/12 rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all resize-none"
                                     />
                                 </div>
                             </div>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                                     value={profile.default_pincode}
                                     onChange={(e) => setProfile({...profile, default_pincode: e.target.value})}
                                     placeholder="XXXXXX"
-                                    className="w-full bg-zinc-50 border border-foreground/5 rounded-2xl py-4 px-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
+                                    className="w-full bg-zinc-50 border border-foreground/12 rounded-2xl py-4 px-4 text-sm font-semibold focus:outline-none focus:border-foreground/20 focus:bg-white transition-all"
                                 />
                             </div>
                         </div>

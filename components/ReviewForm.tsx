@@ -31,6 +31,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const createdUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -41,6 +42,13 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     checkUser();
   }, []);
 
+  // Clean up remaining object URLs on unmount
+  useEffect(() => {
+    return () => {
+      createdUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length + videos.length > 4) {
@@ -49,7 +57,11 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     }
     
     setImages(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'image' as const }));
+    const newPreviews = files.map(file => {
+      const url = URL.createObjectURL(file);
+      createdUrlsRef.current.push(url);
+      return { url, type: 'image' as const };
+    });
     setPreviews(prev => [...prev, ...newPreviews]);
     setError(null);
   };
@@ -69,13 +81,20 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
     }
 
     setVideos(prev => [...prev, ...files]);
-    const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), type: 'video' as const }));
+    const newPreviews = files.map(file => {
+      const url = URL.createObjectURL(file);
+      createdUrlsRef.current.push(url);
+      return { url, type: 'video' as const };
+    });
     setPreviews(prev => [...prev, ...newPreviews]);
     setError(null);
   };
 
   const removeMedia = (index: number) => {
     const item = previews[index];
+    URL.revokeObjectURL(item.url);
+    createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== item.url);
+
     if (item.type === 'image') {
         // Find match in images array and remove one instance
         setImages(prev => {
@@ -137,6 +156,8 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
         setName("");
         setImages([]);
         setVideos([]);
+        createdUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+        createdUrlsRef.current = [];
         setPreviews([]);
         setIsSuccess(false);
       }, 2000);
@@ -167,7 +188,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed inset-x-0 bottom-0 bg-background rounded-t-[32px] z-[101] max-h-[92vh] overflow-y-auto shadow-2xl safe-p-bottom"
           >
-            <div className="sticky top-0 bg-background/80 backdrop-blur-md z-10 px-6 py-4 border-b border-foreground/5 flex items-center justify-between">
+            <div className="sticky top-0 bg-background/80 backdrop-blur-md z-10 px-6 py-4 border-b border-foreground/12 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-black uppercase tracking-[0.2em]">Review Studio</h2>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[200px]">{productName}</p>
@@ -206,7 +227,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ex: Rahul Sharma"
-                        className="w-full bg-muted/30 border border-foreground/5 rounded-2xl p-4 text-xs font-medium placeholder:opacity-30 focus:outline-none focus:border-brand-accent/50 transition-all"
+                        className="w-full bg-muted/30 border border-foreground/12 rounded-2xl p-4 text-xs font-medium placeholder:opacity-30 focus:outline-none focus:border-brand-accent/50 transition-all"
                       />
                     </div>
                   )}
@@ -230,7 +251,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                               "transition-all duration-300",
                               (hoverRating || rating) >= star
                                 ? "fill-brand-red text-brand-red"
-                                : "fill-foreground/5 text-foreground/10"
+                                : "fill-foreground/5 text-foreground/25"
                             )}
                           />
                         </button>
@@ -245,7 +266,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Tell us about the fit, quality, or how it looks in person..."
-                      className="w-full bg-muted/30 border border-foreground/5 rounded-2xl p-4 text-xs font-medium placeholder:opacity-30 focus:outline-none focus:border-brand-accent/50 transition-all min-h-[120px] resize-none"
+                      className="w-full bg-muted/30 border border-foreground/12 rounded-2xl p-4 text-xs font-medium placeholder:opacity-30 focus:outline-none focus:border-brand-accent/50 transition-all min-h-[120px] resize-none"
                     />
                   </div>
 
@@ -259,7 +280,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
+                        className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/18 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
                       >
                         <Camera size={20} />
                         <span className="text-[8px] font-black uppercase tracking-widest">Photo</span>
@@ -268,7 +289,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                       <button
                         type="button"
                         onClick={() => videoInputRef.current?.click()}
-                        className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
+                        className="flex-none w-24 h-24 rounded-2xl border-2 border-dashed border-foreground/18 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-muted/30 transition-all"
                       >
                         <Video size={20} />
                         <span className="text-[8px] font-black uppercase tracking-widest">Video</span>
@@ -292,7 +313,7 @@ export default function ReviewForm({ productId, productName, isOpen, onClose, on
                       />
 
                       {previews.map((preview, index) => (
-                        <div key={index} className="flex-none w-24 h-24 rounded-2xl relative group bg-muted overflow-hidden border border-foreground/5">
+                        <div key={index} className="flex-none w-24 h-24 rounded-2xl relative group bg-muted overflow-hidden border border-foreground/12">
                           {preview.type === 'image' ? (
                             <img src={preview.url} alt="preview" className="w-full h-full object-cover" />
                           ) : (

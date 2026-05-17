@@ -44,7 +44,7 @@ export default function CouponsPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* ── Minimal Header ── */}
-            <div className="px-6 pt-10 pb-6 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 border-b border-foreground/5">
+            <div className="px-6 pt-10 pb-6 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-xl z-20 border-b border-foreground/12">
                 <Link href="/profile" className="w-10 h-10 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-600 active:scale-90 transition-transform">
                     <ArrowLeft size={20} />
                 </Link>
@@ -56,7 +56,7 @@ export default function CouponsPage() {
 
             <main className="px-6 py-8 max-w-2xl mx-auto space-y-6">
                 {coupons.length === 0 ? (
-                    <div className="text-center py-20 bg-muted rounded-3xl border border-dashed border-foreground/10">
+                    <div className="text-center py-20 bg-muted rounded-3xl border border-dashed border-foreground/18">
                         <Ticket className="w-12 h-12 mx-auto text-muted-foreground/20 mb-4" />
                         <h2 className="text-lg font-bold text-foreground">No active offers</h2>
                         <p className="text-sm text-muted-foreground mt-1 px-10">We're curating new drops and deals for you. Check back soon!</p>
@@ -69,7 +69,7 @@ export default function CouponsPage() {
                         {coupons.map((coupon) => (
                             <div 
                                 key={coupon.id} 
-                                className="group relative bg-zinc-50 border border-foreground/5 rounded-3xl p-6 transition-all hover:bg-white hover:border-foreground/10 hover:shadow-xl hover:shadow-zinc-200/50"
+                                className="group relative bg-zinc-50 border border-foreground/12 rounded-3xl p-6 transition-all hover:bg-white hover:border-foreground/18 hover:shadow-xl hover:shadow-zinc-200/50"
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="space-y-1">
@@ -85,12 +85,12 @@ export default function CouponsPage() {
                                             {coupon.min_order_value > 0 ? `Valid on orders above ₹${coupon.min_order_value}` : 'No minimum order required'}
                                         </p>
                                     </div>
-                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-zinc-300 border border-foreground/5">
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-zinc-300 border border-foreground/12">
                                         <Ticket size={24} />
                                     </div>
                                 </div>
 
-                                <div className="mt-6 flex items-center justify-between gap-4 p-2 bg-white border border-foreground/5 rounded-2xl">
+                                <div className="mt-6 flex items-center justify-between gap-4 p-2 bg-white border border-foreground/12 rounded-2xl">
                                     <div className="px-3">
                                         <span className="font-mono text-sm font-bold tracking-widest text-foreground uppercase">{coupon.code}</span>
                                     </div>
@@ -117,8 +117,8 @@ export default function CouponsPage() {
                                 </div>
                                 
                                 {/* Decorative "Ticket Cut" Circles */}
-                                <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 bg-background rounded-full border-r border-foreground/5" />
-                                <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 bg-background rounded-full border-l border-foreground/5" />
+                                <div className="absolute top-1/2 -left-3 -translate-y-1/2 w-6 h-6 bg-background rounded-full border-r border-foreground/12" />
+                                <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-6 bg-background rounded-full border-l border-foreground/12" />
                             </div>
                         ))}
                     </div>

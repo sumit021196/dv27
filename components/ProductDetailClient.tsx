@@ -38,7 +38,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const cart = useCart();
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>("M"); // Default for demo
+  const [selectedSize, setSelectedSize] = useState<string | null>(null); // Dynamic default
   const [isAdded, setIsAdded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -74,6 +74,40 @@ export default function ProductDetailClient({ id }: { id: string }) {
     if (availableSizes.length > 0) return availableSizes;
     return ["XS", "S", "M", "L", "XL", "XXL"];
   }, [availableSizes, product?.name]);
+
+  // Compute stock levels per size for the selected color variant
+  const sizeStockMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (!product) return map;
+
+    if (product.variants && product.variants.length > 0) {
+      product.variants.forEach(v => {
+        if (selectedColor && v.color && v.color !== selectedColor) return;
+        if (v.size) {
+          map[v.size] = (map[v.size] || 0) + (v.stock || 0);
+        }
+      });
+    } else {
+      // Fallback to product-level stock distributed across virtual sizes
+      const stockVal = product.stock !== undefined && product.stock !== null ? product.stock : 10;
+      virtualSizes.forEach(s => {
+        map[s] = stockVal;
+      });
+    }
+    return map;
+  }, [product, selectedColor, virtualSizes]);
+
+  // Premium default size selector: automatically pick the first available (in-stock) size
+  useEffect(() => {
+    if (product && virtualSizes.length > 0) {
+      const inStockSize = virtualSizes.find(size => (sizeStockMap[size] || 0) > 0);
+      if (inStockSize) {
+        setSelectedSize(inStockSize);
+      } else {
+        setSelectedSize(virtualSizes[0]); // fallback to first size if everything is out of stock
+      }
+    }
+  }, [product, selectedColor, virtualSizes, sizeStockMap]);
 
   const fetchReviews = async () => {
     const data = await productService.getReviewsByProductId(id);
@@ -174,7 +208,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 xl:gap-16">
           
           <div className="lg:col-span-7 space-y-6">
-             <div className="relative aspect-[3/4] rounded-none md:rounded-[32px] overflow-hidden bg-muted/30 md:border border-foreground/5 md:shadow-2xl">
+             <div className="relative aspect-[3/4] rounded-none md:rounded-[32px] overflow-hidden bg-muted/30 md:border border-foreground/12 md:shadow-2xl">
                 <AnimatePresence mode="wait">
                   <motion.img 
                     key={currentImageIndex}
@@ -229,7 +263,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                   <span className="text-sm text-muted-foreground line-through decoration-brand-red/30">₹{oldPrice.toLocaleString()}</span>
                 </div>
                 {product.rating && (
-                  <div className="flex items-center gap-1 bg-foreground/5 px-2 py-1 rounded-full border border-foreground/5">
+                  <div className="flex items-center gap-1 bg-foreground/5 px-2 py-1 rounded-full border border-foreground/12">
                     <Star size={10} className="fill-brand-red text-brand-red" />
                     <span className="text-[10px] font-black">{Number(product.rating).toFixed(1)}</span>
                     <span className="text-[10px] text-muted-foreground ml-1">({reviews.length})</span>
@@ -241,15 +275,15 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
             {/* Available Offers */}
             {coupons.length > 0 && (
-              <div className="mt-4 border-t border-foreground/5 pt-3">
-                 <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/30 mb-2">Available Offers</h3>
+              <div className="mt-4 border-t border-foreground/12 pt-3">
+                 <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/50 mb-2">Available Offers</h3>
                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                     {coupons.map((offer, i) => (
-                      <div key={i} className="flex-none w-[170px] p-2.5 rounded-xl border border-foreground/10 bg-white shadow-sm">
+                      <div key={i} className="flex-none w-[170px] p-2.5 rounded-xl border border-foreground/18 bg-white shadow-sm">
                          <span className="text-sm font-black uppercase tracking-tighter block mb-0.5">₹{offer.discount_value} OFF</span>
                          <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-2">Prepaid above ₹{offer.min_order_value}</p>
-                         <div className="flex items-center justify-between pt-2 border-t border-foreground/5">
-                            <span className="text-[9px] font-bold text-foreground/20 uppercase tracking-tighter">{offer.code}</span>
+                         <div className="flex items-center justify-between pt-2 border-t border-foreground/12">
+                            <span className="text-[9px] font-bold text-foreground/45 uppercase tracking-tighter">{offer.code}</span>
                             <span className="text-[7px] font-black uppercase text-emerald-600 flex items-center gap-1">
                                <Plus size={8} strokeWidth={4} /> AUTO APPLIED
                             </span>
@@ -263,7 +297,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
             <div className="mt-3 space-y-2">
                 <button 
                   onClick={() => setIsSizingModalOpen(true)}
-                  className="w-full flex items-center gap-3 py-2.5 border-y border-foreground/5 group hover:bg-muted/30 transition-all text-left"
+                  className="w-full flex items-center gap-3 py-2.5 border-y border-foreground/12 group hover:bg-muted/30 transition-all text-left"
                 >
                   <Ruler size={16} className="text-foreground transition-transform" />
                   <span className="text-[9px] font-black uppercase tracking-[0.2em]">Sizing chart</span>
@@ -287,7 +321,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                           onClick={() => setSelectedColor(color)}
                           className={cn(
                             "min-w-[80px] px-4 h-9 flex items-center justify-center rounded-full text-[8px] font-black uppercase tracking-widest transition-all border",
-                            selectedColor === color ? "bg-foreground text-background border-foreground" : "bg-transparent text-foreground border-foreground/10"
+                            selectedColor === color ? "bg-foreground text-background border-foreground" : "bg-transparent text-foreground border-foreground/18"
                           )}
                         >
                           {color}
@@ -300,44 +334,77 @@ export default function ProductDetailClient({ id }: { id: string }) {
             <div className="mt-4 space-y-2.5">
                <h3 className="text-[9px] font-black uppercase tracking-[0.2em]">Select Size — <span className="text-brand-accent">{selectedSize}</span></h3>
                <div className="flex flex-wrap gap-2">
-                  {virtualSizes.map(size => (
-                    <button 
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={cn(
-                        "min-w-[55px] h-9 flex items-center justify-center rounded-full text-[8px] font-black uppercase tracking-widest transition-all border",
-                        selectedSize === size ? "bg-foreground text-background border-foreground" : "bg-transparent text-foreground border-foreground/10"
-                      )}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {virtualSizes.map(size => {
+                    const stock = sizeStockMap[size] || 0;
+                    const isOutOfStock = stock === 0;
+
+                    return (
+                      <button 
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={cn(
+                          "min-w-[55px] h-9 flex items-center justify-center rounded-full text-[8px] font-black uppercase tracking-widest transition-all border relative overflow-hidden",
+                          selectedSize === size 
+                            ? "bg-foreground text-background border-foreground" 
+                            : "bg-transparent text-foreground border-foreground/18 hover:border-foreground/30",
+                          isOutOfStock && "opacity-40 cursor-not-allowed bg-foreground/5 line-through before:absolute before:content-[''] before:top-1/2 before:left-0 before:right-0 before:h-[1px] before:bg-foreground/40 before:-rotate-[25deg]"
+                        )}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                </div>
+               {selectedSize && (sizeStockMap[selectedSize] || 0) > 0 && (sizeStockMap[selectedSize] || 0) <= 3 && (
+                  <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest animate-pulse flex items-center gap-1.5 mt-2">
+                     <span className="w-1.5 h-1.5 bg-amber-500 rounded-full inline-block animate-ping"></span>
+                     ONLY {sizeStockMap[selectedSize]} LEFT IN SIZE {selectedSize}! SECURE YOURS NOW.
+                  </p>
+               )}
             </div>
 
+            {/* CTA Section */}
             <div className="mt-4" ref={mainCtaRef}>
-               <button
-                  onClick={handleAddToCart}
-                  disabled={isAdded}
-                  className={cn(
-                    "w-full h-13 min-h-[52px] rounded-xl font-black uppercase tracking-[0.3em] text-[10px] transition-all relative overflow-hidden group mb-4",
-                    isAdded ? "bg-emerald-500 text-white" : "bg-foreground text-background"
-                  )}
-               >
-                  <span className="relative z-10">{isAdded ? "Secured In Bag" : "Add to Bag"}</span>
-                  {!isAdded && <div className="absolute inset-0 bg-brand-accent/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />}
-               </button>
+               {/* Compute if selected variant size is completely out of stock */}
+               {(() => {
+                  const isCurrentSizeOutOfStock = selectedSize ? (sizeStockMap[selectedSize] || 0) === 0 : false;
+                  return (
+                     <button
+                        onClick={handleAddToCart}
+                        disabled={isAdded || isCurrentSizeOutOfStock}
+                        className={cn(
+                           "w-full h-13 min-h-[52px] rounded-xl font-black uppercase tracking-[0.3em] text-[10px] transition-all relative overflow-hidden group mb-4",
+                           isAdded 
+                             ? "bg-emerald-500 text-white" 
+                             : isCurrentSizeOutOfStock 
+                               ? "bg-foreground/10 text-foreground/50 border border-foreground/12 cursor-not-allowed" 
+                               : "bg-foreground text-background"
+                        )}
+                     >
+                        <span className="relative z-10">
+                           {isAdded 
+                             ? "Secured In Bag" 
+                             : isCurrentSizeOutOfStock 
+                               ? "Out of Stock" 
+                               : "Add to Bag"}
+                        </span>
+                        {!isAdded && !isCurrentSizeOutOfStock && (
+                           <div className="absolute inset-0 bg-brand-accent/20 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                        )}
+                     </button>
+                  );
+               })()}
             </div>
 
-            <div className="mt-6 border-t border-foreground/5">
-                <div className="flex border-b border-foreground/5">
+            <div className="mt-6 border-t border-foreground/12">
+                <div className="flex border-b border-foreground/12">
                    {["description", "details", "reviews", "return policy"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={cn(
                           "flex-1 py-3 text-[8px] font-black uppercase tracking-[0.15em] transition-all relative",
-                          activeTab === tab ? "text-foreground" : "text-foreground/30"
+                          activeTab === tab ? "text-foreground" : "text-foreground/50"
                         )}
                       >
                         {tab}
@@ -381,7 +448,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                                <div className="px-1 mb-8">
                                   <button 
                                     onClick={() => setIsReviewModalOpen(true)}
-                                    className="w-full py-4 border-2 border-dashed border-foreground/10 rounded-2xl flex items-center justify-center gap-2 hover:bg-muted/30 transition-all group"
+                                    className="w-full py-4 border-2 border-dashed border-foreground/18 rounded-2xl flex items-center justify-center gap-2 hover:bg-muted/30 transition-all group"
                                   >
                                      <Plus size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors">Write a Review</span>
@@ -390,11 +457,11 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
                                {reviews.length > 0 ? (
                                   reviews.map((review, i) => (
-                                     <div key={review.id || i} className="border-b border-foreground/5 pb-6 last:border-0">
+                                     <div key={review.id || i} className="border-b border-foreground/12 pb-6 last:border-0">
                                         <div className="flex items-center justify-between mb-3">
                                            <div className="flex gap-0.5">
                                               {[...Array(5)].map((_, starIdx) => (
-                                                 <Star key={starIdx} size={10} className={cn(starIdx < review.rating ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/10")} />
+                                                 <Star key={starIdx} size={10} className={cn(starIdx < review.rating ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/25")} />
                                               ))}
                                            </div>
                                            <span className="text-[8px] font-bold opacity-30 tracking-widest uppercase">{new Date(review.created_at).toLocaleDateString()}</span>
@@ -405,7 +472,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                                         {review.review_media && review.review_media.length > 0 && (
                                           <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar pb-1">
                                             {review.review_media.map((media: any, mediaIdx: number) => (
-                                              <div key={mediaIdx} className="w-20 h-20 rounded-xl overflow-hidden flex-none bg-muted border border-foreground/5 relative">
+                                              <div key={mediaIdx} className="w-20 h-20 rounded-xl overflow-hidden flex-none bg-muted border border-foreground/12 relative">
                                                 {media.media_type === 'image' ? (
                                                   <img src={media.media_url} alt="Review" className="w-full h-full object-cover" />
                                                 ) : (
@@ -430,7 +497,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                                      </div>
                                   ))
                                ) : (
-                                  <div className="text-center py-12 opacity-30 p-6 bg-muted/20 rounded-[32px] border border-dashed border-foreground/5">
+                                  <div className="text-center py-12 opacity-30 p-6 bg-muted/20 rounded-[32px] border border-dashed border-foreground/12">
                                      <p className="text-[9px] font-black uppercase tracking-widest">No reviews yet for this piece.</p>
                                   </div>
                                )}
@@ -438,7 +505,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
                          )}
                          {activeTab === "return policy" && (
                             <div className="space-y-4">
-                               <p className="bg-muted/40 p-2.5 rounded-lg text-foreground/50 border border-foreground/5">Returns within 48 hours for defects or damage. Mandatory unboxing video required.</p>
+                               <p className="bg-muted/40 p-2.5 rounded-lg text-foreground/50 border border-foreground/12">Returns within 48 hours for defects or damage. Mandatory unboxing video required.</p>
                             </div>
                          )}
                       </motion.div>
@@ -451,7 +518,7 @@ export default function ProductDetailClient({ id }: { id: string }) {
 
       <AnimatePresence>
         {showStickyBar && (
-          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-foreground/10 z-[60] p-3 lg:hidden flex items-center justify-between gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-foreground/18 z-[60] p-3 lg:hidden flex items-center justify-between gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
              <div className="flex items-center gap-3">
                 <div className="w-10 h-13 rounded-lg overflow-hidden bg-muted">
                    <img src={getOptimizedImageUrl(images[0])} alt="" className="w-full h-full object-cover" />
@@ -463,9 +530,25 @@ export default function ProductDetailClient({ id }: { id: string }) {
                    </div>
                 </div>
              </div>
-             <button onClick={handleAddToCart} className="bg-foreground text-background h-11 px-6 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-transform">
-                {isAdded ? "Added" : "Drop In Bag"}
-             </button>
+             {(() => {
+                const isCurrentSizeOutOfStock = selectedSize ? (sizeStockMap[selectedSize] || 0) === 0 : false;
+                return (
+                   <button 
+                      onClick={handleAddToCart} 
+                      disabled={isAdded || isCurrentSizeOutOfStock}
+                      className={cn(
+                         "h-11 px-6 rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-transform",
+                         isAdded 
+                           ? "bg-emerald-500 text-white" 
+                           : isCurrentSizeOutOfStock 
+                             ? "bg-foreground/10 text-foreground/50 border border-foreground/12 cursor-not-allowed" 
+                             : "bg-foreground text-background"
+                      )}
+                   >
+                      {isAdded ? "Added" : isCurrentSizeOutOfStock ? "Out of Stock" : "Drop In Bag"}
+                   </button>
+                );
+             })()}
           </motion.div>
         )}
       </AnimatePresence>

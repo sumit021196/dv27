@@ -64,6 +64,52 @@ export async function GET() {
                 INSERT INTO coupons (code, discount_value, discount_type, min_order_value)
                 VALUES ('BDAY500', 500, 'fixed', 1000)
                 ON CONFLICT (code) DO NOTHING;
+
+                -- Inventory Management System
+                ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS stock_managed BOOLEAN DEFAULT FALSE;
+
+                CREATE OR REPLACE FUNCTION public.manage_order_stock(p_order_id UUID, p_action TEXT)
+                RETURNS VOID AS $$
+                DECLARE
+                    item RECORD;
+                BEGIN
+                    IF p_action NOT IN ('decrement', 'increment') THEN
+                        RAISE EXCEPTION 'Invalid action: %%', p_action;
+                    END IF;
+
+                    IF p_action = 'decrement' THEN
+                        IF EXISTS (SELECT 1 FROM public.orders WHERE id = p_order_id AND stock_managed = TRUE) THEN
+                            RETURN;
+                        END IF;
+
+                        FOR item IN (SELECT product_id, quantity FROM public.order_items WHERE order_id = p_order_id) LOOP
+                            IF item.product_id IS NOT NULL THEN
+                                UPDATE public.products 
+                                SET stock = GREATEST(0, stock - item.quantity)
+                                WHERE id = item.product_id;
+                            END IF;
+                        END LOOP;
+
+                        UPDATE public.orders SET stock_managed = TRUE WHERE id = p_order_id;
+
+                    ELSIF p_action = 'increment' THEN
+                        IF EXISTS (SELECT 1 FROM public.orders WHERE id = p_order_id AND stock_managed = FALSE) THEN
+                            RETURN;
+                        END IF;
+
+                        FOR item IN (SELECT product_id, quantity FROM public.order_items WHERE order_id = p_order_id) LOOP
+                            IF item.product_id IS NOT NULL THEN
+                                UPDATE public.products 
+                                SET stock = stock + item.quantity
+                                WHERE id = item.product_id;
+                            END IF;
+                        END LOOP;
+
+                        UPDATE public.orders SET stock_managed = FALSE WHERE id = p_order_id;
+                    END IF;
+                END;
+                $$ LANGUAGE plpgsql SECURITY DEFINER;
+
             `
         });
 

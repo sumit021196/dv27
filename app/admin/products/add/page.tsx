@@ -12,13 +12,18 @@ import { createClient } from "@/utils/supabase/client";
 import { compressImage, uploadToSupabase } from "@/utils/image-utils";
 
 
-const INITIAL_FORM_DATA = {
+const INITIAL_FORM_DATA: {
+    name: string;
+    price: string;
+    original_price: string;
+    description: string;
+    categoryIds: string[];
+} = {
     name: "",
     price: "",
     original_price: "",
     description: "",
-    category: "",
-    category_id: "",
+    categoryIds: [],
 };
 
 export default function AddProductPage() {
@@ -26,6 +31,7 @@ export default function AddProductPage() {
     const isSubmitting = useRef(false);
     // Session token reference for secure uploads
     const sessionTokenRef = useRef<string | undefined>(undefined);
+    const createdUrlsRef = useRef<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);          // 0-100
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -115,15 +121,17 @@ export default function AddProductPage() {
         fetchToken();
     }, []);
 
+    // Clean up all generated preview object URLs on component unmount
+    useEffect(() => {
+        return () => {
+            createdUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        if (name === "category_id") {
-            const selectedCat = categories.find(c => c.id === value);
-            setFormData(prev => ({
-                ...prev,
-                category_id: value,
-                category: selectedCat ? selectedCat.name : ""
-            }));
+        if (name === "categoryIds") {
+            // Handled inline in the checkbox
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -132,10 +140,11 @@ export default function AddProductPage() {
     const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            const newImages = files.map(file => ({
-                file,
-                url: URL.createObjectURL(file)
-            }));
+            const newImages = files.map(file => {
+                const url = URL.createObjectURL(file);
+                createdUrlsRef.current.push(url);
+                return { file, url };
+            });
             setImages(prev => [...prev, ...newImages]);
         }
     };
@@ -143,7 +152,9 @@ export default function AddProductPage() {
     const removeImage = (index: number) => {
         setImages(prev => {
             const newArr = [...prev];
-            URL.revokeObjectURL(newArr[index].url);
+            const url = newArr[index].url;
+            URL.revokeObjectURL(url);
+            createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== url);
             newArr.splice(index, 1);
             return newArr;
         });
@@ -152,13 +163,21 @@ export default function AddProductPage() {
     const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (video) URL.revokeObjectURL(video.url);
-            setVideo({ file, url: URL.createObjectURL(file) });
+            if (video) {
+                URL.revokeObjectURL(video.url);
+                createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== video.url);
+            }
+            const url = URL.createObjectURL(file);
+            createdUrlsRef.current.push(url);
+            setVideo({ file, url });
         }
     };
 
     const removeVideo = () => {
-        if (video) URL.revokeObjectURL(video.url);
+        if (video) {
+            URL.revokeObjectURL(video.url);
+            createdUrlsRef.current = createdUrlsRef.current.filter(u => u !== video.url);
+        }
         setVideo(null);
     };
 
@@ -192,6 +211,7 @@ export default function AddProductPage() {
         // 1. Clear media URLs from browser memory
         images.forEach(img => URL.revokeObjectURL(img.url));
         if (video) URL.revokeObjectURL(video.url);
+        createdUrlsRef.current = [];
         
         // 2. Reset basic form states
         setFormData(INITIAL_FORM_DATA);
@@ -231,8 +251,8 @@ export default function AddProductPage() {
             return;
         }
 
-        if (categories.length > 0 && !formData.category_id) {
-            setErrorParam("Please select a category.");
+        if (categories.length > 0 && formData.categoryIds.length === 0) {
+            setErrorParam("Please select at least one category.");
             isSubmitting.current = false;
             return;
         }
@@ -294,8 +314,7 @@ export default function AddProductPage() {
                 price: Number(formData.price),
                 original_price: formData.original_price ? Number(formData.original_price) : undefined,
                 description: formData.description,
-                category: formData.category,
-                category_id: formData.category_id || null,
+                categoryIds: formData.categoryIds,
                 imageUrls: finalImageUrls,
                 videoUrl: finalVideoUrl,
                 variants: JSON.stringify(variants.map(v => ({ size: v.size, color: v.color, stock: Number(v.stock), sku: v.sku }))),
@@ -342,12 +361,12 @@ export default function AddProductPage() {
             {/* Fixed Header section */}
             <div className="flex-shrink-0 mb-4 px-1">
                 <div className="flex items-center gap-3">
-                    <Link href="/admin/products" className="p-2 hover:bg-white/80 bg-gray-100 rounded-full transition-colors text-gray-500">
+                    <Link href="/admin/products" className="p-2 hover:bg-white/80 bg-gray-100 rounded-full transition-colors text-gray-700">
                         <ArrowLeft size={18} />
                     </Link>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">Add Clothing Product</h1>
-                        <p className="text-[10px] md:text-sm text-gray-500">New product with variants & media.</p>
+                        <p className="text-[10px] md:text-sm text-gray-700">New product with variants & media.</p>
                     </div>
                 </div>
             </div>
@@ -376,23 +395,40 @@ export default function AddProductPage() {
                         <div>
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Selling Price (₹) *</label>
                             <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-500 text-sm">₹</span></div>
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-700 text-sm">₹</span></div>
                                 <input type="number" name="price" required min="0" step="0.01" value={formData.price} onChange={handleInputChange} className="w-full pl-8 border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="0.00" />
                             </div>
                         </div>
                         <div>
                             <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Original Price / MRP (₹)</label>
                             <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-500 text-sm">₹</span></div>
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center"><span className="text-gray-700 text-sm">₹</span></div>
                                 <input type="number" name="original_price" min="0" step="0.01" value={formData.original_price} onChange={handleInputChange} className="w-full pl-8 border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border" placeholder="0.00" />
                             </div>
                         </div>
-                        <div>
-                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Category {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
-                            <select name="category_id" disabled={catsLoading} value={formData.category_id} onChange={handleInputChange} className="w-full border-gray-200 rounded-xl shadow-sm focus:ring-black text-sm p-3 border disabled:bg-gray-50">
-                                <option value="">{catsLoading ? "Loading..." : "Select Category"}</option>
-                                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                            </select>
+                        <div className="col-span-1 sm:col-span-2">
+                            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">Categories {catsLoading && <Loader2 className="inline animate-spin ml-2 h-3 w-3" />}</label>
+                            <div className="flex flex-wrap gap-2 p-3 border border-gray-200 rounded-xl max-h-40 overflow-y-auto bg-white">
+                                {catsLoading ? <span className="text-sm text-gray-700">Loading...</span> : categories.length === 0 ? <span className="text-sm text-gray-700">No categories found</span> : (
+                                    categories.map(cat => (
+                                        <label key={cat.id} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 cursor-pointer transition-colors">
+                                            <input 
+                                                type="checkbox" 
+                                                className="rounded border-gray-300 text-black focus:ring-black h-4 w-4"
+                                                checked={formData.categoryIds.includes(cat.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setFormData(prev => ({ ...prev, categoryIds: [...prev.categoryIds, cat.id] }));
+                                                    } else {
+                                                        setFormData(prev => ({ ...prev, categoryIds: prev.categoryIds.filter(id => id !== cat.id) }));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-xs font-medium text-gray-700">{cat.name}</span>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -405,7 +441,7 @@ export default function AddProductPage() {
                             </button>
                         </div>
                         {variants.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">No variants added. Click 'Add Variant' to add sizes, colors, and stock.</p>
+                            <p className="text-sm text-gray-700 text-center py-4">No variants added. Click 'Add Variant' to add sizes, colors, and stock.</p>
                         ) : (
                             <div className="space-y-4">
                                 {variants.map((v) => (
@@ -442,7 +478,7 @@ export default function AddProductPage() {
                                 <Plus size={14} className="mr-1" /> Add Detail
                             </button>
                         </div>
-                        <p className="text-[10px] text-gray-500">These will appear in the "Details" tab on the product page as key-value pairs (e.g. Material: Cotton).</p>
+                        <p className="text-[10px] text-gray-700">These will appear in the "Details" tab on the product page as key-value pairs (e.g. Material: Cotton).</p>
                         <div className="space-y-3">
                             {details.map((d) => (
                                 <div key={d.id} className="flex gap-3 items-center bg-gray-50 p-3 rounded-xl border border-gray-100 relative group">
@@ -467,7 +503,7 @@ export default function AddProductPage() {
                         <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Images</h2>
                         <div className="mt-2 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition cursor-pointer relative overflow-hidden group">
                             <div className="text-center">
-                                <UploadCloud className="mx-auto h-8 w-8 text-gray-400 group-hover:text-black transition" />
+                                <UploadCloud className="mx-auto h-8 w-8 text-gray-600 group-hover:text-black transition" />
                                 <div className="mt-2 text-xs text-gray-600">
                                     <label className="cursor-pointer font-medium text-black hover:text-gray-700">
                                         <span>Select images</span>
@@ -494,7 +530,7 @@ export default function AddProductPage() {
                         <h2 className="text-md md:text-lg font-semibold text-gray-900 border-b pb-2">Video (Optional)</h2>
                         <div className="mt-2 flex justify-center px-4 py-6 border-2 border-gray-200 border-dashed rounded-xl hover:bg-gray-50 transition cursor-pointer relative overflow-hidden group">
                             <div className="text-center">
-                                <Video className="mx-auto h-8 w-8 text-gray-400 group-hover:text-black transition" />
+                                <Video className="mx-auto h-8 w-8 text-gray-600 group-hover:text-black transition" />
                                 <div className="mt-2 text-xs text-gray-600">
                                     <label className="cursor-pointer font-medium text-black hover:text-gray-700">
                                         <span>Upload Video</span>
@@ -528,7 +564,7 @@ export default function AddProductPage() {
                                 />
                             </div>
                         </div>
-                        <p className="text-[10px] text-gray-400 text-center italic">This is how your product will appear on the shop page.</p>
+                        <p className="text-[10px] text-gray-600 text-center italic">This is how your product will appear on the shop page.</p>
                     </div>
 
                     <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -543,7 +579,7 @@ export default function AddProductPage() {
                                 <button type="button" onClick={resetAllState} className="mt-2 w-full bg-black text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-sm">
                                     Add Another Product
                                 </button>
-                                <Link href="/admin/products" className="text-xs font-medium text-gray-500 underline mt-2 hover:text-black transition">
+                                <Link href="/admin/products" className="text-xs font-medium text-gray-700 underline mt-2 hover:text-black transition">
                                     Return to Product List
                                 </Link>
                             </div>
@@ -570,7 +606,7 @@ export default function AddProductPage() {
                                 </div>
 
                                 {/* Elapsed time */}
-                                <p className="text-[10px] text-gray-400 text-right tabular-nums">
+                                <p className="text-[10px] text-gray-600 text-right tabular-nums">
                                     ⏱ {String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:{String(elapsedSeconds % 60).padStart(2, '0')} elapsed
                                 </p>
                             </div>

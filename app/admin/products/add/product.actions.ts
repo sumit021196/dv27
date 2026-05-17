@@ -8,8 +8,7 @@ export async function createProductAction(formData: {
     price: number;
     original_price?: number;
     description?: string | null;
-    category?: string | null;
-    category_id?: string | null;
+    categoryIds?: string[];
     imageUrls?: string[];
     videoUrl?: string | null;
     variants?: string | null; // JSON string of { size, color, stock, sku }
@@ -38,7 +37,7 @@ export async function createProductAction(formData: {
                 price: formData.price,
                 original_price: formData.original_price || null,
                 description: formData.description || null,
-                category_id: formData.category_id || null,
+                category_id: formData.categoryIds?.[0] || null,
                 media_url: mainMediaUrl,
                 video_url: finalVideoUrl,
                 stock: 10,
@@ -66,6 +65,16 @@ export async function createProductAction(formData: {
             }));
             const { error: imgError } = await supabase.from('product_images').insert(imageInserts);
             if (imgError) console.error("Error inserting multiple images (Logged and continuing):", imgError);
+        }
+
+        // 4b. Insert multiple categories into product_categories
+        if (formData.categoryIds && formData.categoryIds.length > 0) {
+            const catInserts = formData.categoryIds.map((cId) => ({
+                product_id: productId,
+                category_id: cId
+            }));
+            const { error: catError } = await supabase.from('product_categories').insert(catInserts);
+            if (catError) console.error("Error inserting multiple categories:", catError);
         }
 
         // 5. Insert Variants

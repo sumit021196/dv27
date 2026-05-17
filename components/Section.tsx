@@ -20,7 +20,7 @@ export default function Section({
               {title}
             </h2>
             {subtitle ? (
-              <p className="mt-3 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-foreground/40 max-w-[280px] md:max-w-none">
+              <p className="mt-3 text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-foreground/60 max-w-[280px] md:max-w-none">
                 {subtitle}
               </p>
             ) : null}

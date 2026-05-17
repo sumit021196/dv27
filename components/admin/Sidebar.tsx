@@ -80,7 +80,7 @@ export function AdminSidebar() {
                                         size={20}
                                         className={cn(
                                             "transition-colors",
-                                            active ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                                            active ? "text-blue-600" : "text-gray-600 group-hover:text-gray-600"
                                         )}
                                     />
                                     <span className={cn("font-medium", active && "font-semibold")}>
@@ -96,7 +96,7 @@ export function AdminSidebar() {
                             onClick={handleLogout}
                             className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors group"
                         >
-                            <LogOut size={20} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                            <LogOut size={20} className="text-gray-600 group-hover:text-red-500 transition-colors" />
                             <span className="font-medium">Logout</span>
                         </button>
                     </div>

@@ -13,12 +13,10 @@ export class ProductService implements IProductService {
         try {
             let query = client
                 .from("products")
-                .select("*, categories(name, id, is_active), product_variants(*), product_images(*)");
+                .select("*, categories!products_category_id_fkey(name, id, is_active), product_categories(categories(id, name, slug, is_active)), product_variants(*), product_images(*)");
             
             if (!includeInactive) {
-                query = query
-                    .eq("is_active", true)
-                    .eq("categories.is_active", true);
+                query = query.eq("is_active", true);
             }
             
             const { data, error } = await query.limit(100);
@@ -39,7 +37,7 @@ export class ProductService implements IProductService {
             
             let query = client
                 .from("products")
-                .select("*, categories(name, is_active), product_variants(*), product_images(*) ");
+                .select("*, categories!products_category_id_fkey(name, is_active), product_variants(*), product_images(*) ");
             
             if (isNumeric) {
                 query = query.eq("id", idOrSlug);
@@ -64,10 +62,9 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!products_category_id_fkey(name, is_active), product_categories(categories(id, name, slug, is_active))")
                 .eq("is_active", true)
                 .eq("is_trending", true)
-                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -81,9 +78,8 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!products_category_id_fkey(name, is_active), product_categories(categories(id, name, slug, is_active))")
                 .eq("is_active", true)
-                .eq("categories.is_active", true)
                 .order("created_at", { ascending: false })
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
@@ -98,9 +94,8 @@ export class ProductService implements IProductService {
         try {
             const { data, error } = await client
                 .from("products")
-                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!inner(is_active)")
+                .select("id, name, price, original_price, media_url, rating, created_at, category_id, categories!products_category_id_fkey(name, is_active), product_categories(categories(id, name, slug, is_active))")
                 .eq("is_active", true)
-                .eq("categories.is_active", true)
                 .limit(limit);
             if (error || !data) return this.mapFallback(fallback.slice(0, limit));
             return this.mapSupabaseData(data);
@@ -199,30 +194,71 @@ export class ProductService implements IProductService {
         category?: string; 
         search?: string; 
         limit?: number; 
-        offset?: number 
+        offset?: number;
+        sortBy?: string;
+        minPrice?: number;
+        maxPrice?: number;
     }, supabase?: any): Promise<Product[]> {
         const client = this.getClient(supabase);
         try {
+            let selectStr = "*, categories!products_category_id_fkey(name, slug, is_active), product_variants(*), product_images(*)";
+            
+            if (options.category && options.category !== 'all') {
+                selectStr += ", product_categories!inner(categories!inner(slug, is_active))";
+            } else {
+                selectStr = "*, categories!products_category_id_fkey!inner(name, slug, is_active), product_variants(*), product_images(*)";
+            }
+
             let query = client
                 .from("products")
-                .select("*, categories!inner(name, slug, is_active), product_variants(*), product_images(*)")
-                .eq("is_active", true)
-                .eq("categories.is_active", true);
+                .select(selectStr)
+                .eq("is_active", true);
 
             if (options.category && options.category !== 'all') {
-                query = query.eq("categories.slug", options.category);
+                query = query
+                    .eq("product_categories.categories.slug", options.category)
+                    .eq("product_categories.categories.is_active", true);
+            } else {
+                query = query.eq("categories.is_active", true);
             }
 
             if (options.search) {
-                query = query.ilike('name', `%${options.search}%`);
+                query = query.or(`name.ilike.%${options.search}%,description.ilike.%${options.search}%`);
+            }
+
+            if (options.minPrice !== undefined) {
+                query = query.gte('price', options.minPrice);
+            }
+
+            if (options.maxPrice !== undefined) {
+                query = query.lte('price', options.maxPrice);
             }
 
             const limit = options.limit || 12;
             const offset = options.offset || 0;
             
-            query = query
-                .order("created_at", { ascending: false })
-                .range(offset, offset + limit - 1);
+            if (options.sortBy) {
+                switch (options.sortBy) {
+                    case 'price_asc':
+                        query = query.order("price", { ascending: true });
+                        break;
+                    case 'price_desc':
+                        query = query.order("price", { ascending: false });
+                        break;
+                    case 'newest':
+                        query = query.order("created_at", { ascending: false });
+                        break;
+                    case 'rating':
+                        query = query.order("rating", { ascending: false });
+                        break;
+                    default:
+                        query = query.order("created_at", { ascending: false });
+                }
+            } else {
+                query = query.order("created_at", { ascending: false });
+            }
+
+            query = query.range(offset, offset + limit - 1);
 
             const { data, error } = await query;
             if (error || !data) return [];
@@ -291,7 +327,8 @@ export class ProductService implements IProductService {
             is_active: d.is_active ?? true,
             is_trending: d.is_trending ?? false,
             category_id: d.category_id || undefined,
-            category_name: d.categories?.name || d.category || undefined,
+            category_name: d.categories?.name || d.product_categories?.[0]?.categories?.name || d.category || undefined,
+            all_categories: d.product_categories?.map((pc: any) => pc.categories).filter(Boolean) || [],
             description: d.description || undefined,
             details: d.details || undefined,
             variants: d.product_variants || [],

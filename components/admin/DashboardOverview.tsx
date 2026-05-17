@@ -15,7 +15,7 @@ export default function DashboardOverview({
                 <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl">
                     Dashboard Overview
                 </h1>
-                <p className="mt-1 text-xs lg:text-sm text-gray-500">
+                <p className="mt-1 text-xs lg:text-sm text-gray-700">
                     Monitor your store&#39;s performance.
                 </p>
             </div>

@@ -47,7 +47,7 @@ function VideoCard({ review }: { review: any }) {
     if (!videoData) return null;
 
     return (
-        <div className="flex-none w-[280px] aspect-[9/16] rounded-[32px] overflow-hidden relative snap-center group bg-muted border border-foreground/5 shadow-2xl">
+        <div className="flex-none w-[280px] aspect-[9/16] rounded-[32px] overflow-hidden relative snap-center group bg-muted border border-foreground/12 shadow-2xl">
             <video
                 ref={videoRef}
                 src={videoData.media_url}

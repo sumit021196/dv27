@@ -45,6 +45,9 @@ export default function CartDrawer() {
         } else {
             document.body.style.overflow = "auto";
         }
+        return () => {
+            document.body.style.overflow = "auto";
+        };
     }, [isOpen]);
 
     // Handle Confetti Effect (Simple Framer Motion Alternative for now)
@@ -116,7 +119,7 @@ export default function CartDrawer() {
                         )}
 
                         {/* Header */}
-                        <div className="flex flex-col border-b border-foreground/5">
+                        <div className="flex flex-col border-b border-foreground/12">
                             <div className="flex items-center justify-between px-6 py-4">
                                 <div className="flex items-center gap-2">
                                     <ShoppingBag className="text-brand-accent" size={20} />
@@ -124,7 +127,7 @@ export default function CartDrawer() {
                                 </div>
                                 <button
                                     onClick={closeCart}
-                                    className="rounded-full p-2 text-foreground/40 hover:bg-foreground/5 hover:text-foreground transition-colors"
+                                    className="rounded-full p-2 text-foreground/60 hover:bg-foreground/5 hover:text-foreground transition-colors"
                                 >
                                     <X size={20} />
                                 </button>
@@ -133,7 +136,7 @@ export default function CartDrawer() {
                             {/* Shipping Progress */}
                             {shippingThreshold > 0 && items.length > 0 && (
                                 <div className="px-6 pb-4 animate-in slide-in-from-top duration-500">
-                                    <div className="bg-muted/50 rounded-xl p-3 border border-foreground/5">
+                                    <div className="bg-muted/50 rounded-xl p-3 border border-foreground/12">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                                                 <Truck size={14} className={isFreeShipping ? "text-green-500" : "text-brand-accent"} />
@@ -185,7 +188,7 @@ export default function CartDrawer() {
                                     <motion.div 
                                         key={`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`} 
                                         variants={itemVariants}
-                                        className="flex gap-4 border-b border-foreground/5 pb-4 last:border-0 last:pb-0"
+                                        className="flex gap-4 border-b border-foreground/12 pb-4 last:border-0 last:pb-0"
                                     >
                                         <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                                             <img
@@ -208,7 +211,7 @@ export default function CartDrawer() {
                                                 <p className="text-sm font-black text-brand-accent mt-1 tracking-tighter">₹{item.price}</p>
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
-                                                <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-foreground/5">
+                                                <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-foreground/12">
                                                     <TapScale>
                                                         <button
                                                             onClick={() => cart.add({ id: item.id, name: item.name, price: item.price, image: item.image, variant_id: item.variant_id, size: item.size, color: item.color }, -1)}
@@ -241,7 +244,7 @@ export default function CartDrawer() {
                                                 <TapScale>
                                                     <button
                                                         onClick={() => cart.remove(`${item.id}-${item.variant_id || 'base'}-${item.size || 'none'}-${item.color || 'none'}`)}
-                                                        className="text-foreground/20 hover:text-brand-red transition-colors p-2"
+                                                        className="text-foreground/45 hover:text-brand-red transition-colors p-2"
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -255,7 +258,7 @@ export default function CartDrawer() {
 
                         {/* Footer */}
                         {items.length > 0 && (
-                            <div className="border-t border-foreground/5 bg-muted/30 p-6 space-y-4">
+                            <div className="border-t border-foreground/12 bg-muted/30 p-6 space-y-4">
                                 {/* Coupon Display */}
                                 {coupon ? (
                                     <div className="flex items-center justify-between bg-brand-accent/10 border border-brand-accent/20 rounded-xl p-3">
@@ -277,7 +280,7 @@ export default function CartDrawer() {
                                                 type="text"
                                                 id="coupon_input_drawer"
                                                 placeholder="Enter Coupon Code"
-                                                className="w-full h-14 bg-white border border-foreground/10 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest outline-none focus:border-brand-accent/50 focus:ring-4 focus:ring-brand-accent/5 transition-all pr-24"
+                                                className="w-full h-14 bg-white border border-foreground/18 rounded-2xl px-5 text-xs font-bold uppercase tracking-widest outline-none focus:border-brand-accent/50 focus:ring-4 focus:ring-brand-accent/5 transition-all pr-24"
                                             />
                                             <button 
                                                 onClick={async () => {
@@ -307,7 +310,7 @@ export default function CartDrawer() {
                                             <span>-₹{discount.toLocaleString()}</span>
                                         </div>
                                     )}
-                                    <div className="flex items-center justify-between text-xl font-black uppercase tracking-tighter text-foreground pt-1 border-t border-foreground/5">
+                                    <div className="flex items-center justify-between text-xl font-black uppercase tracking-tighter text-foreground pt-1 border-t border-foreground/12">
                                         <span>Total</span>
                                         <AnimatePresence mode="wait">
                                             <motion.span 
@@ -327,7 +330,7 @@ export default function CartDrawer() {
                                         <Link
                                             href="/cart"
                                             onClick={closeCart}
-                                            className="flex h-14 w-full items-center justify-center rounded-2xl border border-foreground/10 bg-background font-black text-[10px] uppercase tracking-widest text-foreground hover:bg-muted transition shadow-sm"
+                                            className="flex h-14 w-full items-center justify-center rounded-2xl border border-foreground/18 bg-background font-black text-[10px] uppercase tracking-widest text-foreground hover:bg-muted transition shadow-sm"
                                         >
                                             View Bag
                                         </Link>
