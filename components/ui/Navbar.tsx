@@ -23,6 +23,7 @@ import { createClient } from "@/utils/supabase/client";
 import { logout } from "@/app/(auth)/auth.actions";
 import { User as UserType } from "@supabase/supabase-js";
 import Image from "next/image";
+import Logo from "./Logo";
 import Ticker from "./Ticker";
 import { productService } from "@/services/product.service";
 import { Category, Product } from "@/types/product";
@@ -319,14 +320,7 @@ export default function Navbar() {
                         {/* Center: Logo */}
                         <div className="flex justify-center perspective-1000">
                             <Link href="/" className="flex items-center transition-all hover:scale-110">
-                                <Image
-                                    src="/logo.svg"
-                                    alt={settings.site_name || "DV27"}
-                                    width={120}
-                                    height={40}
-                                    className="h-8 sm:h-10 w-auto animate-logo-flip"
-                                    priority
-                                />
+                                <Logo className="h-12 sm:h-16 w-auto" />
                             </Link>
                         </div>
 
@@ -796,7 +790,7 @@ export default function Navbar() {
                                             </motion.button>
                                         )}
                                     </AnimatePresence>
-                                    <Image src="/logo.svg" alt="DV27" width={70} height={20} className="h-5 w-auto" />
+                                    <Logo className="h-8 w-auto" />
                                 </div>
                                 <button onClick={() => {
                                     setMobileMenuOpen(false);
