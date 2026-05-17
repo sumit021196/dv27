@@ -44,7 +44,16 @@ export default function ProductDetailClient({ id }: { id: string }) {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const mainCtaRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState("description");
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    description: true,
+  });
+
+  const toggleAccordion = (key: string) => {
+    setOpenAccordions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
   const [isSizingModalOpen, setIsSizingModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [coupons, setCoupons] = useState<any[]>([]);
@@ -80,11 +89,14 @@ export default function ProductDetailClient({ id }: { id: string }) {
     const map: Record<string, number> = {};
     if (!product) return map;
 
+    const isCap = product.name.toLowerCase().includes("cap");
+
     if (product.variants && product.variants.length > 0) {
       product.variants.forEach(v => {
         if (selectedColor && v.color && v.color !== selectedColor) return;
         if (v.size) {
-          map[v.size] = (map[v.size] || 0) + (v.stock || 0);
+          const key = isCap ? "ADJUSTABLE (ONE SIZE)" : v.size.trim();
+          map[key] = (map[key] || 0) + (v.stock || 0);
         }
       });
     } else {
@@ -397,74 +409,90 @@ export default function ProductDetailClient({ id }: { id: string }) {
             </div>
 
             <div className="mt-6 border-t border-foreground/12">
-                <div className="flex border-b border-foreground/12">
-                   {["description", "details", "reviews", "return policy"].map((tab) => (
+                {[
+                  { id: "description", label: "Description" },
+                  { id: "details", label: "Details" },
+                  { id: "reviews", label: `Reviews (${reviews.length})` },
+                  { id: "return policy", label: "Return Policy" }
+                ].map((item) => {
+                  const isOpen = !!openAccordions[item.id];
+                  return (
+                    <div key={item.id} className="border-b border-foreground/12">
                       <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={cn(
-                          "flex-1 py-3 text-[8px] font-black uppercase tracking-[0.15em] transition-all relative",
-                          activeTab === tab ? "text-foreground" : "text-foreground/50"
-                        )}
+                        onClick={() => toggleAccordion(item.id)}
+                        className="w-full py-4 flex items-center justify-between text-left group hover:opacity-80 transition-all focus:outline-none"
                       >
-                        {tab}
-                        {activeTab === tab && (
-                          <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
-                        )}
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
+                          {item.label}
+                        </span>
+                        <div className="relative w-4 h-4 flex items-center justify-center">
+                          {/* Horizontal line of the plus/minus icon */}
+                          <div className="absolute w-3 h-[1.5px] bg-foreground transition-all duration-300" />
+                          {/* Vertical line that rotates/disappears for minus icon */}
+                          <div 
+                            className={cn(
+                              "absolute w-3 h-[1.5px] bg-foreground transition-all duration-300 rotate-90",
+                              isOpen && "rotate-0 opacity-0"
+                            )} 
+                          />
+                        </div>
                       </button>
-                   ))}
-                </div>
-                
-                <div className="py-6 px-3 min-h-[140px]">
-                   <AnimatePresence mode="wait">
-                      <motion.div
-                        key={activeTab}
-                        initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 5 }} transition={{ duration: 0.15 }}
-                        className="text-[9px] font-bold text-muted-foreground uppercase leading-[1.6] tracking-widest"
-                      >
-                         {activeTab === "description" && (
-                            <div className="space-y-4">
-                               <p className="text-foreground/80">{product.description || "No description available for this piece."}</p>
-                            </div>
-                         )}
-                         {activeTab === "details" && (
-                            <div className="grid grid-cols-2 gap-y-4 gap-x-3">
-                               {product.details && Object.entries(product.details).length > 0 ? (
-                                  Object.entries(product.details).map(([label, value]) => (
-                                     <div key={label}>
+
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pb-6 pt-1 text-[9px] font-bold text-muted-foreground uppercase leading-[1.6] tracking-widest px-1">
+                              {item.id === "description" && (
+                                <div className="space-y-4">
+                                  <p className="text-foreground/85 normal-case leading-relaxed font-semibold">
+                                    {product.description || "No description available for this piece."}
+                                  </p>
+                                </div>
+                              )}
+                              {item.id === "details" && (
+                                <div className="grid grid-cols-2 gap-y-4 gap-x-3">
+                                  {product.details && Object.entries(product.details).length > 0 ? (
+                                    Object.entries(product.details).map(([label, value]) => (
+                                      <div key={label}>
                                         <span className="text-foreground block mb-0.5 font-black">{label}:</span>
                                         <p className="normal-case">{value}</p>
-                                     </div>
-                                  ))
-                               ) : (
-                                  <div className="col-span-2 py-4 opacity-50 italic">
-                                     <p>No specific details available for this piece.</p>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="col-span-2 py-4 opacity-50 italic">
+                                      <p>No specific details available for this piece.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {item.id === "reviews" && (
+                                <div className="space-y-6">
+                                  <div className="px-1 mb-6">
+                                    <button 
+                                      onClick={() => setIsReviewModalOpen(true)}
+                                      className="w-full py-4 border-2 border-dashed border-foreground/18 rounded-2xl flex items-center justify-center gap-2 hover:bg-muted/30 transition-all group"
+                                    >
+                                      <Plus size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors">Write a Review</span>
+                                    </button>
                                   </div>
-                               )}
-                            </div>
-                         )}
-                         {activeTab === "reviews" && (
-                            <div className="space-y-6">
-                               <div className="px-1 mb-8">
-                                  <button 
-                                    onClick={() => setIsReviewModalOpen(true)}
-                                    className="w-full py-4 border-2 border-dashed border-foreground/18 rounded-2xl flex items-center justify-center gap-2 hover:bg-muted/30 transition-all group"
-                                  >
-                                     <Plus size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
-                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground group-hover:text-foreground transition-colors">Write a Review</span>
-                                  </button>
-                               </div>
 
-                               {reviews.length > 0 ? (
-                                  reviews.map((review, i) => (
-                                     <div key={review.id || i} className="border-b border-foreground/12 pb-6 last:border-0">
+                                  {reviews.length > 0 ? (
+                                    reviews.map((review, i) => (
+                                      <div key={review.id || i} className="border-b border-foreground/12 pb-6 last:border-0">
                                         <div className="flex items-center justify-between mb-3">
-                                           <div className="flex gap-0.5">
-                                              {[...Array(5)].map((_, starIdx) => (
-                                                 <Star key={starIdx} size={10} className={cn(starIdx < review.rating ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/25")} />
-                                              ))}
-                                           </div>
-                                           <span className="text-[8px] font-bold opacity-30 tracking-widest uppercase">{new Date(review.created_at).toLocaleDateString()}</span>
+                                          <div className="flex gap-0.5">
+                                            {[...Array(5)].map((_, starIdx) => (
+                                              <Star key={starIdx} size={10} className={cn(starIdx < review.rating ? "fill-brand-red text-brand-red" : "fill-foreground/10 text-foreground/25")} />
+                                            ))}
+                                          </div>
+                                          <span className="text-[8px] font-bold opacity-30 tracking-widest uppercase">{new Date(review.created_at).toLocaleDateString()}</span>
                                         </div>
                                         <p className="text-foreground/80 normal-case italic leading-relaxed text-[10px]">&quot;{review.comment}&quot;</p>
                                         
@@ -494,23 +522,29 @@ export default function ProductDetailClient({ id }: { id: string }) {
                                             — {review.profiles?.full_name || review.guest_name || "Anonymous User"}
                                             <span className="opacity-40 ml-2">VERIFIED BUYER</span>
                                         </p>
-                                     </div>
-                                  ))
-                               ) : (
-                                  <div className="text-center py-12 opacity-30 p-6 bg-muted/20 rounded-[32px] border border-dashed border-foreground/12">
-                                     <p className="text-[9px] font-black uppercase tracking-widest">No reviews yet for this piece.</p>
-                                  </div>
-                               )}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-center py-10 opacity-30 p-6 bg-muted/20 rounded-[32px] border border-dashed border-foreground/12">
+                                      <p className="text-[9px] font-black uppercase tracking-widest">No reviews yet for this piece.</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {item.id === "return policy" && (
+                                <div className="space-y-4">
+                                  <p className="bg-muted/40 p-4 rounded-2xl text-foreground/50 border border-foreground/12 normal-case leading-relaxed font-semibold">
+                                    Returns within 48 hours for defects or damage. Mandatory unboxing video required.
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                         )}
-                         {activeTab === "return policy" && (
-                            <div className="space-y-4">
-                               <p className="bg-muted/40 p-2.5 rounded-lg text-foreground/50 border border-foreground/12">Returns within 48 hours for defects or damage. Mandatory unboxing video required.</p>
-                            </div>
-                         )}
-                      </motion.div>
-                   </AnimatePresence>
-                </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>

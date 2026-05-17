@@ -14,6 +14,29 @@ function TrackOrderContent() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [error, setError] = useState("");
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleCancel = async () => {
+        if (!result?.order?.id) return;
+        if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) return;
+        setIsCancelling(true);
+        try {
+            const res = await fetch(`/api/orders/${result.order.id}/cancel`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Order cancelled successfully.");
+                handleTrack(result.order.id);
+            } else {
+                alert(data.error || "Failed to cancel order.");
+            }
+        } catch (err) {
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     useEffect(() => {
         if (idParam) {
@@ -94,13 +117,24 @@ function TrackOrderContent() {
                                     <div className="space-y-6">
                                         <div>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-foreground/60 mb-2">Order Status</p>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex flex-wrap items-center gap-3">
                                                 <span className={cn(
-                                                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
-                                                    result.order.status === 'paid' ? "bg-emerald-500/10 text-emerald-500" : "bg-brand-accent/10 text-brand-accent"
+                                                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                                                    result.order.status === 'paid' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                                                    result.order.status === 'cancelled' ? "bg-red-500/10 text-red-500 border-red-500/20" : 
+                                                    "bg-brand-accent/10 text-brand-accent border-brand-accent/20"
                                                 )}>
                                                     {result.order.status}
                                                 </span>
+                                                {(result.order.status === 'paid' || result.order.status === 'pending' || result.order.status === 'processing') && (
+                                                    <button
+                                                        onClick={handleCancel}
+                                                        disabled={isCancelling}
+                                                        className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-all cursor-pointer shadow-lg shadow-red-500/20"
+                                                    >
+                                                        {isCancelling ? "Cancelling..." : "Cancel Order"}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                         <div>

@@ -156,10 +156,30 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                                                 <Package className="h-full w-full p-4 text-gray-700" />
                                             )}
                                         </div>
-                                        <div>
-                                            <h3 className="text-sm font-bold text-gray-900">{item.product_name}</h3>
-                                            <p className="text-sm text-gray-700 mt-1">₹{item.price} x {item.quantity}</p>
-                                        </div>
+                                         <div>
+                                             <h3 className="text-sm font-bold text-gray-900">{item.product_name}</h3>
+                                             <div className="flex flex-wrap gap-2 mt-1.5">
+                                                 {item.size ? (
+                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+                                                         Size: {item.size}
+                                                     </span>
+                                                 ) : (
+                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-50 text-gray-400 border border-gray-100">
+                                                         Size: N/A
+                                                     </span>
+                                                 )}
+                                                 {item.color ? (
+                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+                                                         Color: {item.color.trim()}
+                                                     </span>
+                                                 ) : (
+                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-50 text-gray-400 border border-gray-100">
+                                                         Color: N/A
+                                                     </span>
+                                                 )}
+                                             </div>
+                                             <p className="text-sm text-gray-700 mt-2">₹{item.price} x {item.quantity}</p>
+                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-gray-900">₹{item.price * item.quantity}</p>
@@ -179,6 +199,16 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                             Payment Summary
                         </h2>
                         <div className="space-y-3 text-sm">
+                            <div className="flex justify-between items-center text-gray-700">
+                                <span>Payment Mode</span>
+                                <span className={`font-semibold uppercase px-2 py-0.5 rounded text-[10px] border ${
+                                    order.payment_method === 'cod' 
+                                        ? "bg-amber-50 text-amber-800 border-amber-200" 
+                                        : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                }`}>
+                                    {order.payment_method === 'cod' ? 'Cash on Delivery (COD)' : 'Online Payment'}
+                                </span>
+                            </div>
                             <div className="flex justify-between text-gray-700">
                                 <span>Subtotal</span>
                                 <span className="text-gray-900">₹{order.subtotal}</span>

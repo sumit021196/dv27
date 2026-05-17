@@ -14,6 +14,29 @@ export default function UserOrderDetailsPage({ params }: { params: Promise<{ id:
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const supabase = createClient();
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const handleCancel = async () => {
+        if (!order) return;
+        if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) return;
+        setIsCancelling(true);
+        try {
+            const res = await fetch(`/api/orders/${order.id}/cancel`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Order cancelled successfully.");
+                window.location.reload();
+            } else {
+                alert(data.error || "Failed to cancel order.");
+            }
+        } catch (err) {
+            alert("Something went wrong. Please try again.");
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -94,7 +117,18 @@ export default function UserOrderDetailsPage({ params }: { params: Promise<{ id:
                 
                 {/* Status Timeline */}
                 <div className="bg-white rounded-[2rem] p-6 border border-zinc-100 shadow-sm">
-                    <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6">Tracking</h2>
+                     <div className="flex items-center justify-between mb-6">
+                         <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-widest">Tracking</h2>
+                         {!isCancelled && (order.status?.toLowerCase() === 'paid' || order.status?.toLowerCase() === 'pending' || order.status?.toLowerCase() === 'processing') && (
+                             <button
+                                 onClick={handleCancel}
+                                 disabled={isCancelling}
+                                 className="px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50 transition-all cursor-pointer border border-red-100"
+                             >
+                                 {isCancelling ? "Cancelling..." : "Cancel Order"}
+                             </button>
+                         )}
+                     </div>
                     
                     {isCancelled ? (
                          <div className="flex items-center gap-3 text-red-500 font-bold bg-red-50 p-4 rounded-xl">
