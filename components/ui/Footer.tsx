@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import Logo from "./Logo";
 
 import { useSettings } from "@/components/SettingsContext";
 
@@ -16,9 +17,9 @@ export default function Footer() {
       <div className="mx-auto max-w-[1440px] px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-10 md:mb-20">
           <div className="space-y-4 md:space-y-8 flex flex-col items-center md:items-start text-center md:text-left">
-             <h2 className="text-4xl font-black tracking-tighter uppercase text-foreground">
-               {settings.site_name || "THE DV27"}
-             </h2>
+             <Link href="/">
+                <Logo className="h-16 md:h-20 w-auto" />
+             </Link>
              <p className="text-xs font-medium text-foreground/60 leading-relaxed uppercase tracking-widest max-w-[240px]">
                  {settings.tagline || "Providing premium streetwear for the bold and contemporary soul."}
              </p>
