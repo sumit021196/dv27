@@ -20,7 +20,7 @@ export default function Logo({ className, width, height }: LogoProps) {
             // @ts-ignore
             webkit-playsinline="true"
             aria-label="DV27 Logo"
-            className={cn("object-contain pointer-events-none mix-blend-multiply", className)}
+            className={cn("object-contain pointer-events-none mix-blend-darken", className)}
             style={{ width, height }}
         >
             <img src="/logo.svg" alt="DV27 Logo" className="w-full h-full object-contain" />
