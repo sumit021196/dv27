@@ -5,7 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { login } from "../auth.actions";
 import { ArrowRight, Loader2, Sparkles, Smartphone, Mail } from "lucide-react";
-import PhoneAuth from "@/components/auth/PhoneAuth";
+import dynamic from "next/dynamic";
+const PhoneAuth = dynamic(() => import("@/components/auth/PhoneAuth"), { ssr: false, loading: () => <div className="p-4 text-center text-sm text-gray-500">Loading mobile login...</div> });
 
 export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
